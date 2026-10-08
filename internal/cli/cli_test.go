@@ -22,7 +22,10 @@ func TestVersionAndUnknownCommand(t *testing.T) {
 }
 
 func TestRestoreRejectsUnrelatedSQLite(t *testing.T) {
-	dir := t.TempDir()
+	dir := filepath.Join(t.TempDir(), "private")
+	if err := os.Mkdir(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
 	t.Setenv("MISKOAI_DATA_DIR", dir)
 	path := filepath.Join(dir, "miskoai.db")
 	os.WriteFile(path, []byte("existing synthetic data"), 0600)
@@ -58,7 +61,7 @@ func TestBackupRestoreRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.Close()
-	backup := filepath.Join(t.TempDir(), "snapshot.db")
+	backup := filepath.Join(t.TempDir(), "private", "snapshot.db")
 	var out bytes.Buffer
 	if err = Run([]string{"backup", backup}, &out); err != nil {
 		t.Fatal(err)
@@ -114,7 +117,10 @@ func TestInitNeverOverwritesAndDoctorRedacts(t *testing.T) {
 }
 
 func TestRestoreRejectsCorruptBackupWithoutReplacingData(t *testing.T) {
-	dir := t.TempDir()
+	dir := filepath.Join(t.TempDir(), "private")
+	if err := os.Mkdir(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
 	t.Setenv("MISKOAI_DATA_DIR", dir)
 	path := filepath.Join(dir, "miskoai.db")
 	if err := os.WriteFile(path, []byte("existing synthetic data"), 0600); err != nil {

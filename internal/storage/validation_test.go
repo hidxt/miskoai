@@ -44,7 +44,7 @@ func TestExistingParentPermissionsArePreserved(t *testing.T) {
 func TestValidateBackupAcceptsOnlySupportedSnapshotWithoutMutation(t *testing.T) {
 	s, _ := testStore(t)
 	ctx := context.Background()
-	valid := filepath.Join(t.TempDir(), "snapshot # bound.db")
+	valid := filepath.Join(t.TempDir(), "private", "snapshot # bound.db")
 	if err := s.Backup(ctx, valid); err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestValidateBackupAcceptsOnlySupportedSnapshotWithoutMutation(t *testing.T)
 		"DROP TRIGGER facts_ai; CREATE TRIGGER facts_ai AFTER INSERT ON facts BEGIN UPDATE facts SET importance=0; END",
 		"PRAGMA user_version=0",
 	} {
-		path := filepath.Join(t.TempDir(), "modified.db")
+		path := filepath.Join(t.TempDir(), "private", "modified.db")
 		if err = s.Backup(ctx, path); err != nil {
 			t.Fatal(err)
 		}

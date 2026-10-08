@@ -7,7 +7,7 @@ if (-not (Test-Path -LiteralPath $probeBinary)) { throw 'Build the development W
 if ($Weixin) {
     & $probeBinary weixin login
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    Write-Output 'Send a synthetic direct text message from the QR-scanning user before the single-poll probe.'
+    Write-Output 'From the QR-scanning user send exactly: MiskoAI synthetic integration test'
     Read-Host 'Press Enter when the message has been sent' | Out-Null
     & $probeBinary poc weixin
     exit $LASTEXITCODE

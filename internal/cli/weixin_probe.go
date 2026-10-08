@@ -70,6 +70,11 @@ func weixinProbe(ctx context.Context, client probeChannel, s *storage.Store, a a
 				}
 			}
 		}
+		// The finite live authorization is synthetic-only. Do not claim/store or
+		// reply to older ordinary chats delivered by this first cursor-less poll.
+		if text.String() != "MiskoAI synthetic integration test" {
+			continue
+		}
 		if text.Len() == 0 {
 			continue
 		}

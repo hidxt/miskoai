@@ -2,7 +2,7 @@
 
 2026-10-09. Tool: github.com/securego/gosec/v2 v2.29.0 (development-only). Command: `gosec -quiet -fmt json -out .tools/gosec-product.json ./cmd/... ./internal/...` on Windows amd64. Product source only; tests/development caches excluded by explicit package scope. The earlier `./...` run recursively traversed .tools and was terminated as invalid product scope. No suppression was added.
 
-Final scan:20 source files,2543 lines,24 findings, no GolangErrors. Exit1 reflects reported findings; **not a zero-warning pass**. Seven G304 medium, one G103 low, sixteen G104 low. Independent Medium source/call-site review and storage specialist review found no actionable vulnerability in these listed findings under the current owner-operated local PoC. This does not certify the future service or replace Phase8 audit.
+Final scan after synthetic-only WeChat filtering:20 source files,2548 lines,24 findings, no GolangErrors. Exit1 reflects reported findings; **not a zero-warning pass**. Seven G304 medium, one G103 low, sixteen G104 low. Independent Medium source/call-site review and storage specialist review found no actionable vulnerability in these listed findings under the current owner-operated local PoC. This does not certify the future service or replace Phase8 audit.
 
 ## G304: administrator-selected local paths (7)
 - storage/store.go: configured private database or application-created candidate; privatePath validates final file/parent and owner-only Unix permissions.

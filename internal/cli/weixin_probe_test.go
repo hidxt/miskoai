@@ -28,7 +28,7 @@ func (f *fakeChannel) SendText(_ context.Context, to, token, id, text string) er
 }
 
 func TestWeixinProbeAuthorizationAndReplay(t *testing.T) {
-	s, err := storage.Open(filepath.Join(t.TempDir(), "probe.db"))
+	s, err := storage.Open(filepath.Join(t.TempDir(), "private", "probe.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,6 +40,10 @@ func TestWeixinProbeAuthorizationAndReplay(t *testing.T) {
 		t.Fatal("unauthorized send", err)
 	}
 	f.updates.Messages[0].FromUserID = "alice"
+	if err = weixinProbe(context.Background(), f, s, a, &out); err == nil || f.sends != 0 {
+		t.Fatal("non-synthetic input replied to", err)
+	}
+	f.updates.Messages[0].Items[0].Text.Text = "MiskoAI synthetic integration test"
 	if err = weixinProbe(context.Background(), f, s, a, &out); err != nil || f.sends != 1 {
 		t.Fatal("authorized probe failed", err)
 	}

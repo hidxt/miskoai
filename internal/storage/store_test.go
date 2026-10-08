@@ -328,7 +328,7 @@ func TestMessageCapacityPreservesExistingClaims(t *testing.T) {
 }
 
 func BenchmarkChineseRecall(b *testing.B) {
-	path := filepath.Join(b.TempDir(), "memory.db")
+	path := filepath.Join(b.TempDir(), "private", "memory.db")
 	s, err := Open(path)
 	if err != nil {
 		b.Fatal(err)

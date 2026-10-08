@@ -3,22 +3,22 @@
   "builds": [
     {
       "file": "miskoai-linux-amd64",
-      "bytes": 17143669,
-      "sha256": "8e8427962e6582e3c506b2e7c95b4b833b33a6cae9766e88fa3ecdd626f2de7f",
+      "bytes": 17143949,
+      "sha256": "fc453ace052394580f269dff73d7a62a9ce0179205bb373a6048425c7074913e",
       "elf_machine": 62,
       "dynamic_loader": false
     },
     {
       "file": "miskoai-linux-arm64",
-      "bytes": 16301051,
-      "sha256": "edba1496e0f10decd4341eae8b2dfae4eeccd60bf5d92b91d6ad79fa7798476b",
+      "bytes": 16303155,
+      "sha256": "700f048c68efa4a875c3315afea95f08e1589545aa3a3fbff40dd2504d24c946",
       "elf_machine": 183,
       "dynamic_loader": false
     },
     {
       "file": "miskoai-windows-amd64.exe",
-      "bytes": 17232384,
-      "sha256": "ef7cd421e7b8191d720b84c792288a348fec3004bd3a002913dd52e1ec328053",
+      "bytes": 17232896,
+      "sha256": "9947ecacc34370162bc53a35d29f786a0638b74b20f16820af7140c3525031c1",
       "embedded_notices_exact": true
     }
   ]

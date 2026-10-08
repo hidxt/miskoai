@@ -14,5 +14,8 @@
 | D010 2026-10-09 | Current vision PoC accepts fully decoded PNG/JPEG only | GIF first-frame decoding cannot establish full animation validity; GIF product/media support remains required and pending |
 | D011 2026-10-09 | Add x/term v0.46.0 only for hidden, bounded, cancelable human QR verification input | No secrets in arguments or logs; terminal mode restored before cancellation closes input |
 | D012 2026-10-09 | Keep ambiguous sends claimed, never automatically replay | Durable message state favors duplicate-side-effect prevention; full cursor/recovery pipeline remains Phase2 |
+| D013 2026-10-09 | User explicitly selects deepseek-flash for text/vision; retain configurable model fields | Default already matched; four authorized actual cloud probes passed, no provider change |
+| D014 2026-10-09 | Native Unix fixtures create0700 children instead of assuming t.TempDir is private | Actual Go1.27 numbered test temp dirs use0777/umask; product security boundary remains unchanged |
+| D015 2026-10-09 | Finite WeChat probe requires exact synthetic marker before claim/persistence/reply | Limit authorized test to synthetic traffic and ignore ordinary older chats |
 
 No change to product/provider/deployment/resource/security constraints authorized or made.

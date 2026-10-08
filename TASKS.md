@@ -5,7 +5,7 @@
 | Phase | Deliverable / acceptance | Owner | Dependencies | Status |
 |---|---|---|---|---|
 | 0 | inspect existing files/name/Public repo; base docs; minimal compile | High | existing LICENSE | complete; initial docs committed before code |
-| 1 | pinned official WeChat protocol; providers mock/live matrix; SQLite FTS5 and backup PoC | High + Medium protocol/storage/review + Low evidence/licenses/tests | 0; credentials for live tests | local foundation verified63pass/1skip, vet, vulnerability scan and cross-builds; authorized live tests waiting local credentials/human QR; full channel media/recovery pending |
+| 1 | pinned official WeChat protocol; providers mock/live matrix; SQLite FTS5 and backup PoC | High + Medium protocol/storage/review + Low evidence/licenses/tests | 0; credentials for live tests | Windows63pass/1skip, vet/vulnerability/cross-builds and all4live cloud probes passed; humanQR/full channel media/recovery pending; firstLinux CI failed, fixture correction underway |
 | 2 | bounded chat pipeline, provider/channel, dedup/recovery | High + Medium | 1 protocol evidence | pending |
 | 3 | scoped facts/context/summary/history and FTS retrieval/CRUD | Medium reviewed by High | SQLite PoC | pending |
 | 4 | personality profiles and natural reply policy | High | 2/3 | pending |
