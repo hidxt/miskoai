@@ -14,7 +14,7 @@ type schemaObject struct{ Type, Table, DDL string }
 
 // currentManifest pins both application DDL and the FTS5 shadow schema produced
 // by the pinned driver. Future migrations must explicitly update this manifest.
-func currentManifest() map[string]schemaObject {
+func schema1Manifest() map[string]schemaObject {
 	statement := func(start, end string) string {
 		i := strings.Index(schema, start)
 		if i < 0 {
@@ -42,6 +42,25 @@ func currentManifest() map[string]schemaObject {
 		"facts_fts_docsize":           {"table", "facts_fts_docsize", `CREATE TABLE 'facts_fts_docsize'(id INTEGER PRIMARY KEY, sz BLOB)`},
 		"facts_fts_config":            {"table", "facts_fts_config", `CREATE TABLE 'facts_fts_config'(k PRIMARY KEY, v) WITHOUT ROWID`},
 	}
+}
+
+func currentManifest() map[string]schemaObject {
+	m := schema1Manifest()
+	m["sqlite_sequence"] = schemaObject{"table", "sqlite_sequence", "CREATE TABLE sqlite_sequence(name,seq)"}
+	statement := func(start, end string) string {
+		i := strings.Index(schema2, start)
+		rest := schema2[i:]
+		j := strings.Index(rest, end)
+		return strings.TrimSuffix(rest[:j+len(end)], ";")
+	}
+	m["poll_frames"] = schemaObject{"table", "poll_frames", statement("CREATE TABLE poll_frames", ");")}
+	m["sqlite_autoindex_poll_frames_1"] = schemaObject{"index", "poll_frames", ""}
+	m["channel_cursors"] = schemaObject{"table", "channel_cursors", statement("CREATE TABLE channel_cursors", ");")}
+	m["sqlite_autoindex_channel_cursors_1"] = schemaObject{"index", "channel_cursors", ""}
+	m["inbox"] = schemaObject{"table", "inbox", statement("CREATE TABLE inbox", ");")}
+	m["sqlite_autoindex_inbox_1"] = schemaObject{"index", "inbox", ""}
+	m["inbox_scope"] = schemaObject{"index", "inbox", statement("CREATE INDEX inbox_scope", ";")}
+	return m
 }
 
 func normalizeDDL(v string) string { return strings.Join(strings.Fields(v), " ") }
@@ -85,14 +104,50 @@ func ValidateBackup(ctx context.Context, path string) error {
 	if _, err = db.ExecContext(ctx, "PRAGMA query_only=ON; PRAGMA cache_size=-8192"); err != nil {
 		return storageError(ctx, err)
 	}
+	if err = validateManifest(ctx, db); err != nil {
+		return err
+	}
+	rows, err := db.QueryContext(ctx, "PRAGMA integrity_check")
+	if err != nil {
+		return storageError(ctx, err)
+	}
+	checks := 0
+	for rows.Next() {
+		var result string
+		if err = rows.Scan(&result); err != nil {
+			rows.Close()
+			return storageError(ctx, err)
+		}
+		if result != "ok" {
+			rows.Close()
+			return ErrStorage
+		}
+		checks++
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		return storageError(ctx, err)
+	}
+	if checks != 1 {
+		return ErrStorage
+	}
+	return nil
+}
+
+func validateManifest(ctx context.Context, db rowQuery) error {
 	var version int
+	var err error
 	if err = db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil {
 		return storageError(ctx, err)
 	}
-	if version != schemaVersion {
+	if version != 1 && version != schemaVersion {
 		return ErrInvalid
 	}
 	expected := currentManifest()
+	if version == 1 {
+		expected = schema1Manifest()
+	}
 	rows, err := db.QueryContext(ctx, "SELECT type,name,tbl_name,sql FROM sqlite_schema")
 	if err != nil {
 		return storageError(ctx, err)
@@ -118,31 +173,6 @@ func ValidateBackup(ctx context.Context, path string) error {
 	}
 	if len(expected) != 0 {
 		return ErrInvalid
-	}
-	rows, err = db.QueryContext(ctx, "PRAGMA integrity_check")
-	if err != nil {
-		return storageError(ctx, err)
-	}
-	checks := 0
-	for rows.Next() {
-		var result string
-		if err = rows.Scan(&result); err != nil {
-			rows.Close()
-			return storageError(ctx, err)
-		}
-		if result != "ok" {
-			rows.Close()
-			return ErrStorage
-		}
-		checks++
-	}
-	err = rows.Err()
-	rows.Close()
-	if err != nil {
-		return storageError(ctx, err)
-	}
-	if checks != 1 {
-		return ErrStorage
 	}
 	return nil
 }

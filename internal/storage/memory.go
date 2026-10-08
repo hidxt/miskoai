@@ -62,6 +62,12 @@ func (s *Store) AddFact(ctx context.Context, scope Scope, f Fact) (int64, error)
 	if count >= maxFacts || bytes+len(f.Content) > maxFactBytes {
 		return 0, ErrCapacity
 	}
+	if err = tx.QueryRowContext(ctx, "SELECT count(*),coalesce(sum(length(CAST(content AS BLOB))),0) FROM facts").Scan(&count, &bytes); err != nil {
+		return 0, storageError(ctx, err)
+	}
+	if count >= maxFacts || bytes+len(f.Content) > 8<<20 {
+		return 0, ErrCapacity
+	}
 	now := time.Now().UTC().UnixMilli()
 	result, err := tx.ExecContext(ctx, `INSERT INTO facts(account,user,content,category,source,confidence,importance,created_at,updated_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?)`, scope.Account, scope.User, f.Content, f.Category, f.Source, f.Confidence, f.Importance, now, now, expiry(f))
 	if err != nil {
@@ -101,6 +107,12 @@ func (s *Store) UpdateFact(ctx context.Context, scope Scope, f Fact) error {
 		return storageError(ctx, err)
 	}
 	if totalBytes-oldBytes+len(f.Content) > maxFactBytes {
+		return ErrCapacity
+	}
+	if err = tx.QueryRowContext(ctx, "SELECT coalesce(sum(length(CAST(content AS BLOB))),0) FROM facts").Scan(&totalBytes); err != nil {
+		return storageError(ctx, err)
+	}
+	if totalBytes-oldBytes+len(f.Content) > 8<<20 {
 		return ErrCapacity
 	}
 	result, err := tx.ExecContext(ctx, `UPDATE facts SET content=?,category=?,source=?,confidence=?,importance=?,updated_at=?,expires_at=? WHERE account=? AND user=? AND id=?`, f.Content, f.Category, f.Source, f.Confidence, f.Importance, time.Now().UTC().UnixMilli(), expiry(f), scope.Account, scope.User, f.ID)

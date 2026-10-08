@@ -20,5 +20,7 @@
 | D016 2026-10-09 | Defer real WeChat validation and preserve private authorization while owner sleeps; continue local/mock work | Explicit latest user instruction; no new live requests or actual service start |
 | D017 2026-10-09 | Add bounded persistent raw receive frames/inbox and global storage quotas before service exposure | Within existing SQLite/dedup/resource requirements; schema2 must retain schema1 snapshot compatibility |
 | D018 2026-10-09 | Preserve opaque item msg_id strings and lossless numeric IDs according to pinned source | Synthetic regression reproduces prior rejection; original live error cause remains unestablished |
+| D019 2026-10-09 | Reject over-cap/uncheckpointed schema1 migration without deleting data/journals; admit schema2 against effective transactional WAL view | Read-only capacity/type/field guards and initial schema checkpoint tested; completed under-cap schema1 snapshots preserved/migrated |
+| D020 2026-10-09 | Enforce byte cap and configurable conservative token estimate while building context; actual provider usage separately | Avoid large tokenizer dependency; estimator UTF-8 bytes+32/message, not exact native token accounting |
 
 No change to product/provider/deployment/resource/security constraints authorized or made.

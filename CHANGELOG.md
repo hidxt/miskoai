@@ -9,5 +9,6 @@
 - Cross-built development Windows amd64 and Linux amd64/arm64 binaries. One authorized real DeepSeek text/stream/PNG and Ollama search batch passed; deepseek-flash explicitly selected. WeChat and real512MB acceptance remain unverified.
 - Restricted the finite WeChat text probe to the exact synthetic marker before persistence. Corrected native Unix test fixtures to create0700 children without weakening data directory protection; revised native Linux CI e5f0e61 passed, including race.
 - QR authorization confirmed; synthetic text receive failed before send and remains deferred by the owner. Preserved official opaque item identifiers with synthetic regression coverage; the live failure cause is not established.
+- Added compatible schema2 durable receive frames/inbox/cursor, quarantine, global fact/message quotas and pre-send reply reservations. Read-only snapshot/WAL admission validates bounded row types/fields and scoped quotas; independent review findings fixed with adversarial regressions.
 
 No released application version yet.

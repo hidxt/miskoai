@@ -32,16 +32,17 @@ func (s *Store) ClaimMessage(ctx context.Context, scope Scope, id, text string) 
 	}
 	defer tx.Rollback()
 	var exists, count int
+	var bytes int64
 	if err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM messages WHERE account=? AND user=? AND id=?)`, scope.Account, scope.User, id).Scan(&exists); err != nil {
 		return false, storageError(ctx, err)
 	}
 	if exists == 1 {
 		return false, nil
 	}
-	if err = tx.QueryRowContext(ctx, `SELECT count(*) FROM messages`).Scan(&count); err != nil {
+	if err = tx.QueryRowContext(ctx, `SELECT count(*),coalesce(sum(length(CAST(content AS BLOB))+length(CAST(reply AS BLOB))+CASE WHEN state IN ('processing','sending','ambiguous') THEN 16384 ELSE 0 END),0) FROM messages`).Scan(&count, &bytes); err != nil {
 		return false, storageError(ctx, err)
 	}
-	if count >= 10000 {
+	if count >= 10000 || bytes+int64(len(text))+16384 > 64<<20 {
 		return false, ErrCapacity
 	}
 	result, err := tx.ExecContext(ctx, `INSERT INTO messages(account,user,id,content,state,created_at,updated_at) VALUES(?,?,?,?,'processing',?,?) ON CONFLICT(account,user,id) DO NOTHING`, scope.Account, scope.User, id, text, now, now)
