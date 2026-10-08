@@ -1,0 +1,33 @@
+# Text core and durable receive design
+
+## Intent and authorization
+Implement the master task's one-process Go text companion: authorized direct messages, bounded context/facts, natural configurable style, explicit-only search and memory controls, durable dedup and safe send recovery. On2026-10-09 the owner deferred further real WeChat validation while sleeping and authorized ordinary implementation choices. Continue local/mock development; do not issue more real WeChat or cloud test requests. Dangerous actions, provider/SQLite/deployment/resource requirement changes or actual VPS access still require owner decision.
+
+Cloud text/stream/vision/search real probes passed once. QR authorization passed after one expired attempt; text receive failed before send. One diagnostic initiated before deferral returned an empty batch and cannot establish the original failure cause. The official item ID string-contract mismatch is being fixed synthetically. Native Linux CI e5f0e61 passed all configured steps, including race, but is not a512MB/VPS result.
+
+## Choices and boundaries
+Use existing provider, channel and SQLite packages; add internal/agent and later internal/service. A serial text worker and one poller keep per-user ordering, concurrency and memory straightforward; a bounded32-entry wake queue holds references only, and the database owns pending messages. No cloud SDK, local model, additional resident runtime or database. More concurrency can be considered from actual resource evidence later;2 in-flight is a cap, not a requirement to use2.
+
+One account and its QR-scanning user are initially authorized from the private authorization file. Group messages and unknown senders are rejected before model/tool calls. Storage scope comes from authenticated channel metadata, never model output. An agent is created with fixed Account/User; incoming envelope must match it. Module interfaces can later permit explicitly configured accounts without weakening scope checks.
+
+## Durable receiving and capacities
+Persist each bounded raw poll response before typed normalization. This prevents a parsing failure from silently erasing the only received evidence. A pending frame stores prior cursor and body≤2MiB privately. Resolve it transactionally into deduplicated scoped inbox entries and the next cursor; only then remove the raw frame. An invalid frame is quarantined, does not advance cursor, and stops that account's poll until owner inspection. No raw frame, token or private payload is logged or embedded in model context.
+
+Schema2 adds poll_frames, channel_cursors and inbox. Maximum4 frames/8MiB globally; one pending frame per account; inbox1024 entries/8MiB globally, each text≤16KiB/context≤16KiB and batch≤256 entries. Duplicate inbox IDs or already claimed messages do not create more work. Capacity failure commits neither inbox nor cursor. Completed inbox entries are removed; persistent messages retain dedup even after ambiguous failures/restarts. No automatic deletion of dedup history.
+
+Before general service exposure, global facts≤10000/8MiB, per-scope existing10000/4MiB; messages≤10000 and64MiB including a16KiB reply reservation for processing/sending/ambiguous rows. Reservations prevent successful remote sends from discovering storage capacity only afterward. No large exports bypass these budgets. Existing schema1 snapshots remain valid, validated against their exact old manifest, then migrated on a private candidate. Future/foreign schemas are rejected without mutation. Fresh version0 databases with unrelated application tables must not be silently initialized as MiskoAI.
+
+## Chat pipeline
+`Incoming{Account,User,ID,Text,ContextToken}` → authorize/validate → durable claim → deterministic command routing → context/facts → model → bounded validated reply → durable sending state → one SendText → atomic reply/sent → inbox completion. Stable client ID is derived from account/user/messageID, never random on retry. Existing claims return duplicate without new side effects. Model errors produce a safe fixed user reply without leaking remote response. Any send error or cancellation after sending starts becomes ambiguous; never automatically retry it. Pre-send cancellation marks failed. No streaming partial text reaches WeChat before a complete validated answer.
+
+Defaults: current text≤8KiB for model context, context≤24KiB,32 historical turns/16 complete pairs, up to8 facts, max512 output tokens and16KiB final channel reply. Provider's40message/64KiB constraints remain stronger final limits. Remove oldest whole history pairs first; current input and fixed safety instruction are never displaced by retrieved data. Facts and future summaries are data, not privileged instructions. UTF-8 and control-character checks apply to input/output; oversized answers are truncated on rune boundaries with a clear suffix.
+
+Three profiles (warm, concise, professional) change expression only; core authorization/tool/data controls are identical. Default warm Chinese conversational style avoids robotic templates where model succeeds. Root safety instruction forbids credential disclosure or changing permissions. Model cannot invoke shell/filesystem/network itself.
+
+## Explicit commands and search
+`/remember TEXT` and Chinese `请记住：TEXT` persist exactly supplied content as explicit_user with confidence1/importance50; no inferred automatic facts. `/memory QUERY` returns scoped matching fact IDs/content. `/forget ID` deletes only that scope's fact. `/memory clear` clears only confirmed facts in that scope. `/export-memory` returns bounded scoped JSON, subject to channel16KiB output limit (full export later available through authenticated Web). Commands do not call the model/search.
+
+`/search QUERY` and `搜索：QUERY` explicitly permit one hosted search, max3 results and query≤512bytes; ordinary chat never searches. Treat results as untrusted quoted data, limit each content to1600bytes/title256/URL2048 and total input budget. Use only provider-validated HTTPS links and append actual returned titles/URLs to the reply. No fetching result pages, model-driven tools, repeated search or source-driven actions. Search failure gets safe fixed text, not invented sources.
+
+## Delivery and remaining scope
+This subsystem supplies a tested text agent and durable inbox/storage primitives. Summaries, editable persistent profile configuration, documents/images/stickers, authenticated embedded Web, systemd/operations and real resource workload follow separate plans. No actual service with private credentials starts during the owner's deferred WeChat period. Unit/integration use synthetic stores/providers/channels only. Full release and real512MB acceptance remain open.

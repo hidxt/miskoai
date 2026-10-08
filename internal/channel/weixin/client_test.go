@@ -82,6 +82,38 @@ func TestGetUpdatesWireAndLosslessID(t *testing.T) {
 		t.Fatalf("updates %+v error %v", u, e)
 	}
 }
+
+func TestGetUpdatesAcceptsOpaqueItemMessageID(t *testing.T) {
+	c := fixture(t, func(*http.Request) (*http.Response, error) {
+		return response(`{"ret":0,"msgs":[{"message_id":"18446744073709551615","item_list":[{"type":1,"msg_id":"synthetic-item:alpha/opaque","text_item":{"text":"fixture"}}]}],"get_updates_buf":"synthetic-next"}`), nil
+	})
+	updates, err := c.GetUpdates(context.Background(), "")
+	if err != nil {
+		t.Fatalf("official string item ID rejected: %v", err)
+	}
+	if len(updates.Messages) != 1 || len(updates.Messages[0].Items) != 1 {
+		t.Fatal("missing synthetic message")
+	}
+	if updates.Messages[0].Items[0].MessageID.String() != "synthetic-item:alpha/opaque" {
+		t.Fatal("opaque item ID not preserved")
+	}
+	if updates.Messages[0].MessageID.String() != "18446744073709551615" {
+		t.Fatal("top-level uint64 string not preserved")
+	}
+}
+
+func TestGetUpdatesPreservesNumericItemMessageID(t *testing.T) {
+	c := fixture(t, func(*http.Request) (*http.Response, error) {
+		return response(`{"ret":0,"msgs":[{"message_id":18446744073709551615,"item_list":[{"type":1,"msg_id":18446744073709551615}]}]}`), nil
+	})
+	updates, err := c.GetUpdates(context.Background(), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updates.Messages[0].Items[0].MessageID.String() != "18446744073709551615" || updates.Messages[0].MessageID.String() != "18446744073709551615" {
+		t.Fatal("numeric identifiers lost precision")
+	}
+}
 func TestSendTextContextAndNoRetry(t *testing.T) {
 	calls := 0
 	c := fixture(t, func(r *http.Request) (*http.Response, error) {

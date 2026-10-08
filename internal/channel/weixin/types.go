@@ -2,7 +2,10 @@
 // Adapted from Tencent/openclaw-weixin (MIT); see docs/research/tencent-LICENSE.txt.
 package weixin
 
-import "encoding/json"
+import (
+	"bytes"
+	"encoding/json"
+)
 
 // Message identifiers remain lossless whether the service encodes them as
 // decimal JSON numbers or strings. Unknown content is retained for later stages.
@@ -21,7 +24,7 @@ type Message struct {
 }
 type Item struct {
 	Type      int             `json:"type"`
-	MessageID json.Number     `json:"msg_id,omitempty"`
+	MessageID ItemMessageID   `json:"msg_id,omitempty"`
 	Text      *TextItem       `json:"text_item,omitempty"`
 	Image     json.RawMessage `json:"image_item,omitempty"`
 	Voice     json.RawMessage `json:"voice_item,omitempty"`
@@ -29,6 +32,44 @@ type Item struct {
 	Video     json.RawMessage `json:"video_item,omitempty"`
 	Reference json.RawMessage `json:"ref_msg,omitempty"`
 }
+
+// ItemMessageID matches the pinned MessageItem.msg_id string contract. The
+// upstream parser also losslessly converts integer JSON IDs into strings;
+// existing opaque strings are retained unchanged.
+type ItemMessageID string
+
+func (id ItemMessageID) String() string { return string(id) }
+
+func (id *ItemMessageID) UnmarshalJSON(data []byte) error {
+	data = bytes.TrimSpace(data)
+	if bytes.Equal(data, []byte("null")) {
+		*id = ""
+		return nil
+	}
+	if len(data) > 0 && data[0] == '"' {
+		var value string
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		*id = ItemMessageID(value)
+		return nil
+	}
+	digits := data
+	if len(digits) > 0 && digits[0] == '-' {
+		digits = digits[1:]
+	}
+	if len(digits) == 0 {
+		return ErrProtocol
+	}
+	for _, digit := range digits {
+		if digit < '0' || digit > '9' {
+			return ErrProtocol
+		}
+	}
+	*id = ItemMessageID(string(data))
+	return nil
+}
+
 type TextItem struct {
 	Text string `json:"text"`
 }

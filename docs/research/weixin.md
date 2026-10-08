@@ -3,7 +3,7 @@
 Research date: 2026-10-09. Official repository main resolved through GitHub's
 commit API to **24de5c9eb0dd5e595d7e2d090ed8a3f82870d42c**, package **2.4.9**.
 This note distinguishes source evidence, synthetic tests and live acceptance.
-No real WeChat authentication or messaging was performed.
+Initial research used synthetic fixtures. Later authorized QR login confirmed after one expired attempt; text receive failed before claim/send. The owner deferred further real WeChat testing. No text send success is claimed.
 
 ## Source evidence
 
@@ -32,7 +32,7 @@ and independent-client acceptance still require live verification.
 - QR statuses expose all pinned fields and support `wait`, `scaned`, `confirmed`, `expired`, `need_verifycode`, `verify_code_blocked`, `scaned_but_redirect`, `binded_redirect`. Confirmation requires issued token and bot ID; any supplied API origin is validated. Bot IDs and peer IDs remain opaque.
 - `GetUpdates(ctx, cursor)` makes one authenticated bounded long poll and returns messages, opaque cursor and timeout hint. Server timeout hints do not expand the current 40-second engineering limit.
 - `SendText(ctx, to, contextToken, clientID, text)` requires the authorized inbound context and a stable persisted outbox client ID; sends type 2/state 2 and a type-1 text item, with explicit empty from_user_id.
-- `message_id` and item `msg_id` use `json.Number`, preserving uint64 decimal values including values above JavaScript's safe integer range. Text and raw image/voice/file/video/reference fields are retained; this is not full group or media support.
+- Top-level `message_id` uses `json.Number`, preserving decimal uint64 values. Item `msg_id` follows the pinned string contract, retaining opaque strings and converting integer JSON literals losslessly to strings. Synthetic tests reproduce the old opaque-string rejection and verify preservation above JavaScript's safe integer range. This mismatch is not proven to be the original live failure's cause. Text and raw image/voice/file/video/reference fields are retained; this is not full group or media support.
 
 Every call has caller cancellation, a deadline, bounded per-client request slots,
 2MiB response cap and bounded input. Text is capped at 16KiB and opaque fields
@@ -127,6 +127,4 @@ from new tests and `internal/cli` import failures for os/path/filepath with
 an empty cache path. These failures are outside this agent's file ownership;
 the primary must rerun integrated checks once concurrent work stabilizes.
 
-Real QR login, code verification, independent-client acceptance, authorized
-receive/reply, context expiry, reconnect/replay, media, native Linux execution
-and 512MB RSS tests are **unverified**. Fixture success is not live acceptance.
+Real QR login confirmed. Authorized text receive failed before send; a subsequent read-only diagnostic initiated before deferral decoded an empty batch. Further real WeChat testing is paused by the owner. Code-verification terminal restoration, receive/reply, context expiry, reconnect/replay, media and512MB RSS acceptance remain unverified. Native Linux CI run37822881696 passed configured synthetic tests/race/builds; fixture success is not live channel acceptance.

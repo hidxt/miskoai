@@ -7,6 +7,7 @@
 - Added synthetic regressions for isolation, duplicates, malformed streams/images, network limits, IPv6 transition SSRF defenses and QR state/verification handling.
 - Fixed six independent review findings; added embedded dependency notices and opt-in Windows credential/test scripts.
 - Cross-built development Windows amd64 and Linux amd64/arm64 binaries. One authorized real DeepSeek text/stream/PNG and Ollama search batch passed; deepseek-flash explicitly selected. WeChat and real512MB acceptance remain unverified.
-- Restricted the finite WeChat text probe to the exact synthetic marker before persistence. Corrected native Unix test fixtures to create0700 children without weakening data directory protection; revised native CI result pending.
+- Restricted the finite WeChat text probe to the exact synthetic marker before persistence. Corrected native Unix test fixtures to create0700 children without weakening data directory protection; revised native Linux CI e5f0e61 passed, including race.
+- QR authorization confirmed; synthetic text receive failed before send and remains deferred by the owner. Preserved official opaque item identifiers with synthetic regression coverage; the live failure cause is not established.
 
 No released application version yet.
