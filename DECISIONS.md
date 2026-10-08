@@ -26,4 +26,7 @@
 | D021 2026-10-09 | Chat memory export encodes individual bounded facts and stops at16KiB before partial-array overflow | Escaping allocation regression7338415B/op RED→66082B/op GREEN; full scoped set remains storage-bounded; no memory deletion advice |
 | D022 2026-10-09 | Raw poll decoder enforces message/item counts before typed-array allocation | Prevent tiny-object JSON amplification; runtime task plan updated before implementation; no live protocol claim |
 
+| D023 2026-10-09 | Persist successful zero-byte raw responses as exact BLOB evidence before malformed decode/quarantine | No schema/version change;3-line refinement, scoped lifecycle/capacity/admission tests and independent Medium review |
+| D024 2026-10-09 | Planned derived-memory writes use revision CAS and non-reused candidate IDs; privacy clearing retains ID/state dedup metadata | Requested SQLite memory extension, no actual migration; prevents stale generated jobs/review references and repeated remote effects |
+
 No change to product/provider/deployment/resource/security constraints authorized or made.

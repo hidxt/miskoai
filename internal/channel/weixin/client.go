@@ -130,9 +130,30 @@ type baseInfo struct {
 
 func metadata() baseInfo { return baseInfo{ProtocolVersion, "MiskoAI/0.1.0"} }
 
+// call preserves the typed login/send contract over the same bounded exchange.
 func (c *Client) call(ctx context.Context, base *url.URL, method, path string, body any, authenticated, send bool, timeout time.Duration, out any) error {
+	raw, err := c.exchange(ctx, base, method, path, body, authenticated, send, timeout)
+	if err != nil {
+		return err
+	}
+	if err = responseStatus(raw); err != nil {
+		if send && errors.Is(err, ErrProtocol) {
+			return ErrOutcomeUnknown
+		}
+		return err
+	}
+	if err = json.Unmarshal(raw, out); err != nil {
+		if send {
+			return ErrOutcomeUnknown
+		}
+		return ErrProtocol
+	}
+	return nil
+}
+
+func (c *Client) exchange(ctx context.Context, base *url.URL, method, path string, body any, authenticated, send bool, timeout time.Duration) ([]byte, error) {
 	if ctx == nil {
-		return ErrInvalidInput
+		return nil, ErrInvalidInput
 	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -146,17 +167,17 @@ func (c *Client) call(ctx context.Context, base *url.URL, method, path string, b
 	case slot <- struct{}{}:
 		defer func() { <-slot }()
 	case <-ctx.Done():
-		return ctx.Err()
+		return nil, ctx.Err()
 	}
 	if ctx.Err() != nil {
-		return ctx.Err()
+		return nil, ctx.Err()
 	}
 	var data []byte
 	var e error
 	if body != nil {
 		data, e = json.Marshal(body)
 		if e != nil || len(data) > maxResponseBytes {
-			return ErrInvalidInput
+			return nil, ErrInvalidInput
 		}
 	}
 	u := base.ResolveReference(&url.URL{Path: strings.SplitN(path, "?", 2)[0]})
@@ -165,7 +186,7 @@ func (c *Client) call(ctx context.Context, base *url.URL, method, path string, b
 	}
 	req, e := http.NewRequestWithContext(ctx, method, u.String(), bytes.NewReader(data))
 	if e != nil {
-		return ErrInvalidInput
+		return nil, ErrInvalidInput
 	}
 	req.Header.Set("iLink-App-Id", "bot")
 	req.Header.Set("iLink-App-ClientVersion", strconv.Itoa(2<<16|4<<8|9))
@@ -174,95 +195,86 @@ func (c *Client) call(ctx context.Context, base *url.URL, method, path string, b
 		req.Header.Set("AuthorizationType", "ilink_bot_token")
 		var random [4]byte
 		if _, e = rand.Read(random[:]); e != nil {
-			return ErrTransport
+			return nil, ErrTransport
 		}
 		req.Header.Set("X-WECHAT-UIN", base64.StdEncoding.EncodeToString([]byte(strconv.FormatUint(uint64(binary.BigEndian.Uint32(random[:])), 10))))
 	}
 	if authenticated {
 		if c.token == "" {
-			return ErrUnauthorized
+			return nil, ErrUnauthorized
 		}
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 	res, e := c.httpClient.Do(req)
 	if e != nil {
 		if send {
-			return ErrOutcomeUnknown
+			return nil, ErrOutcomeUnknown
 		}
 		if ctx.Err() != nil {
-			return ctx.Err()
+			return nil, ctx.Err()
 		}
-		return ErrTransport
+		return nil, ErrTransport
 	}
 	defer res.Body.Close()
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		switch res.StatusCode {
 		case 401, 403:
-			return ErrUnauthorized
+			return nil, ErrUnauthorized
 		case 429:
-			return ErrRateLimited
+			return nil, ErrRateLimited
 		}
 		if send && res.StatusCode >= 500 {
-			return ErrOutcomeUnknown
+			return nil, ErrOutcomeUnknown
 		}
-		return ErrHTTP
+		return nil, ErrHTTP
 	}
 	raw, e := io.ReadAll(io.LimitReader(res.Body, maxResponseBytes+1))
 	if e != nil {
 		if send {
-			return ErrOutcomeUnknown
+			return nil, ErrOutcomeUnknown
 		}
 		if ctx.Err() != nil {
-			return ctx.Err()
+			return nil, ctx.Err()
 		}
-		return ErrTransport
+		return nil, ErrTransport
 	}
 	if len(raw) > maxResponseBytes {
 		if send {
-			return ErrOutcomeUnknown
+			return nil, ErrOutcomeUnknown
 		}
-		return ErrResponseLimit
+		return nil, ErrResponseLimit
 	}
-	var status struct {
-		Ret  *int `json:"ret"`
-		Code *int `json:"errcode"`
-	}
-	if e = json.Unmarshal(raw, &status); e != nil {
-		if send {
-			return ErrOutcomeUnknown
-		}
-		return ErrProtocol
-	}
-	for _, code := range []*int{status.Ret, status.Code} {
-		if code != nil && *code != 0 {
-			if *code == -14 {
-				return ErrAuthExpired
-			}
-			return ErrService
-		}
-	}
-	if e = json.Unmarshal(raw, out); e != nil {
-		if send {
-			return ErrOutcomeUnknown
-		}
-		return ErrProtocol
-	}
-	return nil
+	return raw, nil
 }
 
 // GetUpdates performs one bounded poll. The caller durably ingests messages and
 // cursor together; this adapter does not acknowledge/persist or retry them.
 func (c *Client) GetUpdates(ctx context.Context, cursor string) (Updates, error) {
-	var out Updates
+	raw, err := c.RawUpdates(ctx, cursor)
+	if err != nil {
+		return Updates{}, err
+	}
+	return DecodeUpdates(raw)
+}
+
+// RawUpdates performs one bounded poll for durable ingestion.
+func (c *Client) RawUpdates(ctx context.Context, cursor string) ([]byte, error) {
 	if len(cursor) > maxOpaqueBytes {
-		return out, ErrInvalidInput
+		return nil, ErrInvalidInput
 	}
 	body := struct {
 		Cursor string   `json:"get_updates_buf"`
 		Base   baseInfo `json:"base_info"`
 	}{cursor, metadata()}
-	e := c.call(ctx, c.base, "POST", "/ilink/bot/getupdates", body, true, false, 40*time.Second, &out)
-	return out, e
+	raw, err := c.exchange(ctx, c.base, "POST", "/ilink/bot/getupdates", body, true, false, 40*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	// Malformed successes must reach private durable quarantine unchanged.
+	if err = responseStatus(raw); err != nil && !errors.Is(err, ErrProtocol) {
+		return nil, err
+	}
+	return raw, nil
 }
 
 // SendText makes exactly one request. Context and clientID must come from the

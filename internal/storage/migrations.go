@@ -234,7 +234,7 @@ func closeValidatedRows(ctx context.Context, rows *sql.Rows) error {
 func validateReceiveRows(ctx context.Context, q rowQuery) error {
 	scope := []boundedColumn{{"account", 256, "text"}, {"user", 256, "text"}}
 	frames := append(append([]boundedColumn{}, scope...), boundedColumn{"cursor", 16384, "text"}, boundedColumn{"state", 16, "text"}, boundedColumn{"body", 2 << 20, "blob"})
-	if err := validateRowShape(ctx, q, "poll_frames", frames, `typeof(id)<>'integer' OR id<=0 OR length(CAST(body AS BLOB))=0`); err != nil {
+	if err := validateRowShape(ctx, q, "poll_frames", frames, `typeof(id)<>'integer' OR id<=0`); err != nil {
 		return err
 	}
 	cursors := append(append([]boundedColumn{}, scope...), boundedColumn{"cursor", 16384, "text"})

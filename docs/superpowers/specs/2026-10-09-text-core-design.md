@@ -31,3 +31,5 @@ Three profiles (warm, concise, professional) change expression only; core author
 
 ## Delivery and remaining scope
 This subsystem supplies a tested text agent and durable inbox/storage primitives. Summaries, editable persistent profile configuration, documents/images/stickers, authenticated embedded Web, systemd/operations and real resource workload follow separate plans. No actual service with private credentials starts during the owner's deferred WeChat period. Unit/integration use synthetic stores/providers/channels only. Full release and real512MB acceptance remain open.
+
+Raw evidence clarification: empty HTTP200 bodies are0-byte BLOB frames (not SQL NULL), persisted and quarantined before typed decoding. Upper2MiB body/4frames/8MiB budgets remain. An empty malformed response must not force a new remote poll just because there are no body bytes. Storage refinement is required before serial service integration.

@@ -32,7 +32,7 @@ func (s *Store) RecordPoll(ctx context.Context, scope Scope, cursor string, body
 	if err := scope.validate(); err != nil {
 		return 0, err
 	}
-	if !validField(cursor, 16384) || len(body) == 0 || len(body) > 2<<20 {
+	if !validField(cursor, 16384) || len(body) > 2<<20 {
 		return 0, ErrInvalid
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -54,7 +54,7 @@ func (s *Store) RecordPoll(ctx context.Context, scope Scope, cursor string, body
 	if cur != cursor {
 		return 0, ErrInvalid
 	}
-	result, err := tx.ExecContext(ctx, `INSERT INTO poll_frames(account,user,cursor,body,state) VALUES(?,?,?,?,'pending')`, scope.Account, scope.User, cursor, body)
+	result, err := tx.ExecContext(ctx, `INSERT INTO poll_frames(account,user,cursor,body,state) VALUES(?,?,?,COALESCE(?,X''),'pending')`, scope.Account, scope.User, cursor, body)
 	if err != nil {
 		return 0, storageError(ctx, err)
 	}
