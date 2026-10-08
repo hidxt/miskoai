@@ -23,4 +23,7 @@
 | D019 2026-10-09 | Reject over-cap/uncheckpointed schema1 migration without deleting data/journals; admit schema2 against effective transactional WAL view | Read-only capacity/type/field guards and initial schema checkpoint tested; completed under-cap schema1 snapshots preserved/migrated |
 | D020 2026-10-09 | Enforce byte cap and configurable conservative token estimate while building context; actual provider usage separately | Avoid large tokenizer dependency; estimator UTF-8 bytes+32/message, not exact native token accounting |
 
+| D021 2026-10-09 | Chat memory export encodes individual bounded facts and stops at16KiB before partial-array overflow | Escaping allocation regression7338415B/op RED→66082B/op GREEN; full scoped set remains storage-bounded; no memory deletion advice |
+| D022 2026-10-09 | Raw poll decoder enforces message/item counts before typed-array allocation | Prevent tiny-object JSON amplification; runtime task plan updated before implementation; no live protocol claim |
+
 No change to product/provider/deployment/resource/security constraints authorized or made.

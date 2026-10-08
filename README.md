@@ -41,3 +41,5 @@ No installation script or release exists yet. `backup PATH` uses a consistent li
 
 ## Project records
 REQUIREMENTS.md is product scope; ARCHITECTURE.md describes boundaries/budgets; SECURITY.md defines trust/prohibited behavior; TESTING.md distinguishes mocks/live/WeChat/VPS; TASKS.md and MEMORY.md capture progress. DELIVERY.md is the acceptance record. Apache-2.0; dependency license inventory is in docs/research/dependency-licenses.md, with full notices embedded in `miskoai licenses`.
+
+Development progress: bounded text orchestration and storage2 receive primitives now pass synthetic integration and independent review. Text commands include `/remember`, `/memory`, `/forget`, `/memory clear`, `/export-memory` and explicit `/search`/`搜索：`; they are internal tested behavior pending runtime/CLI exposure. Three builtin styles preserve honest AI identity. There is no runnable integrated chat service yet. Real WeChat validation is deferred by the owner; real512MB measurement awaits an authorized server.

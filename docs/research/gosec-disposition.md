@@ -24,3 +24,9 @@ The controlled unsafe conversion reads the SID starting in a validated ACCESS_AL
 - cli/probes.go (1): file Close after ACL protection has already failed; no credential bytes have been written and caller returns error.
 
 Storage EOF/close reasoning was checked against actual Go1.27 database/sql (Rows.Next/Rows.close) and modernc.org/sqlite v1.60.1 rows.Close. Reviewer details and fixed six pre-scanner findings are in foundation-review.md. Dynamic evidence is synthetic local tests; no live API/QR/Linux/VPS pass is inferred.
+
+## Text-core development rerun
+
+After storage2 and frozen text agent, product-only `gosec -fmt=json -out=.tools/gosec-text-core.json ./cmd/... ./internal/...` returned exit1. On this Windows shell its JSON was emitted to the captured output; root extracted and parsed that report into the ignored JSON artifact.25source files/3747lines,34findings:7mediumG304,1lowG103,26lowG104; no high and no Golang errors. No suppression or zero-warning claim.
+
+Ten additional lowG104 findings are migrations.go row-Close calls at188/192/207/211/258/262/277/281/296/300. Each is cleanup immediately before an unconditional Scan/policy error return; a failed close cannot turn refused data into admission. Completed successful iterations use closeValidatedRows, checking Rows.Err and Close before continuing on the single connection. Root inspected all ten branches; prior storage2 Medium review inspected the same admission/iteration paths. New agent files produced no scanner finding, and fresh Medium task review approved its exact frozen patch. Full product/final service audit remains pending.

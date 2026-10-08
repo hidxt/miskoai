@@ -11,4 +11,6 @@
 - QR authorization confirmed; synthetic text receive failed before send and remains deferred by the owner. Preserved official opaque item identifiers with synthetic regression coverage; the live failure cause is not established.
 - Added compatible schema2 durable receive frames/inbox/cursor, quarantine, global fact/message quotas and pre-send reply reservations. Read-only snapshot/WAL admission validates bounded row types/fields and scoped quotas; independent review findings fixed with adversarial regressions.
 
+- Added reviewed bounded text-agent orchestration with explicit memory/search commands, three honest builtin profiles, cancelable admission, byte/token-budgeted context and one-send ambiguity handling. Incremental chat export avoids full escaped-array encoding; synthetic integrated suite184pass/1Unixskip and vet0. Storage2 native Linux e988028 passed all configured gates; new agent native evidence pending.
+
 No released application version yet.

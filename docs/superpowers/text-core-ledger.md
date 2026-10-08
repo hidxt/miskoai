@@ -14,3 +14,13 @@ Base: e5f0e61. Branch: codex/foundation. Owner permits ordinary implementation a
 - Ruling: text context enforces both byte cap and configurable conservative token estimate (UTF-8 bytes+32/message), actual provider usage separately — fulfils bounded dynamic context without a large tokenizer dependency — cost is fewer usable history turns than native tokenization for the same displayed estimate; not a claimed exact tokenizer bound.
 
 Deferred minor: decoder table coverage for null/escaped/negative and invalid ID shapes, noted by independent protocol reviewer; existing HTTP-boundary regressions cover actual corrected behavior.
+
+- Native Linux storage2 gate: e988028 run37830782509 completed successfully; unit/integration, vet, race, govulncheck, history policy scan and both CGO-disabled architecture builds passed. Hosted runner is not a512MB VPS.
+- Task1: implementer reported frozen first GREEN; export allocation concern sent back before independent review.
+- Ruling: encode chat memory export one bounded fact at a time and stop at the16KiB channel result cap — whole escaped JSON could allocate several times the scoped payload budget before rejection — cost is early limit rejection and individual fact encoding bounded separately; full Web export remains a later feature.
+
+- Ruling: runtime decoder checks256 messages and256 items per message before typed-array allocation, including duplicate keys — small JSON objects can amplify a2MiB body into a large typed slice — cost is rejecting unusually large item lists until explicitly supported; current text needs far fewer.
+
+- Task1: complete locally (base e988028; frozen uncommitted new agent); independent fresh GPT-6.1 Medium spec and quality approved, no Critical/Important/Minor. Root full synthetic suite184pass/1Unixskip and vet0. Scoped incremental export allocation66082B/op vs whole-slice RED7338415B/op is not RSS evidence. Native CI for the new agent awaits commit/push.
+- Cross-task checks: root storage2 evidence resolves raw-frame/inbox/cursor/schema/quota items; reviewer checked actual claim/history/provider contracts. Runtime construction/order and new-package native Linux remain subsequent gates; realWeChat and512MB stay deferred/unverified.
+- Task1 report rulings retained: concrete Store APIs/fixed scope avoid an extra abstraction (cost: local seam refactor if later integration needs it); memory display shows8 facts with1600-byte per-record truncation (cost: shortened display only, stored data unchanged).
