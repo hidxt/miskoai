@@ -18,4 +18,6 @@ Request server only when executable and test workload are ready. Explain purpose
 Record OS/Go/build revision, RSS/Peak RSS/CPU/goroutines/GC/errors/OOM with native tools and opt-in loopback pprof. Targets are 80/128/192MiB; no forced-GC concealment. Cleanup only named test paths; retain user-requested evidence/data.
 
 ## Current evidence
-Environment inspection only at document initialization. No tests/API calls/WeChat login/server access have been executed yet. Update DELIVERY.md with actual results.
+Final Windows synthetic suite after token ACL integration:63 passed, one explicitly skipped Unix permissions case; provider/channel boundaries, scoped SQLite FTS5/CRUD/claims/backup/restore and CLI image/QR/cancellation/owner ACL tested. go vet and govulncheck passed. Linux CGO0 amd64/arm64 cross-builds and ELF architecture/no-dynamic-loader checks succeeded; Windows doctor/licenses executed and embedded notices matched bytes. Gosec reported24 findings, independently triaged rather than suppressed or called clean; see docs/research/gosec-disposition.md.
+
+No real provider, WeChat or server test yet. Cloud/QR permission already granted; temporary keys/human QR interaction still needed. Native Linux CI is configured but unexecuted; Windows race cannot pass without gcc. scripts/Test.ps1 places Go cache/temp inside workspace to respect sandbox rename permissions. Final evidence belongs in DELIVERY.md.

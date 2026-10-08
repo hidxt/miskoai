@@ -1,0 +1,31 @@
+name: Native Go foundation checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6; verified upstream tag
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6; verified upstream tag
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Unit and integration fixtures
+        run: go test ./... -count=1
+      - name: Vet
+        run: go vet ./...
+      - name: Race detector on native Linux runner
+        run: go test -race ./... -count=1
+      - name: Known vulnerabilities
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
+      - name: Secret policy including history
+        run: python3 scripts/secret_scan.py --history
+      - name: Cross-build native Linux binaries without cgo
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o dist/miskoai-linux-amd64 ./cmd/miskoai
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o dist/miskoai-linux-arm64 ./cmd/miskoai

@@ -8,5 +8,11 @@
 | D004 2026-10-09 | Choose modernc.org/sqlite provisionally; verify FTS5/backup before accepting | Pure Go supports requested cross-build without server runtimes |
 | D005 2026-10-09 | Record live and mock checks separately; continue independent local work | Keys/account/server not yet provided |
 | D006 2026-10-09 | Preserve autonomous implementation mandate over routine skill approval gates | User explicitly requests no repeated ordinary detail approvals; key requirement changes still require consent |
+| D007 2026-10-09 | Lock Tencent/openclaw-weixin 2.4.9 source at 24de5c9eb0dd5e595d7e2d090ed8a3f82870d42c; implement narrow native Go text PoC | Official protocol evidence in docs/research/weixin.md; backend/live acceptance remains separate |
+| D008 2026-10-09 | Pin modernc.org/sqlite v1.60.1, single connection, WAL/FULL, 8MiB cache | Actual SQLite3.53.4 FTS5/integrity/consistent snapshot and scoped state tests passed on Windows |
+| D009 2026-10-09 | Restore validates exact read-only schema before opening/migrating a candidate | Independent review found unrelated SQLite acceptance; regression now rejects without replacing existing data |
+| D010 2026-10-09 | Current vision PoC accepts fully decoded PNG/JPEG only | GIF first-frame decoding cannot establish full animation validity; GIF product/media support remains required and pending |
+| D011 2026-10-09 | Add x/term v0.46.0 only for hidden, bounded, cancelable human QR verification input | No secrets in arguments or logs; terminal mode restored before cancellation closes input |
+| D012 2026-10-09 | Keep ambiguous sends claimed, never automatically replay | Durable message state favors duplicate-side-effect prevention; full cursor/recovery pipeline remains Phase2 |
 
 No change to product/provider/deployment/resource/security constraints authorized or made.

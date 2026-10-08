@@ -1,0 +1,25 @@
+{
+  "kind": "development cross-build evidence, not release/Linux runtime",
+  "builds": [
+    {
+      "file": "miskoai-linux-amd64",
+      "bytes": 17143669,
+      "sha256": "8e8427962e6582e3c506b2e7c95b4b833b33a6cae9766e88fa3ecdd626f2de7f",
+      "elf_machine": 62,
+      "dynamic_loader": false
+    },
+    {
+      "file": "miskoai-linux-arm64",
+      "bytes": 16301051,
+      "sha256": "edba1496e0f10decd4341eae8b2dfae4eeccd60bf5d92b91d6ad79fa7798476b",
+      "elf_machine": 183,
+      "dynamic_loader": false
+    },
+    {
+      "file": "miskoai-windows-amd64.exe",
+      "bytes": 17232384,
+      "sha256": "ef7cd421e7b8191d720b84c792288a348fec3004bd3a002913dd52e1ec328053",
+      "embedded_notices_exact": true
+    }
+  ]
+}
