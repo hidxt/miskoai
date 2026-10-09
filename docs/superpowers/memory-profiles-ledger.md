@@ -19,4 +19,6 @@ Spec: docs/superpowers/specs/2026-10-09-memory-profiles-design.md. Synthetic-onl
 - Ruling: compatible schema3 extends existing SQLite; it does not change the approved database route — memory/profiles are requested features — cost is migration/admission tests and retained old manifests. No real private migration is performed during development.
 - Ruling: retain claimed message IDs/state when clearing memory, while erasing scoped content/reply — privacy clearing must not enable duplicate remote effects — cost is bounded dedup metadata remains until explicit future reconciliation/retention policy.
 
-Tasks1/2/3: not started. Runtime service gate is a prerequisite.
+Runtime service local gate passed afterfreshMediumreview/root258pass/1skip/vet0. Service development publication/nativeCI pending; actualcore stillnotexposed.
+
+Task1 started: freshGPT-6.1 Medium /root/memory_storage3; exactTask1storage-only ownership/report. Tasks2/3 notstarted. No actualprivateDBmigration bychild. Ownerresumed realwx tests separatelyhandledROOT; storagechildremains synthetic-only.

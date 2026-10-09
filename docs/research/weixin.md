@@ -128,3 +128,9 @@ an empty cache path. These failures are outside this agent's file ownership;
 the primary must rerun integrated checks once concurrent work stabilizes.
 
 Real QR login confirmed. Authorized text receive failed before send; a subsequent read-only diagnostic initiated before deferral decoded an empty batch. Further real WeChat testing is paused by the owner. Code-verification terminal restoration, receive/reply, context expiry, reconnect/replay, media and512MB RSS acceptance remain unverified. Native Linux CI run37822881696 passed configured synthetic tests/race/builds; fixture success is not live channel acceptance.
+
+## Resumed controlled live text checkpoint
+
+2026-10-09 ownerreturned andresumedverification. Rootverifiedexistingauthorizationowner-onlyACLwithoutprintingvalues. InitialnewCLIattempt stoppedbeforeHTTP onlegacySQLitejournaladmission; exactschema1 hadzero facts/messages,0-byteWAL/sharedmemory. Ownerexplicitlyapprovedconsistentprivatebackup thenSQLitecheckpoint/close, preserving originalbytes andtoken; no manualDB/WAL/SHMdeletion. Approved compatible schema2 admission thenallowedtest.
+
+Onefixedsyntheticmessage wasreceived andonesend attempted. ClientreturnedErrOutcomeUnknown; messageclaimbecameambiguous andwasnotresent. Ownerexplicitlyconfirmedreceipt oftheexpectedfixedreply. Thusrealcontrolledreceive andpeer-observedtextdelivery areestablished, whileprogrammaticackreason remainsunestablished. Do notinferHTTPstatus/bodyshape frompeerreceipt. A boundedstructuraldiagnostic hasbeenprepared; additionalnewsyntheticinputrequired,neverretry priorclaimedmessage. This isnot generalchat/media/reconnect/expiry/resourceacceptance. No rawprivatebody/IDs/token/QR persisted inthisreport. Originalearlierreceiveerrorcause remainsnotproven.
