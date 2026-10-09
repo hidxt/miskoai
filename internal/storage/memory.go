@@ -13,6 +13,7 @@ import (
 const maxFacts = 10000
 const maxFactBytes = 4 << 20
 const factColumns = "id,content,category,source,confidence,importance,created_at,updated_at,expires_at"
+const factOrder = " ORDER BY importance DESC,updated_at DESC,id DESC"
 
 type Fact struct {
 	ID                        int64
@@ -185,12 +186,22 @@ func searchFacts(ctx context.Context, rq rowQuery, scope Scope, query string, li
 	if scope.validate() != nil || limit < 1 || limit > 1000 || !validFactQuery(query) {
 		return nil, ErrInvalid
 	}
-	q := `SELECT ` + factColumns + ` FROM facts WHERE account=? AND user=? AND (expires_at IS NULL OR expires_at>?)`
-	args := []any{scope.Account, scope.User, time.Now().UTC().UnixMilli()}
-	terms := strings.FieldsFunc(query, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsNumber(r) })
-	if len(terms) > 32 {
-		return nil, ErrInvalid
+	predicate, args := factPredicate(scope, query, false)
+	q := `SELECT ` + factColumns + ` FROM facts` + predicate + factOrder + ` LIMIT ?`
+	args = append(args, limit)
+	return readFacts(ctx, rq, q, args...)
+}
+
+// factPredicate preserves the shared quoted-FTS and literal-keyword policy.
+// Administration includes expired retained facts; conversational retrieval does not.
+func factPredicate(scope Scope, query string, retained bool) (string, []any) {
+	q := ` WHERE account=? AND user=?`
+	args := []any{scope.Account, scope.User}
+	if !retained {
+		q += ` AND (expires_at IS NULL OR expires_at>?)`
+		args = append(args, time.Now().UTC().UnixMilli())
 	}
+	terms := strings.FieldsFunc(query, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsNumber(r) })
 	if strings.TrimSpace(query) != "" {
 		// All MATCH syntax is generated here; quotes in untrusted input cannot become operators.
 		var fts []string
@@ -211,9 +222,7 @@ func searchFacts(ctx context.Context, rq rowQuery, scope Scope, query string, li
 		}
 		q += `)`
 	}
-	q += ` ORDER BY importance DESC,updated_at DESC,id DESC LIMIT ?`
-	args = append(args, limit)
-	return readFacts(ctx, rq, q, args...)
+	return q, args
 }
 
 func likePattern(v string) string {
@@ -237,22 +246,30 @@ func readFacts(ctx context.Context, rq rowQuery, q string, args ...any) ([]Fact,
 	defer rows.Close()
 	facts := []Fact{}
 	for rows.Next() {
-		var f Fact
-		var created, updated int64
-		var expires sql.NullInt64
-		if err = rows.Scan(&f.ID, &f.Content, &f.Category, &f.Source, &f.Confidence, &f.Importance, &created, &updated, &expires); err != nil {
-			return nil, storageError(ctx, err)
-		}
-		if f.ID <= 0 || f.validate() != nil {
-			return nil, ErrInvalid
-		}
-		f.CreatedAt = time.UnixMilli(created).UTC()
-		f.UpdatedAt = time.UnixMilli(updated).UTC()
-		if expires.Valid {
-			t := time.UnixMilli(expires.Int64).UTC()
-			f.ExpiresAt = &t
+		f, err := readFact(ctx, rows)
+		if err != nil {
+			return nil, err
 		}
 		facts = append(facts, f)
 	}
 	return facts, storageError(ctx, rows.Err())
+}
+
+func readFact(ctx context.Context, row interface{ Scan(...any) error }) (Fact, error) {
+	var f Fact
+	var created, updated int64
+	var expires sql.NullInt64
+	if err := row.Scan(&f.ID, &f.Content, &f.Category, &f.Source, &f.Confidence, &f.Importance, &created, &updated, &expires); err != nil {
+		return f, storageError(ctx, err)
+	}
+	if f.ID <= 0 || f.validate() != nil {
+		return f, ErrInvalid
+	}
+	f.CreatedAt = time.UnixMilli(created).UTC()
+	f.UpdatedAt = time.UnixMilli(updated).UTC()
+	if expires.Valid {
+		t := time.UnixMilli(expires.Int64).UTC()
+		f.ExpiresAt = &t
+	}
+	return f, nil
 }
