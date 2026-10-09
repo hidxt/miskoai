@@ -16,15 +16,34 @@ const privateFileAccess windows.ACCESS_MASK = windows.STANDARD_RIGHTS_REQUIRED |
 var privateReOpenFile = windows.NewLazySystemDLL("kernel32.dll").NewProc("ReOpenFile")
 
 func validPath(path string) bool {
-	rest := strings.TrimPrefix(path, filepath.VolumeName(path))
+	// Windows accepts both separators and may remove unsafe suffixes in Abs.
+	// Validate each raw component, including those later removed by dot operators.
+	path = strings.ReplaceAll(path, "/", `\`)
+	if strings.ContainsRune(path, 0) {
+		return false
+	}
+	volume := filepath.VolumeName(path)
+	rest := strings.TrimPrefix(path, volume)
 	if strings.Contains(rest, ":") {
 		return false
 	}
-	for _, part := range strings.Split(rest, string(os.PathSeparator)) {
-		if part == "" {
+	parts := strings.Split(rest, string(os.PathSeparator))
+	// UNC server/share spellings are components too. Only the recognized drive
+	// letter is exempt from the colon prohibition.
+	for _, part := range strings.Split(volume, string(os.PathSeparator)) {
+		if len(part) == 2 && part[1] == ':' && ((part[0] >= 'a' && part[0] <= 'z') || (part[0] >= 'A' && part[0] <= 'Z')) {
+			continue
+		}
+		parts = append(parts, part)
+	}
+	for _, part := range parts {
+		if part == "" || part == "." || part == ".." {
 			continue
 		}
 		if strings.TrimRight(part, " .") != part {
+			return false
+		}
+		if strings.Contains(part, ":") {
 			return false
 		}
 		stem := strings.ToUpper(strings.SplitN(part, ".", 2)[0])

@@ -2,66 +2,81 @@ package config
 
 import (
 	"errors"
-	"net"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 
-	"github.com/hidxt/miskoai/internal/channel/weixin"
-	"github.com/hidxt/miskoai/internal/provider"
+	"github.com/hidxt/miskoai/internal/privatefs"
 )
 
 type Config struct {
-	Listen        string `json:"listen"`
-	DataDir       string `json:"-"`
-	DeepSeekURL   string `json:"deepseek_url"`
-	Model         string `json:"model"`
-	VisionModel   string `json:"vision_model"`
-	WeixinURL     string `json:"weixin_url"`
-	MaxOutput     int    `json:"max_output_tokens"`
-	DeepSeekKey   string `json:"-"`
-	OllamaKey     string `json:"-"`
-	AdminPassword string `json:"-"`
+	Listen        string          `json:"listen"`
+	DataDir       string          `json:"-"`
+	DeepSeekURL   string          `json:"deepseek_url"`
+	Model         string          `json:"model"`
+	VisionModel   string          `json:"vision_model"`
+	WeixinURL     string          `json:"weixin_url"`
+	MaxOutput     int             `json:"max_output_tokens"`
+	ContextBytes  int             `json:"context_bytes"`
+	ContextTokens int             `json:"context_tokens"`
+	Overrides     map[string]bool `json:"overrides"`
+	DeepSeekKey   string          `json:"-"`
+	OllamaKey     string          `json:"-"`
+	AdminPassword string          `json:"-"`
+	desired       Settings
+	effective     Settings
 }
 
-func env(name, fallback string) string {
-	if value, ok := os.LookupEnv(name); ok {
-		return value
-	}
-	return fallback
-}
+func (c Config) DesiredSettings() Settings   { return c.desired }
+func (c Config) EffectiveSettings() Settings { return c.effective }
 func Load() (Config, error) {
-	c := Config{Listen: env("MISKOAI_LISTEN", "127.0.0.1:8787"), DataDir: env("MISKOAI_DATA_DIR", "./data"), DeepSeekURL: env("MISKOAI_DEEPSEEK_URL", "https://api.deepseek.com"), Model: env("MISKOAI_MODEL", "deepseek-flash"), VisionModel: env("MISKOAI_VISION_MODEL", "deepseek-flash"), WeixinURL: env("MISKOAI_WEIXIN_URL", weixin.DefaultBaseURL), DeepSeekKey: os.Getenv("DEEPSEEK_API_KEY"), OllamaKey: os.Getenv("OLLAMA_API_KEY"), AdminPassword: os.Getenv("MISKOAI_ADMIN_PASSWORD"), MaxOutput: 512}
-	host, port, err := net.SplitHostPort(c.Listen)
-	p, e := strconv.Atoi(port)
-	if err != nil || e != nil || p < 1 || p > 65535 || (host != "127.0.0.1" && host != "::1") {
-		return Config{}, errors.New("management listener must be a loopback IP and valid port")
+	dir := "./data"
+	if value, ok := os.LookupEnv("MISKOAI_DATA_DIR"); ok {
+		dir = value
 	}
-	if strings.TrimSpace(c.DataDir) == "" {
-		return Config{}, errors.New("data directory is required")
+	if !validText(dir, 32768) {
+		return Config{}, errors.New("invalid data directory")
 	}
-	c.DataDir, err = filepath.Abs(c.DataDir)
+	abs, err := privatefs.Resolve(dir)
 	if err != nil {
 		return Config{}, errors.New("invalid data directory")
 	}
-	if value := os.Getenv("MISKOAI_MAX_OUTPUT_TOKENS"); value != "" {
-		c.MaxOutput, err = strconv.Atoi(value)
-		if err != nil || c.MaxOutput < 1 || c.MaxOutput > 4096 {
-			return Config{}, errors.New("invalid output token budget")
+	desired, err := LoadSettings(abs)
+	if err != nil {
+		return Config{}, err
+	}
+	s := desired
+	overrides := make(map[string]bool)
+	for _, field := range []struct {
+		name, key string
+		dest      *string
+	}{{"MISKOAI_LISTEN", "listen", &s.Listen}, {"MISKOAI_DEEPSEEK_URL", "deepseek_url", &s.DeepSeekURL}, {"MISKOAI_MODEL", "model", &s.Model}, {"MISKOAI_VISION_MODEL", "vision_model", &s.VisionModel}, {"MISKOAI_WEIXIN_URL", "weixin_url", &s.WeixinURL}} {
+		if v, ok := os.LookupEnv(field.name); ok {
+			*field.dest = v
+			overrides[field.key] = true
 		}
 	}
-	if _, err = provider.NewDeepSeek(c.DeepSeekURL, c.DeepSeekKey, c.Model); err != nil {
+	for _, field := range []struct {
+		name, key string
+		dest      *int
+	}{{"MISKOAI_MAX_OUTPUT_TOKENS", "max_output_tokens", &s.MaxOutput}, {"MISKOAI_CONTEXT_BYTES", "context_bytes", &s.ContextBytes}, {"MISKOAI_CONTEXT_TOKENS", "context_tokens", &s.ContextTokens}} {
+		if v, ok := os.LookupEnv(field.name); ok {
+			*field.dest, err = strconv.Atoi(v)
+			if err != nil {
+				return Config{}, ErrSettings
+			}
+			overrides[field.key] = true
+		}
+	}
+	if validateSettings(s) != nil {
+		return Config{}, ErrSettings
+	}
+	deep, search, err := loadKeys()
+	if err != nil {
 		return Config{}, err
 	}
-	if _, err = provider.NewDeepSeek(c.DeepSeekURL, c.DeepSeekKey, c.VisionModel); err != nil {
-		return Config{}, err
+	password, present := os.LookupEnv("MISKOAI_ADMIN_PASSWORD")
+	if present && !validText(password, 256) {
+		return Config{}, ErrCredentials
 	}
-	if _, err = provider.NewSearch(c.OllamaKey); err != nil {
-		return Config{}, err
-	}
-	if _, err = weixin.New(c.WeixinURL, ""); err != nil {
-		return Config{}, err
-	}
-	return c, nil
+	return Config{Listen: s.Listen, DataDir: abs, DeepSeekURL: s.DeepSeekURL, Model: s.Model, VisionModel: s.VisionModel, WeixinURL: s.WeixinURL, MaxOutput: s.MaxOutput, ContextBytes: s.ContextBytes, ContextTokens: s.ContextTokens, Overrides: overrides, DeepSeekKey: deep, OllamaKey: search, AdminPassword: password, desired: desired, effective: s}, nil
 }

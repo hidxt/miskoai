@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -23,18 +22,10 @@ func initialize(c config.Config, out io.Writer) error {
 	if err := privateDir(c.DataDir); err != nil {
 		return err
 	}
-	file, err := privatefs.Create(filepath.Join(c.DataDir, "settings.json"))
-	if err != nil {
+	if err := config.InitSettings(c.DataDir, c.EffectiveSettings()); err != nil {
 		return errors.New("configuration already exists or cannot be created")
 	}
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	err = encoder.Encode(c)
-	closeErr := file.Close()
-	if err != nil || closeErr != nil {
-		return errors.New("configuration write failed")
-	}
-	_, err = fmt.Fprintln(out, "initialized private settings template; environment is authoritative for this development version")
+	_, err := fmt.Fprintln(out, "initialized private settings; environment overrides saved values")
 	return err
 }
 

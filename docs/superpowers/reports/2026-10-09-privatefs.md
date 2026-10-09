@@ -78,3 +78,37 @@ Created: internal/privatefs/privatefs.go, permissions_unix.go, permissions_windo
 Self-review checked safe errors, no overwrite, no existing-directory permission repair, exact max+1 refusal and target retention, payload access ordering, protected directory inheritance, opened-handle ACL verification and compatibility reader refusal. Same-user malicious processes are outside the boundary; ordinary checks do not revoke already-acquired handles. Windows administrators retain normal OS ownership privileges. Ancestor traversal is checked, but no immunity beyond the actual metadata/handle checks is claimed. Native Linux runtime, Windows race, live providers/WeChat, actual database migration and VPS/RSS were not tested.
 
 Implementation and report are frozen for independent Medium review and root integrated verification; no staging/commit/push by child.
+
+## Follow-up: raw Windows aliases before normalization
+
+Checkpoint: follow-up after base `85d60c8`. Implementer remains `gpt-6.1-sol`, reasoning effort `medium`; no delegation. Follow-up base `85d60c8`; root supplied the independently reproduced alias issue and approved the narrow exported Resolve interface. This follow-up supersedes the earlier Task1 freeze only for four privatefs files and this appended report. Runtime-config implementation is separately frozen pending reuse of this interface; root owns full integration. Core/Web/media, live channel/provider acceptance and actual 512MB/VPS/release gates remain separate project work.
+
+Ownership followed: modified only internal/privatefs/privatefs.go, permissions_windows.go, permissions_windows_test.go, privatefs_test.go and appended this report. No CLI/config/root-doc edits, actual private data, credentials, networking, staging or commits. Unix permissions implementation is unchanged.
+
+Root cause: Windows filepath.Abs accepts/normalizes raw trailing-dot and trailing-space component aliases. Validation applied only after Abs cannot see the original spelling, so an alias can silently address the canonical object. Raw ProtectEmpty names also reached the ACL mutator without lexical refusal.
+
+Meaningful RED used existing APIs before introducing Resolve:
+
+```powershell
+& .tools/toolchains/go1.27.2-verified/go/bin/go.exe test -count=1 -run 'TestPrivateRawAliasesRejectedWindows|TestPrivateOrdinaryRelativePathsWindows' -v ./internal/privatefs
+```
+
+Exit 1 on committed behavior. All four dot/space × backslash/forward-slash alias subtests failed: EnsureDir and CheckFile accepted aliases, Read returned the known synthetic marker, Create touched the canonical new target, and ProtectEmpty accepted the raw alias and changed the synthetic empty target's ACL. The assertions also snapshot known target identity, bytes and owner/DACL before invoking these APIs. Ordinary relative dot-operator paths already passed. This was runtime behavior evidence, not a missing-API compilation failure.
+
+Correction: exported Resolve(path) returns a safe ErrUnsafe for an empty or lexically invalid raw spelling, validates platform spelling before filepath.Abs and again afterward, and returns an absolute lexical path. Its documentation states that it proves neither existence, privacy nor absence of symlink/reparse traversal. Windows lexical inspection normalizes both separators, checks components (including UNC volume components), preserves only exact . and .. dot operators, and refuses other trailing-dot/space components, ADS/colon spellings and reserved names before Abs can erase them. Dedicated-directory checking, checkedOpen and Create reuse Resolve. ProtectEmpty resolves and rejects its raw f.Name before any permission mutation. Read's final identity/parent rechecks use the canonical absolute f.Name already associated with the verified opened handle.
+
+The post-fix Resolve tests were added only after the API existed. They show no directory creation for a valid nonexistent path, permit lexical resolution of the current directory without falsely claiming dedicated-directory privacy, reject raw aliases/reserved/ADS spellings even in components followed by .., and independently check exact ./synthetic-data, .\synthetic-data, ..\synthetic-data and ../synthetic-data results. Existing APIs also accept ordinary relative paths and return the complete marker through Read.
+
+GREEN commands, using the same verified Go1.27.2/offline workspace-cache/temp environment recorded above:
+
+```powershell
+& .tools/toolchains/go1.27.2-verified/go/bin/go.exe fmt ./internal/privatefs
+& .tools/toolchains/go1.27.2-verified/go/bin/go.exe test -count=1 -run 'TestPrivateRawAliasesRejectedWindows|TestPrivateOrdinaryRelativePathsWindows' -v ./internal/privatefs
+& .tools/toolchains/go1.27.2-verified/go/bin/go.exe test -count=1 -v ./internal/privatefs
+& .tools/toolchains/go1.27.2-verified/go/bin/go.exe vet ./internal/privatefs
+git diff --check -- internal/privatefs/privatefs.go internal/privatefs/permissions_windows.go internal/privatefs/permissions_windows_test.go internal/privatefs/privatefs_test.go
+```
+
+All GREEN commands exited 0. Final focused native Windows package run: 11 top-level tests plus four alias subtests passed (15 passing entries), zero failures, four unchanged explicit skips. Skips remain the Unix-mode test, denied Windows junction/hardlink setup, and unavailable Windows symlink privilege. The raw alias regression and ordinary relative-path tests executed without skips; known target ACLs/identity/bytes remain unchanged after refusal. Scoped vet and diff check produced no diagnostics. This follow-up did not rerun CLI/config/full-project tests, live probes or cross-platform execution; root will perform integrated checks after independent review.
+
+Self-review inspected the exact production diff for raw-before-Abs ordering, safe sentinels, exact dot operators, both separator styles, canonical handle-name rechecks and no expansion into permission repair or config policy. Follow-up source and report are frozen for the same independent Medium reviewer and root integration.

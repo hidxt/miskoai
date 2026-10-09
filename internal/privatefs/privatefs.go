@@ -17,13 +17,24 @@ var (
 	ErrRead   = errors.New("private filesystem read failed or exceeded limit")
 )
 
-func dedicated(path string) (string, error) {
-	if path == "" {
+// Resolve validates the raw platform spelling before normalization and returns
+// an absolute lexical path. It does not establish existence, privacy or safety
+// against symlink/reparse traversal; use the filesystem boundary APIs for that.
+func Resolve(path string) (string, error) {
+	if path == "" || !validPath(path) {
 		return "", ErrUnsafe
 	}
 	abs, err := filepath.Abs(path)
 	if err != nil || !validPath(abs) {
 		return "", ErrUnsafe
+	}
+	return abs, nil
+}
+
+func dedicated(path string) (string, error) {
+	abs, err := Resolve(path)
+	if err != nil {
+		return "", err
 	}
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -106,8 +117,8 @@ func checkedOpen(path string, maxBytes int64) (*os.File, error) {
 	if maxBytes < 0 {
 		return nil, ErrUnsafe
 	}
-	abs, err := filepath.Abs(path)
-	if err != nil || !validPath(abs) {
+	abs, err := Resolve(path)
+	if err != nil {
 		return nil, ErrUnsafe
 	}
 	if err = CheckDir(filepath.Dir(abs)); err != nil {
@@ -152,8 +163,8 @@ func CheckFile(path string, maxBytes int64) error {
 // Create exclusively creates an owner-only file in an already private parent.
 // Protection is supplied at creation, before the caller can write payloads.
 func Create(path string) (*os.File, error) {
-	abs, err := filepath.Abs(path)
-	if err != nil || !validPath(abs) {
+	abs, err := Resolve(path)
+	if err != nil {
 		return nil, ErrUnsafe
 	}
 	if err = CheckDir(filepath.Dir(abs)); err != nil {
@@ -196,8 +207,8 @@ func Read(path string, maxBytes int64) ([]byte, error) {
 		return nil, ErrRead
 	}
 	after, err := f.Stat()
-	named, e := os.Lstat(path)
-	if err != nil || e != nil || !sameMetadata(before, after) || !sameMetadata(after, named) || checkPermissions(f, false) != nil || CheckDir(filepath.Dir(path)) != nil {
+	named, e := os.Lstat(f.Name())
+	if err != nil || e != nil || !sameMetadata(before, after) || !sameMetadata(after, named) || checkPermissions(f, false) != nil || CheckDir(filepath.Dir(f.Name())) != nil {
 		return nil, ErrUnsafe
 	}
 	return data, nil
@@ -209,12 +220,16 @@ func ProtectEmpty(f *os.File) error {
 	if f == nil {
 		return ErrUnsafe
 	}
+	abs, err := Resolve(f.Name())
+	if err != nil {
+		return err
+	}
 	info, err := f.Stat()
 	if err != nil || !info.Mode().IsRegular() || info.Size() != 0 {
 		return ErrUnsafe
 	}
-	named, err := os.Lstat(f.Name())
-	if err != nil || !sameMetadata(named, info) || !plainPath(f.Name()) || ancestors(filepath.Dir(f.Name())) != nil {
+	named, err := os.Lstat(abs)
+	if err != nil || !sameMetadata(named, info) || !plainPath(abs) || ancestors(filepath.Dir(abs)) != nil {
 		return ErrUnsafe
 	}
 	return protectEmpty(f)

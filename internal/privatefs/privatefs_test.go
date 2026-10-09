@@ -1,6 +1,7 @@
 package privatefs
 
 import (
+	"errors"
 	"math"
 	"os"
 	"path/filepath"
@@ -229,5 +230,26 @@ func TestPrivateHardlinkAndEmptyProtection(t *testing.T) {
 	}
 	if _, err := f.WriteString("x"); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestPrivateResolveIsLexicalOnly(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "missing-parent", "leaf")
+	got, err := Resolve(path)
+	if err != nil || got != path {
+		t.Fatal("lexically valid missing path refused or changed", got, err)
+	}
+	if _, err := os.Stat(filepath.Dir(path)); !os.IsNotExist(err) {
+		t.Fatal("resolution created a directory", err)
+	}
+	if got, err := Resolve(""); !errors.Is(err, ErrUnsafe) || got != "" {
+		t.Fatal("empty path resolved", got, err)
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := Resolve("."); err != nil || got != cwd {
+		t.Fatal("resolution should not impose dedicated directory/privacy policy", got, err)
 	}
 }

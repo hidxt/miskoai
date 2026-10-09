@@ -4,13 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/hidxt/miskoai/internal/channel/weixin"
@@ -24,20 +21,11 @@ type probeChannel interface {
 }
 
 func liveWeixinProbe(ctx context.Context, c config.Config, out io.Writer) error {
-	path := filepath.Join(c.DataDir, "weixin-auth.json")
-	info, err := os.Lstat(path)
-	if err != nil || !info.Mode().IsRegular() || info.Size() > 64<<10 || runtime.GOOS != "windows" && info.Mode().Perm()&0077 != 0 {
-		return errors.New("private WeChat authorization file unavailable or unsafe")
-	}
-	f, err := os.Open(path)
+	loaded, err := config.LoadAuthorization(c.DataDir)
 	if err != nil {
-		return errors.New("cannot read private authorization")
+		return err
 	}
-	defer f.Close()
-	var a authorization
-	if json.NewDecoder(io.LimitReader(f, (64<<10)+1)).Decode(&a) != nil || a.Account == "" || a.AllowedUser == "" {
-		return errors.New("invalid private authorization")
-	}
+	a := authorization{Token: loaded.Token, Account: loaded.Account, AllowedUser: loaded.AllowedUser, BaseURL: loaded.BaseURL}
 	client, err := weixin.New(a.BaseURL, a.Token)
 	if err != nil {
 		return err

@@ -4,12 +4,48 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/hidxt/miskoai/internal/channel/weixin"
+	"github.com/hidxt/miskoai/internal/config"
+	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/storage"
 )
+
+func TestProbeStrictPrivateAuthorization(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "private")
+	if err := privatefs.EnsureDir(dir); err != nil {
+		t.Fatal(err)
+	}
+	c := config.Config{DataDir: dir}
+	var out bytes.Buffer
+	if err := liveWeixinProbe(context.Background(), c, &out); !errors.Is(err, config.ErrAuthorizationMissing) {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "weixin-auth.json")
+	f, err := privatefs.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.WriteString(`{"bot_token":"synthetic-secret-canary","account":"fixture","allowed_user":"alice","base_url":"https://ilinkai.weixin.qq.com"} {}`); err != nil {
+		t.Fatal(err)
+	}
+	if err = f.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err = liveWeixinProbe(context.Background(), c, &out); !errors.Is(err, config.ErrAuthorization) {
+		t.Fatal("malformed auth not refused before client/database", err)
+	}
+	if _, err = os.Lstat(filepath.Join(dir, "miskoai.db")); !os.IsNotExist(err) {
+		t.Fatal("database opened before auth validation", err)
+	}
+	if out.Len() != 0 {
+		t.Fatal("probe produced public output on refused authorization")
+	}
+}
 
 type fakeChannel struct {
 	updates weixin.Updates

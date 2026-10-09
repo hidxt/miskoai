@@ -3,10 +3,12 @@
 package privatefs
 
 import (
+	"errors"
 	"golang.org/x/sys/windows"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"unsafe"
 )
@@ -148,5 +150,166 @@ func TestPrivateJunctionTraversalWindows(t *testing.T) {
 	got, err := os.ReadFile(path)
 	if err != nil || string(got) != "unchanged" {
 		t.Fatal("target payload changed", err)
+	}
+}
+
+// This regression uses the existing boundary APIs so RED proves unsafe raw
+// spellings are accepted, rather than merely proving a new API is absent.
+func TestPrivateRawAliasesRejectedWindows(t *testing.T) {
+	for _, spelling := range []struct {
+		name, suffix string
+		forward      bool
+	}{
+		{"dot-backslash", ".", false}, {"space-backslash", " ", false},
+		{"dot-forward", ".", true}, {"space-forward", " ", true},
+	} {
+		t.Run(spelling.name, func(t *testing.T) {
+			dir := fixtureDir(t)
+			path := filepath.Join(dir, "known")
+			writeFixture(t, path, "unchanged synthetic marker")
+			info, err := os.Stat(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			sd, err := windows.GetNamedSecurityInfo(path, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION|windows.DACL_SECURITY_INFORMATION)
+			if err != nil {
+				t.Fatal(err)
+			}
+			dirInfo, err := os.Stat(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			dirSD, err := windows.GetNamedSecurityInfo(dir, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION|windows.DACL_SECURITY_INFORMATION)
+			if err != nil {
+				t.Fatal(err)
+			}
+			raw := func(p string) string {
+				if spelling.forward {
+					return strings.ReplaceAll(p, `\`, "/")
+				}
+				return p
+			}
+			if err := EnsureDir(raw(dir + spelling.suffix)); !errors.Is(err, ErrUnsafe) {
+				t.Errorf("directory alias not safely refused: %v", err)
+			}
+			if err := CheckFile(raw(path+spelling.suffix), 100); !errors.Is(err, ErrUnsafe) {
+				t.Errorf("file alias not safely refused: %v", err)
+			}
+			if got, err := Read(raw(path+spelling.suffix), 100); !errors.Is(err, ErrUnsafe) || got != nil {
+				t.Errorf("read alias returned payload or unsafe error: %q %v", got, err)
+			}
+			newPath := filepath.Join(dir, "new")
+			f, err := Create(raw(newPath + spelling.suffix))
+			if f != nil {
+				f.Close()
+			}
+			if !errors.Is(err, ErrUnsafe) {
+				t.Errorf("creation alias not safely refused: %v", err)
+			}
+			if _, err := os.Stat(newPath); !os.IsNotExist(err) {
+				t.Errorf("creation alias touched canonical target: %v", err)
+			}
+			empty := filepath.Join(dir, "empty")
+			writeFixture(t, empty, "")
+			broadACL(t, empty)
+			emptyInfo, err := os.Stat(empty)
+			if err != nil {
+				t.Fatal(err)
+			}
+			emptySD, err := windows.GetNamedSecurityInfo(empty, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION|windows.DACL_SECURITY_INFORMATION)
+			if err != nil {
+				t.Fatal(err)
+			}
+			opened, err := os.OpenFile(raw(empty+spelling.suffix), os.O_WRONLY, 0600)
+			if err != nil {
+				t.Fatal("alias setup could not open known empty fixture", err)
+			}
+			if err := ProtectEmpty(opened); !errors.Is(err, ErrUnsafe) {
+				t.Errorf("empty alias not safely refused: %v", err)
+			}
+			opened.Close()
+			for _, known := range []struct {
+				path    string
+				info    os.FileInfo
+				acl     string
+				content string
+			}{
+				{path, info, sd.String(), "unchanged synthetic marker"}, {empty, emptyInfo, emptySD.String(), ""},
+			} {
+				after, err := os.Stat(known.path)
+				if err != nil || !os.SameFile(known.info, after) || known.info.Size() != after.Size() || !known.info.ModTime().Equal(after.ModTime()) {
+					t.Errorf("known target identity/metadata changed: %v", err)
+				}
+				actual, err := windows.GetNamedSecurityInfo(known.path, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION|windows.DACL_SECURITY_INFORMATION)
+				if err != nil || actual.String() != known.acl {
+					t.Errorf("known target ACL changed: %v", err)
+				}
+				data, err := os.ReadFile(known.path)
+				if err != nil || string(data) != known.content {
+					t.Errorf("known target bytes changed: %v", err)
+				}
+			}
+			after, err := os.Stat(dir)
+			if err != nil || !os.SameFile(dirInfo, after) {
+				t.Errorf("directory identity changed: %v", err)
+			}
+			actual, err := windows.GetNamedSecurityInfo(dir, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION|windows.DACL_SECURITY_INFORMATION)
+			if err != nil || actual.String() != dirSD.String() {
+				t.Errorf("directory ACL changed: %v", err)
+			}
+		})
+	}
+}
+
+func TestPrivateOrdinaryRelativePathsWindows(t *testing.T) {
+	dir := fixtureDir(t)
+	path := filepath.Join(dir, "marker")
+	writeFixture(t, path, "relative marker")
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	relative, err := filepath.Rel(cwd, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{`.\` + relative, "./" + strings.ReplaceAll(relative, `\`, "/"), `..\` + filepath.Base(cwd) + `\` + relative} {
+		if err := EnsureDir(p); err != nil {
+			t.Errorf("ordinary relative directory refused: %v", err)
+		}
+		if err := CheckFile(p+`\marker`, 100); err != nil {
+			t.Errorf("ordinary relative file refused: %v", err)
+		}
+		if got, err := Read(p+`\marker`, 100); err != nil || string(got) != "relative marker" {
+			t.Errorf("ordinary relative read failed: %q %v", got, err)
+		}
+	}
+}
+
+func TestPrivateResolveRawWindowsLexical(t *testing.T) {
+	for _, path := range []string{
+		`C:\synthetic\known.`, `C:/synthetic/known `,
+		`C:\synthetic\alias.\..\leaf`, `C:/synthetic/alias /../leaf`,
+		`C:\synthetic\file:stream`, `C:/synthetic/file:stream/../leaf`,
+		`C:\synthetic\NUL.txt\..\leaf`, `C:/synthetic/COM1/../leaf`,
+		`\\synthetic-server.\share\leaf`, `//synthetic-server/share /leaf`,
+	} {
+		if got, err := Resolve(path); !errors.Is(err, ErrUnsafe) || got != "" {
+			t.Errorf("unsafe raw spelling resolved: %q %v", got, err)
+		}
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ raw, want string }{
+		{`./synthetic-data`, filepath.Join(cwd, "synthetic-data")},
+		{`.\synthetic-data`, filepath.Join(cwd, "synthetic-data")},
+		{`..\synthetic-data`, filepath.Join(filepath.Dir(cwd), "synthetic-data")},
+		{`../synthetic-data`, filepath.Join(filepath.Dir(cwd), "synthetic-data")},
+	} {
+		if got, err := Resolve(tc.raw); err != nil || got != tc.want {
+			t.Errorf("ordinary dot operator resolution failed: %q %v", got, err)
+		}
 	}
 }

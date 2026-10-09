@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
+	"github.com/hidxt/miskoai/internal/config"
 	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/storage"
 	"math"
@@ -13,7 +15,37 @@ import (
 	"testing"
 )
 
+func TestInitPersistsNonsecretRuntimeSettings(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "private")
+	t.Setenv("MISKOAI_DATA_DIR", dir)
+	t.Setenv("MISKOAI_MODEL", "synthetic-saved-model")
+	t.Setenv("DEEPSEEK_API_KEY", "synthetic-secret-canary")
+	var out bytes.Buffer
+	if err := Run([]string{"init"}, &out); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(filepath.Join(dir, "settings.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var s config.Settings
+	if err = json.Unmarshal(before, &s); err != nil || s.Model != "synthetic-saved-model" || s.ContextBytes != 24576 {
+		t.Fatal("runtime settings not persisted", err)
+	}
+	if strings.Contains(string(before), "synthetic-secret-canary") || strings.Contains(out.String(), "synthetic-secret-canary") {
+		t.Fatal("init leaked key")
+	}
+	if err = Run([]string{"init"}, &out); err == nil {
+		t.Fatal("init overwrote existing")
+	}
+	after, _ := os.ReadFile(filepath.Join(dir, "settings.json"))
+	if !bytes.Equal(before, after) {
+		t.Fatal("second init changed settings")
+	}
+}
+
 func TestVersionAndUnknownCommand(t *testing.T) {
+	t.Setenv("MISKOAI_DATA_DIR", filepath.Join(t.TempDir(), "missing-private"))
 	var out bytes.Buffer
 	if err := Run([]string{"version"}, &out); err != nil || !strings.Contains(out.String(), "MiskoAI") {
 		t.Fatalf("version failed: %v %q", err, out.String())
