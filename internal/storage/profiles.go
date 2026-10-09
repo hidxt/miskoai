@@ -82,13 +82,23 @@ func activeProfile(ctx context.Context, q rowQuery, sc Scope) (Profile, error) {
 	if e != nil {
 		return Profile{}, storageError(ctx, e)
 	}
+	p, e := profileByID(ctx, q, sc, id)
+	if e == ErrNotFound {
+		return Profile{}, ErrInvalid
+	}
+	return p, e
+}
+func profileByID(ctx context.Context, q rowQuery, sc Scope, id string) (Profile, error) {
+	if !validProfileID(id) {
+		return Profile{}, ErrInvalid
+	}
 	if builtinProfile(id) {
 		return Profile{ID: id}, nil
 	}
 	var body string
-	e = q.QueryRowContext(ctx, "SELECT body FROM profiles WHERE account=? AND user=? AND id=?", sc.Account, sc.User, id).Scan(&body)
+	e := q.QueryRowContext(ctx, "SELECT body FROM profiles WHERE account=? AND user=? AND id=?", sc.Account, sc.User, id).Scan(&body)
 	if e == sql.ErrNoRows {
-		return Profile{}, ErrInvalid
+		return Profile{}, ErrNotFound
 	}
 	if e != nil {
 		return Profile{}, storageError(ctx, e)

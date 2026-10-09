@@ -34,3 +34,7 @@
 No supplier, deployment, SQLite or resource-limit change made. The owner-approved acknowledgement compatibility adjustment is recorded above.
 
 | D026 2026-10-09 | Update Go patch baseline from1.27.0 to1.27.2 after newly published standard-library vulnerabilities; verify official archive size/SHA256 and use project-private toolchain | Official Go release dated2026-10-08; service native tests/vet/race passed but govuln gate failed. No supplier, deployment runtime or product/resource requirement change. |
+
+| D027 2026-10-09 | Capture explicit scoped profile overrides in the same read snapshot as memory without changing persistent selection | Ordinary internal API refinement closes snapshot consistency gap; missing/deleted custom selection refuses before model/search. |
+| D028 2026-10-09 | Planned privatefs factors empty-object protection; Windows SQLite children may use verified owner-only inherited entries under protected owner-only parent | Maintains credential/privacy requirements before payload access while accommodating engine-created journals; no broad grants, permission repair or provider/database route change. |
+| D029 2026-10-09 | Planned restore records durable channel pause before installing older cursor/dedup state; explicit operator reconciliation resumes effects | Required duplicate-side-effect preservation across service restart; prior snapshot retained and no automatic replay from a rolled-back conversation. |

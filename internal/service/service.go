@@ -17,17 +17,32 @@ type Poller interface {
 type Handler interface {
 	Handle(context.Context, agent.Incoming) (agent.Result, error)
 }
+
+// Observer.Wake must return promptly and coalesce any background work.
+// The service calls it synchronously after durable successful delivery.
+type Observer interface{ Wake() }
 type Options struct{ Account, User string }
 type Service struct {
-	store   *storage.Store
-	poller  Poller
-	handler Handler
-	scope   storage.Scope
-	mu      sync.Mutex
-	status  Status
-	started bool
-	wake    chan struct{}
-	wait    func(context.Context, time.Duration) bool
+	store    *storage.Store
+	poller   Poller
+	handler  Handler
+	scope    storage.Scope
+	mu       sync.Mutex
+	status   Status
+	started  bool
+	observer Observer
+	wake     chan struct{}
+	wait     func(context.Context, time.Duration) bool
+}
+
+func (s *Service) SetObserver(o Observer) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.started {
+		return errors.New("service already started")
+	}
+	s.observer = o
+	return nil
 }
 
 func New(s *storage.Store, p Poller, h Handler, o Options) (*Service, error) {
@@ -233,7 +248,7 @@ func (s *Service) work(ctx context.Context, cancel context.CancelFunc) {
 			if ctx.Err() != nil {
 				return
 			}
-			r, _ := s.handler.Handle(ctx, agent.Incoming{Account: e.Scope.Account, User: e.Scope.User, ID: e.MessageID, Text: e.Text, ContextToken: e.ContextToken})
+			r, handleErr := s.handler.Handle(ctx, agent.Incoming{Account: e.Scope.Account, User: e.Scope.User, ID: e.MessageID, Text: e.Text, ContextToken: e.ContextToken})
 			if ctx.Err() != nil {
 				return
 			}
@@ -253,6 +268,9 @@ func (s *Service) work(ctx context.Context, cancel context.CancelFunc) {
 				return
 			}
 			s.recordResult(r)
+			if r.State == "sent" && handleErr == nil && s.observer != nil {
+				s.observer.Wake()
+			}
 		}
 	}
 }

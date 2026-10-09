@@ -13,4 +13,9 @@
 
 - Added reviewed bounded text-agent orchestration with explicit memory/search commands, three honest builtin profiles, cancelable admission, byte/token-budgeted context and one-send ambiguity handling. Incremental chat export avoids full escaped-array encoding; synthetic integrated suite184pass/1Unixskip and vet0. Storage2 native Linux e988028 passed all configured gates; new agent native evidence pending.
 
-No released application version yet.
+- Added durable serial polling/normalization with bounded raw receive admission and cancellation/join behavior; reviewed schema3 stores derived summaries, unconfirmed statement candidates and persistent expression profiles without automatic fact promotion.
+- Added a fixed-scope coalesced summary worker with16-message watermark,60-second failed-attempt cooldown, strict bounded JSON and revision CAS. Chat/profile/candidate integration is under a separate task review.
+- Extended send acknowledgement under explicit owner approval: preserve explicit ret=0; absent ret requires complete successful JSON, positive uint64 message_id and no error status. Uncertain sends remain claimed and are never automatically replayed. Controlled live delivery was confirmed; fresh strict-ACK validation remains pending.
+- Updated Go baseline to1.27.2 for official standard-library security fixes. Reviewed checkpoint358fc7a passed native Linux CI unit/integration, vet, race, govulncheck, full-history policy scan and amd64/arm64 cross-builds. Static gosec findings are retained and triaged rather than presented as zero warnings.
+
+No released application version yet. Hosted Linux evidence is not512MB/VPS or arm64-runtime acceptance; lifecycle/Web/media/final release remain open.

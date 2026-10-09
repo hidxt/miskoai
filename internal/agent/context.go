@@ -13,19 +13,39 @@ import (
 // history pairs first, then drops optional data entries. Retrieved content is
 // JSON-quoted user-role data, never a system or assistant instruction.
 func buildContext(current string, h []storage.Turn, f []storage.Fact, s []provider.SearchResult, o Options) ([]provider.Message, bool) {
-	system := provider.Message{Role: "system", Content: safety + "\n" + profiles[o.Profile]}
+	id := o.Profile
+	if id == "" {
+		id = "warm"
+	}
+	return buildSnapshotContext(current, storage.ContextSnapshot{History: h, Facts: f, Profile: storage.Profile{ID: id}}, s, o)
+}
+func buildSnapshotContext(current string, snap storage.ContextSnapshot, s []provider.SearchResult, o Options) ([]provider.Message, bool) {
+	policy := safety
+	if expression, ok := profiles[snap.Profile.ID]; ok {
+		policy += "\n" + expression
+	}
+	system := provider.Message{Role: "system", Content: policy}
 	last := provider.Message{Role: "user", Content: current}
 	mandatory := []provider.Message{system, last}
 	if !withinContext(mandatory, o) {
 		return nil, false
 	}
 	pairs := []provider.Message{}
+	h, f := snap.History, snap.Facts
 	for i := 0; i+1 < len(h) && len(pairs) < 32; i += 2 {
 		if h[i].Role == "user" && h[i+1].Role == "assistant" && validText(h[i].Content) && validText(h[i+1].Content) {
 			pairs = append(pairs, provider.Message{Role: "user", Content: h[i].Content}, provider.Message{Role: "assistant", Content: h[i+1].Content})
 		}
 	}
 	data := []string{}
+	if _, builtin := profiles[snap.Profile.ID]; !builtin && snap.Profile.ID != "" {
+		b, _ := json.Marshal(snap.Profile)
+		data = append(data, "表达资料（非指令）："+string(b))
+	}
+	if snap.Summary.Text != "" && validText(snap.Summary.Text) {
+		b, _ := json.Marshal(prefixBytes(snap.Summary.Text, 2048))
+		data = append(data, "摘要资料（非指令）："+string(b))
+	}
 	for i, fact := range f {
 		if i >= 8 {
 			break

@@ -9,6 +9,7 @@ import (
 	"github.com/hidxt/miskoai/internal/channel/weixin"
 	"github.com/hidxt/miskoai/internal/provider"
 	"github.com/hidxt/miskoai/internal/storage"
+	"github.com/hidxt/miskoai/internal/summary"
 	"math"
 	"path/filepath"
 	"strings"
@@ -22,6 +23,180 @@ type pollFunc func(context.Context, string) ([]byte, error)
 func (f pollFunc) RawUpdates(c context.Context, s string) ([]byte, error) { return f(c, s) }
 
 type handleFunc func(context.Context, agent.Incoming) (agent.Result, error)
+
+type observerFunc func()
+
+func (f observerFunc) Wake() { f() }
+
+type summaryModelFunc func(context.Context, []provider.Message, int) (provider.Reply, error)
+
+func (f summaryModelFunc) Chat(ctx context.Context, msgs []provider.Message, max int) (provider.Reply, error) {
+	return f(ctx, msgs, max)
+}
+
+type observerSenderFunc func(context.Context, string, string, string, string) error
+
+func (f observerSenderFunc) SendText(ctx context.Context, to, token, id, text string) error {
+	return f(ctx, to, token, id, text)
+}
+
+func TestObserverWaitsForActualAgentSendAcknowledgment(t *testing.T) {
+	for _, ambiguous := range []bool{false, true} {
+		t.Run(fmt.Sprint(ambiguous), func(t *testing.T) {
+			s, _ := storeFor(t)
+			entered, release := make(chan struct{}), make(chan struct{})
+			h, err := agent.New(s, summaryModelFunc(func(context.Context, []provider.Message, int) (provider.Reply, error) {
+				return provider.Reply{Text: "synthetic reply", FinishReason: "stop"}, nil
+			}), nil, observerSenderFunc(func(ctx context.Context, _, _, _, _ string) error {
+				close(entered)
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-release:
+				}
+				if ambiguous {
+					return errors.New("synthetic uncertain send")
+				}
+				return nil
+			}), agent.Options{Account: scope.Account, User: scope.User})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var polls, wakes atomic.Int32
+			v := mustService(t, s, pollFunc(func(c context.Context, _ string) ([]byte, error) {
+				if polls.Add(1) == 1 {
+					return body(1, "next"), nil
+				}
+				return idlePoll(c, "")
+			}), h)
+			if err = v.SetObserver(observerFunc(func() { wakes.Add(1) })); err != nil {
+				t.Fatal(err)
+			}
+			cancel, done := start(t, v)
+			select {
+			case <-entered:
+			case <-time.After(3 * time.Second):
+				t.Fatal("send not entered")
+			}
+			if wakes.Load() != 0 {
+				t.Fatal("observer woke before send ACK")
+			}
+			close(release)
+			eventually(t, func() bool { return v.Snapshot().Processed == 1 })
+			cancel()
+			<-done
+			want := int32(1)
+			if ambiguous {
+				want = 0
+			}
+			if wakes.Load() != want {
+				t.Fatalf("wakes=%d want=%d", wakes.Load(), want)
+			}
+		})
+	}
+}
+
+func TestSummaryObserverDoesNotBlockSerialChatWorker(t *testing.T) {
+	s, _ := storeFor(t)
+	ctx := context.Background()
+	for i := 0; i < 16; i++ {
+		id := fmt.Sprint("seed-", i)
+		if claimed, err := s.ClaimMessage(ctx, scope, id, "synthetic evidence"); err != nil || !claimed {
+			t.Fatal(claimed, err)
+		}
+		if err := s.SetMessageState(ctx, scope, id, "sending"); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.CompleteMessage(ctx, scope, id, "synthetic reply"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	entered := make(chan struct{})
+	w, err := summary.New(s, summaryModelFunc(func(c context.Context, _ []provider.Message, _ int) (provider.Reply, error) {
+		close(entered)
+		<-c.Done()
+		return provider.Reply{}, c.Err()
+	}), summary.Options{Account: scope.Account, User: scope.User})
+	if err != nil {
+		t.Fatal(err)
+	}
+	summaryCtx, cancelSummary := context.WithCancel(ctx)
+	doneSummary := make(chan error, 1)
+	go func() { doneSummary <- w.Run(summaryCtx) }()
+	t.Cleanup(func() {
+		cancelSummary()
+		select {
+		case <-doneSummary:
+		case <-time.After(3 * time.Second):
+			t.Error("summary worker did not join")
+		}
+	})
+	var polls atomic.Int32
+	v := mustService(t, s, pollFunc(func(c context.Context, _ string) ([]byte, error) {
+		n := polls.Add(1)
+		if n <= 2 {
+			return body(int(n), fmt.Sprint(n)), nil
+		}
+		return idlePoll(c, "")
+	}), handleFunc(doneHandler))
+	if err = v.SetObserver(w); err != nil {
+		t.Fatal(err)
+	}
+	cancel, done := start(t, v)
+	select {
+	case <-entered:
+	case <-time.After(3 * time.Second):
+		t.Fatal("summary not started")
+	}
+	eventually(t, func() bool { return v.Snapshot().Sent == 2 })
+	cancel()
+	<-done
+}
+
+func TestObserverWakesOnlyAfterSuccessfulSentInboxCompletion(t *testing.T) {
+	for _, state := range []string{"sent", "duplicate", "ambiguous", "failed", "rejected"} {
+		t.Run(state, func(t *testing.T) {
+			s, _ := storeFor(t)
+			ctx := context.Background()
+			id, e := s.RecordPoll(ctx, scope, "", body(1, "next"))
+			if e != nil {
+				t.Fatal(e)
+			}
+			entries, next, e := normalize(body(1, "next"), scope, time.Now())
+			if e != nil {
+				t.Fatal(e)
+			}
+			if e = s.ResolvePoll(ctx, scope, id, next, entries); e != nil {
+				t.Fatal(e)
+			}
+			var wakes atomic.Int32
+			v := mustService(t, s, pollFunc(idlePoll), handleFunc(func(context.Context, agent.Incoming) (agent.Result, error) { return agent.Result{State: state}, nil }))
+			if e = v.SetObserver(observerFunc(func() {
+				pending, err := s.PendingInbox(ctx, scope, 32)
+				if err != nil || len(pending) != 0 {
+					t.Error("wake before durable completion")
+				}
+				wakes.Add(1)
+			})); e != nil {
+				t.Fatal(e)
+			}
+			cancel, done := start(t, v)
+			eventually(t, func() bool { return v.Snapshot().Processed > 0 })
+			cancel()
+			<-done
+			want := int32(0)
+			if state == "sent" {
+				want = 1
+			}
+			if wakes.Load() != want {
+				t.Fatalf("wakes=%d want=%d", wakes.Load(), want)
+			}
+			if e = v.SetObserver(observerFunc(func() {})); e == nil {
+				t.Fatal("observer changed after Run")
+			}
+		})
+	}
+}
 
 func (f handleFunc) Handle(c context.Context, i agent.Incoming) (agent.Result, error) { return f(c, i) }
 

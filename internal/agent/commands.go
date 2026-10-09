@@ -23,17 +23,25 @@ func searchCommand(text string) (string, bool) {
 	return "", false
 }
 
-// encodeFacts retains only a channel-bounded output buffer and one encoded
-// fact. Store field caps bound that temporary fact even when JSON escapes
-// expand its text. Stop immediately rather than encode the remaining slice.
 func encodeFacts(facts []storage.Fact) ([]byte, bool, error) {
-	if len(facts) == 0 {
+	return encodeBoundedArray(facts)
+}
+
+func encodeCandidates(candidates []storage.Candidate) ([]byte, bool, error) {
+	return encodeBoundedArray(candidates[:min(len(candidates), 8)])
+}
+
+// encodeBoundedArray retains only a channel-bounded output buffer and one
+// encoded item. Store field caps bound that temporary item even when JSON
+// escapes expand its text. Stop before encoding any remaining items on overflow.
+func encodeBoundedArray[T any](items []T) ([]byte, bool, error) {
+	if len(items) == 0 {
 		return []byte("[]"), true, nil
 	}
 	out := make([]byte, 1, maxReply)
 	out[0] = '['
-	for i, fact := range facts {
-		encoded, err := json.Marshal(fact)
+	for i, item := range items {
+		encoded, err := json.Marshal(item)
 		if err != nil {
 			return nil, false, err
 		}
@@ -69,10 +77,50 @@ func (a *Agent) command(ctx context.Context, text string) (string, string, bool)
 		}
 		return fmt.Sprintf("已记住，记忆编号：%d。", id), "", true
 	case text == "/memory clear":
-		if err := a.store.ClearFacts(ctx, a.scope); err != nil {
+		if err := a.store.ClearMemory(ctx, a.scope); err != nil {
 			return memoryReply, storageCode(err), true
 		}
-		return "已清空你的明确记忆。", "", true
+		return "已清空你的明确记忆、派生摘要、待确认候选和此前的上下文。消息编号仍保留，用于防止重复处理。", "", true
+	case text == "/memory candidates":
+		cs, err := a.store.Candidates(ctx, a.scope, 8)
+		if err != nil {
+			return memoryReply, storageCode(err), true
+		}
+		b, fits, err := encodeCandidates(cs)
+		if err != nil {
+			return memoryReply, "storage", true
+		}
+		if !fits {
+			return "候选记忆列表超过消息长度限制，请通过候选编号逐条确认或拒绝。", "limit", true
+		}
+		return string(b), "", true
+	case text == "/memory confirm" || strings.HasPrefix(text, "/memory confirm ") || text == "/memory reject" || strings.HasPrefix(text, "/memory reject "):
+		confirm := text == "/memory confirm" || strings.HasPrefix(text, "/memory confirm ")
+		prefix := "/memory reject"
+		if confirm {
+			prefix = "/memory confirm"
+		}
+		id, err := strconv.ParseInt(strings.TrimSpace(strings.TrimPrefix(text, prefix)), 10, 64)
+		if err != nil || id <= 0 {
+			return "请提供有效的候选记忆编号。", "input", true
+		}
+		if confirm {
+			factID, err := a.store.ConfirmCandidate(ctx, a.scope, id)
+			if err == storage.ErrNotFound {
+				return "没有找到该候选记忆编号。", "input", true
+			}
+			if err != nil {
+				return memoryReply, storageCode(err), true
+			}
+			return fmt.Sprintf("已明确确认该候选，记忆编号：%d。", factID), "", true
+		}
+		if err = a.store.DeleteCandidate(ctx, a.scope, id); err == storage.ErrNotFound {
+			return "没有找到该候选记忆编号。", "input", true
+		}
+		if err != nil {
+			return memoryReply, storageCode(err), true
+		}
+		return "已拒绝该候选记忆。", "", true
 	case text == "/export-memory":
 		facts, err := a.store.ExportFacts(ctx, a.scope)
 		if err != nil {

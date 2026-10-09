@@ -55,10 +55,7 @@ func New(s *storage.Store, m Model, q Searcher, send Sender, o Options) (*Agent,
 	if s == nil || m == nil || send == nil || !validField(o.Account, 256) || !validField(o.User, 256) {
 		return nil, errors.New("invalid agent configuration")
 	}
-	if o.Profile == "" {
-		o.Profile = "warm"
-	}
-	if _, ok := profiles[o.Profile]; !ok {
+	if o.Profile != "" && !validProfileID(o.Profile) {
 		return nil, errors.New("invalid agent configuration")
 	}
 	if o.MaxOutput == 0 {
@@ -72,6 +69,15 @@ func New(s *storage.Store, m Model, q Searcher, send Sender, o Options) (*Agent,
 	}
 	if o.MaxOutput < 1 || o.MaxOutput > 4096 || o.ContextBytes < 16384 || o.ContextBytes > 49152 || o.ContextTokens < 4096 || o.ContextTokens > 65536 {
 		return nil, errors.New("invalid agent configuration")
+	}
+	if o.Profile != "" {
+		if _, builtin := profiles[o.Profile]; !builtin {
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			if _, err := s.ChatContextWithProfile(ctx, storage.Scope{Account: o.Account, User: o.User}, "", 1, 1, o.Profile); err != nil {
+				return nil, errors.New("invalid agent configuration")
+			}
+		}
 	}
 	return &Agent{store: s, model: m, search: q, sender: send, opts: o, scope: storage.Scope{Account: o.Account, User: o.User}, admission: make(chan struct{}, 1)}, nil
 }
@@ -223,6 +229,13 @@ func validatedReply(s string, max int) (string, bool) {
 
 func (a *Agent) answer(ctx context.Context, current string) (string, provider.Usage, string) {
 	var empty provider.Usage
+	snapshot, err := a.store.ChatContextWithProfile(ctx, a.scope, factQuery(current), 16, 8, a.opts.Profile)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) || errors.Is(err, storage.ErrInvalid) {
+			return modelReply, empty, "input"
+		}
+		return modelReply, empty, storageCode(err)
+	}
 	var sources []provider.SearchResult
 	if query, explicit := searchCommand(current); explicit {
 		if query == "" || len(query) > 512 {
@@ -243,15 +256,7 @@ func (a *Agent) answer(ctx context.Context, current string) (string, provider.Us
 			}
 		}
 	}
-	h, err := a.store.History(ctx, a.scope, 16)
-	if err != nil {
-		return modelReply, empty, "storage"
-	}
-	facts, err := a.store.SearchFacts(ctx, a.scope, factQuery(current), 8)
-	if err != nil {
-		return modelReply, empty, storageCode(err)
-	}
-	msgs, ok := buildContext(current, h, facts, sources, a.opts)
+	msgs, ok := buildSnapshotContext(current, snapshot, sources, a.opts)
 	if !ok {
 		return limitReply, empty, "limit"
 	}

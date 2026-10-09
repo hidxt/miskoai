@@ -9,3 +9,15 @@ var profiles = map[string]string{
 	"concise":      "用简洁直接的中文回复，保留必要细节。",
 	"professional": "用清晰、稳健的专业中文回复，明确依据与不确定性。",
 }
+
+func validProfileID(id string) bool {
+	if len(id) < 1 || len(id) > 64 {
+		return false
+	}
+	for _, r := range id {
+		if !(r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '_' || r == '-') {
+			return false
+		}
+	}
+	return true
+}

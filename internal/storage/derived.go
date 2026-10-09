@@ -118,11 +118,21 @@ func (s *Store) DerivedHistory(ctx context.Context, sc Scope, pairs int) (Summar
 	return d, n, h, storageError(ctx, tx.Commit())
 }
 func (s *Store) ChatContext(ctx context.Context, sc Scope, query string, pairs, factLimit int) (ContextSnapshot, error) {
+	return s.chatContext(ctx, sc, query, pairs, factLimit, "")
+}
+
+// ChatContextWithProfile captures an explicit scoped expression profile in the
+// same transaction as memory. Empty profileID uses the persistent selection.
+// An override never changes that selection.
+func (s *Store) ChatContextWithProfile(ctx context.Context, sc Scope, query string, pairs, factLimit int, profileID string) (ContextSnapshot, error) {
+	return s.chatContext(ctx, sc, query, pairs, factLimit, profileID)
+}
+func (s *Store) chatContext(ctx context.Context, sc Scope, query string, pairs, factLimit int, profileID string) (ContextSnapshot, error) {
 	var snap ContextSnapshot
 	if e := sc.validate(); e != nil {
 		return snap, e
 	}
-	if pairs < 1 || pairs > 16 || factLimit < 1 || factLimit > 8 || !validFactQuery(query) {
+	if pairs < 1 || pairs > 16 || factLimit < 1 || factLimit > 8 || !validFactQuery(query) || (profileID != "" && !validProfileID(profileID)) {
 		return snap, ErrInvalid
 	}
 	tx, e := s.db.BeginTx(ctx, nil)
@@ -142,7 +152,12 @@ func (s *Store) ChatContext(ctx context.Context, sc Scope, query string, pairs, 
 	if snap.Summary, e = readDerived(ctx, tx, sc); e != nil {
 		return snap, e
 	}
-	if snap.Profile, e = activeProfile(ctx, tx, sc); e != nil {
+	if profileID == "" {
+		snap.Profile, e = activeProfile(ctx, tx, sc)
+	} else {
+		snap.Profile, e = profileByID(ctx, tx, sc, profileID)
+	}
+	if e != nil {
 		return snap, e
 	}
 	if snap.History, e = history(ctx, tx, sc, pairs); e != nil {

@@ -8,6 +8,39 @@ import (
 	"testing"
 )
 
+func TestCapturedExplicitProfileDoesNotChangeSelection(t *testing.T) {
+	s, _ := testStore(t)
+	ctx := context.Background()
+	sc := Scope{"a", "u"}
+	p := Profile{ID: "custom", Name: "Synthetic", Style: "plain", Length: "normal", Sticker: "off"}
+	if e := s.PutProfile(ctx, sc, p); e != nil {
+		t.Fatal(e)
+	}
+	if e := s.SelectProfile(ctx, sc, "concise"); e != nil {
+		t.Fatal(e)
+	}
+	snap, e := s.ChatContextWithProfile(ctx, sc, "", 16, 8, p.ID)
+	if e != nil || snap.Profile != p {
+		t.Fatalf("override: %+v %v", snap, e)
+	}
+	active, e := s.ActiveProfile(ctx, sc)
+	if e != nil || active.ID != "concise" {
+		t.Fatalf("selection mutated: %+v %v", active, e)
+	}
+	if _, e = s.ChatContextWithProfile(ctx, Scope{"a", "other"}, "", 16, 8, p.ID); !errors.Is(e, ErrNotFound) {
+		t.Fatalf("cross scope: %v", e)
+	}
+	if _, e = s.ChatContextWithProfile(ctx, sc, "", 16, 8, "CUSTOM"); !errors.Is(e, ErrInvalid) {
+		t.Fatalf("invalid ID: %v", e)
+	}
+	if e = s.DeleteProfile(ctx, sc, p.ID); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = s.ChatContextWithProfile(ctx, sc, "", 16, 8, p.ID); !errors.Is(e, ErrNotFound) {
+		t.Fatalf("deleted override: %v", e)
+	}
+}
+
 func TestProfilesScopedSelectionSnapshotAndDeletion(t *testing.T) {
 	s, _ := testStore(t)
 	ctx := context.Background()
