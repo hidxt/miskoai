@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const schemaVersion = 2
+const schemaVersion = 3
 
 const schema = `
 CREATE TABLE facts (
@@ -59,6 +59,28 @@ CREATE INDEX inbox_scope ON inbox(account,user,sequence);
 PRAGMA user_version=2;
 `
 
+const schema3 = `
+CREATE TABLE derived (
+ account TEXT NOT NULL, user TEXT NOT NULL, text TEXT NOT NULL,
+ watermark INTEGER NOT NULL, revision INTEGER NOT NULL, updated_at INTEGER NOT NULL,
+ PRIMARY KEY(account,user)
+);
+CREATE TABLE candidates (
+ id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT NOT NULL, user TEXT NOT NULL,
+ content TEXT NOT NULL, message_id TEXT NOT NULL, quote TEXT NOT NULL, created_at INTEGER NOT NULL,
+ UNIQUE(account,user,message_id,quote,content)
+);
+CREATE TABLE profiles (
+ account TEXT NOT NULL, user TEXT NOT NULL, id TEXT NOT NULL, body TEXT NOT NULL,
+ PRIMARY KEY(account,user,id)
+);
+CREATE TABLE profile_selections (
+ account TEXT NOT NULL, user TEXT NOT NULL, id TEXT NOT NULL,
+ PRIMARY KEY(account,user)
+);
+PRAGMA user_version=3;
+`
+
 func (s *Store) migrate(ctx context.Context) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -92,6 +114,12 @@ func (s *Store) migrate(ctx context.Context) error {
 			return err
 		}
 		if _, err = tx.ExecContext(ctx, schema2); err != nil {
+			return storageError(ctx, err)
+		}
+		version = 2
+	}
+	if version == 2 {
+		if _, err = tx.ExecContext(ctx, schema3); err != nil {
 			return storageError(ctx, err)
 		}
 	}
@@ -167,7 +195,7 @@ func validateRowShape(ctx context.Context, q rowQuery, table string, columns []b
 	return nil
 }
 
-func validateLegacyRows(ctx context.Context, q rowQuery) error {
+func validateLegacyShape(ctx context.Context, q rowQuery) error {
 	scope := []boundedColumn{{"account", 256, "text"}, {"user", 256, "text"}}
 	facts := append(append([]boundedColumn{}, scope...), boundedColumn{"content", 16384, "text"}, boundedColumn{"category", 256, "text"}, boundedColumn{"source", 16, "text"})
 	if err := validateRowShape(ctx, q, "facts", facts, `typeof(id)<>'integer' OR id<=0 OR typeof(importance)<>'integer' OR typeof(confidence) NOT IN ('real','integer') OR typeof(created_at)<>'integer' OR typeof(updated_at)<>'integer' OR (expires_at IS NOT NULL AND typeof(expires_at)<>'integer')`); err != nil {
@@ -175,6 +203,13 @@ func validateLegacyRows(ctx context.Context, q rowQuery) error {
 	}
 	messages := append(append([]boundedColumn{}, scope...), boundedColumn{"id", 512, "text"}, boundedColumn{"content", 16384, "text"}, boundedColumn{"reply", 16384, "text"}, boundedColumn{"state", 16, "text"})
 	if err := validateRowShape(ctx, q, "messages", messages, `typeof(created_at)<>'integer' OR typeof(updated_at)<>'integer'`); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateLegacyRows(ctx context.Context, q rowQuery) error {
+	if err := validateLegacyShape(ctx, q); err != nil {
 		return err
 	}
 	rows, err := q.QueryContext(ctx, `SELECT account,user,id,content,category,source,confidence,importance FROM facts`)

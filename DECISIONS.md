@@ -29,4 +29,8 @@
 | D023 2026-10-09 | Persist successful zero-byte raw responses as exact BLOB evidence before malformed decode/quarantine | No schema/version change;3-line refinement, scoped lifecycle/capacity/admission tests and independent Medium review |
 | D024 2026-10-09 | Planned derived-memory writes use revision CAS and non-reused candidate IDs; privacy clearing retains ID/state dedup metadata | Requested SQLite memory extension, no actual migration; prevents stale generated jobs/review references and repeated remote effects |
 
-No change to product/provider/deployment/resource/security constraints authorized or made.
+| D025 2026-10-09 | Owner explicitly approves strict positive uint64 server-ID acknowledgement when ret is absent, alongside existing ret=0 | Real HTTP200 valid-object response omitted ret/errcode and included message_id; expected delivery confirmed; pinned Tencent optional-ret source; malformed/uncertain outcomes never replay |
+
+No supplier, deployment, SQLite or resource-limit change made. The owner-approved acknowledgement compatibility adjustment is recorded above.
+
+| D026 2026-10-09 | Update Go patch baseline from1.27.0 to1.27.2 after newly published standard-library vulnerabilities; verify official archive size/SHA256 and use project-private toolchain | Official Go release dated2026-10-08; service native tests/vet/race passed but govuln gate failed. No supplier, deployment runtime or product/resource requirement change. |

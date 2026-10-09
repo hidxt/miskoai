@@ -44,7 +44,7 @@ func schema1Manifest() map[string]schemaObject {
 	}
 }
 
-func currentManifest() map[string]schemaObject {
+func schema2Manifest() map[string]schemaObject {
 	m := schema1Manifest()
 	m["sqlite_sequence"] = schemaObject{"table", "sqlite_sequence", "CREATE TABLE sqlite_sequence(name,seq)"}
 	statement := func(start, end string) string {
@@ -60,6 +60,17 @@ func currentManifest() map[string]schemaObject {
 	m["inbox"] = schemaObject{"table", "inbox", statement("CREATE TABLE inbox", ");")}
 	m["sqlite_autoindex_inbox_1"] = schemaObject{"index", "inbox", ""}
 	m["inbox_scope"] = schemaObject{"index", "inbox", statement("CREATE INDEX inbox_scope", ";")}
+	return m
+}
+
+func currentManifest() map[string]schemaObject {
+	m := schema2Manifest()
+	for _, name := range []string{"derived", "candidates", "profiles", "profile_selections"} {
+		rest := schema3[strings.Index(schema3, "CREATE TABLE "+name+" ("):]
+		ddl := strings.TrimSuffix(rest[:strings.Index(rest, ");")+2], ";")
+		m[name] = schemaObject{"table", name, ddl}
+		m["sqlite_autoindex_"+name+"_1"] = schemaObject{"index", name, ""}
+	}
 	return m
 }
 
@@ -107,6 +118,9 @@ func ValidateBackup(ctx context.Context, path string) error {
 	if err = validateManifest(ctx, db); err != nil {
 		return err
 	}
+	if err = validateSchema3IfPresent(ctx, db); err != nil {
+		return err
+	}
 	rows, err := db.QueryContext(ctx, "PRAGMA integrity_check")
 	if err != nil {
 		return storageError(ctx, err)
@@ -141,12 +155,27 @@ func validateManifest(ctx context.Context, db rowQuery) error {
 	if err = db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil {
 		return storageError(ctx, err)
 	}
-	if version != 1 && version != schemaVersion {
+	if version < 1 || version > schemaVersion {
 		return ErrInvalid
 	}
 	expected := currentManifest()
 	if version == 1 {
 		expected = schema1Manifest()
+	}
+	if version == 2 {
+		expected = schema2Manifest()
+	}
+	// Reject oversized manifest metadata in SQLite before transferring any DDL
+	// strings to Go. Exact recognition below still pins every expected object.
+	var objectCount int
+	if err = db.QueryRowContext(ctx, "SELECT count(*) FROM sqlite_schema").Scan(&objectCount); err != nil {
+		return storageError(ctx, err)
+	}
+	if objectCount != len(expected) {
+		return ErrInvalid
+	}
+	if err = validateRowShape(ctx, db, "sqlite_schema", []boundedColumn{{"type", 16, "text"}, {"name", 128, "text"}, {"tbl_name", 128, "text"}}, `(sql IS NOT NULL AND (typeof(sql)<>'text' OR length(CAST(sql AS BLOB))>16384))`); err != nil {
+		return err
 	}
 	rows, err := db.QueryContext(ctx, "SELECT type,name,tbl_name,sql FROM sqlite_schema")
 	if err != nil {

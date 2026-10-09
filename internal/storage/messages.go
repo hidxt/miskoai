@@ -101,7 +101,11 @@ func (s *Store) History(ctx context.Context, scope Scope, limit int) ([]Turn, er
 	if limit < 1 || limit > 1000 {
 		return nil, ErrInvalid
 	}
-	rows, err := s.db.QueryContext(ctx, `SELECT id,content,reply,state,created_at,updated_at FROM (SELECT id,content,reply,state,created_at,updated_at FROM messages WHERE account=? AND user=? AND state='sent' AND reply<>'' ORDER BY created_at DESC,id DESC LIMIT ?) ORDER BY created_at,id`, scope.Account, scope.User, limit)
+	return history(ctx, s.db, scope, limit)
+}
+
+func history(ctx context.Context, q rowQuery, scope Scope, limit int) ([]Turn, error) {
+	rows, err := q.QueryContext(ctx, `SELECT id,content,reply,state,created_at,updated_at FROM (SELECT id,content,reply,state,created_at,updated_at FROM messages WHERE account=? AND user=? AND state='sent' AND content<>'' AND reply<>'' ORDER BY created_at DESC,id DESC LIMIT ?) ORDER BY created_at,id`, scope.Account, scope.User, limit)
 	if err != nil {
 		return nil, storageError(ctx, err)
 	}
@@ -113,6 +117,9 @@ func (s *Store) History(ctx context.Context, scope Scope, limit int) ([]Turn, er
 		var created, updated int64
 		if err = rows.Scan(&t.ID, &t.Content, &reply, &t.State, &created, &updated); err != nil {
 			return nil, storageError(ctx, err)
+		}
+		if !validMessageID(t.ID) || !validField(t.Content, 16384) || !validField(reply, 16384) || t.State != "sent" {
+			return nil, ErrInvalid
 		}
 		t.CreatedAt = time.UnixMilli(created).UTC()
 		t.UpdatedAt = time.UnixMilli(updated).UTC()

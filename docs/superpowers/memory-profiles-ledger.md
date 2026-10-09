@@ -22,3 +22,11 @@ Spec: docs/superpowers/specs/2026-10-09-memory-profiles-design.md. Synthetic-onl
 Runtime service local gate passed afterfreshMediumreview/root258pass/1skip/vet0. Service development publication/nativeCI pending; actualcore stillnotexposed.
 
 Task1 started: freshGPT-6.1 Medium /root/memory_storage3; exactTask1storage-only ownership/report. Tasks2/3 notstarted. No actualprivateDBmigration bychild. Ownerresumed realwx tests separatelyhandledROOT; storagechildremains synthetic-only.
+
+Task1 frozen: freshMedium review found schema2sequenceadmission I1; originalMedium fixround1 observedRED unsafeacceptance/source mutation, version-awareboundedmetadata guard and24legacy2 snapshot/WAL cases fixed it. SameMedium scopedre-review approved; verifiedGo1.27.2 final183passes/0fail/1Unixskip/vet0. Rootintegratedsuite underway; noactualprivateDBmigration. Task2/3 notstarted. RootboundedWeChatvalidation separatelyusesimmutable reviewedStorage2+ACKexport.
+
+Root integrated gate completed on verifiedGo1.27.2:436 test/subtest passes, zero failures, one Unix permission skip; all-package vet exit0. Task2 freshMedium implementation subsequently froze30 scoped passing test entries/vet0 and received freshMedium approval with no findings; root task-specific verification pending. No actual model call or private migration.
+
+Task3 preflight refinement: the original ChatContext captures only stored active selection, but Agent Options may force another custom profile. Resolving that custom profile in a second read would violate the one captured snapshot requirement. Task3 therefore owns a narrow ChatContextWithProfile wrapper/private shared implementation and scoped profile-by-ID helper in existing storage files, tested without schema/admission/quota change. Empty override preserves active selection; explicit override does not mutate it. Root ordinary internal-API decision, no product/security/provider route change. Task3 still gated on root Task2 verification and publication checkpoint.
+
+Task2 complete: fresh Medium spec/quality review approved; root independent source inspection and30 summary test entries/0fail/0skip/scopedvet0 on verifiedGo1.27.2 passed. Task1 root436/0fail/1Unixskip/fullvet0 remains separate evidence. Task3 dispatch follows the reviewed publication checkpoint.

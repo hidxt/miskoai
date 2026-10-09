@@ -55,6 +55,18 @@ func (s *Store) AddFact(ctx context.Context, scope Scope, f Fact) (int64, error)
 		return 0, storageError(ctx, err)
 	}
 	defer tx.Rollback()
+	id, err := insertFact(ctx, tx, scope, f)
+	if err != nil {
+		return 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, storageError(ctx, err)
+	}
+	return id, nil
+}
+
+func insertFact(ctx context.Context, tx *sql.Tx, scope Scope, f Fact) (int64, error) {
+	var err error
 	var count, bytes int
 	if err = tx.QueryRowContext(ctx, "SELECT count(*),coalesce(sum(length(CAST(content AS BLOB))),0) FROM facts WHERE account=? AND user=?", scope.Account, scope.User).Scan(&count, &bytes); err != nil {
 		return 0, storageError(ctx, err)
@@ -75,9 +87,6 @@ func (s *Store) AddFact(ctx context.Context, scope Scope, f Fact) (int64, error)
 	}
 	id, err := result.LastInsertId()
 	if err != nil {
-		return 0, storageError(ctx, err)
-	}
-	if err = tx.Commit(); err != nil {
 		return 0, storageError(ctx, err)
 	}
 	return id, nil
@@ -162,7 +171,18 @@ func (s *Store) SearchFacts(ctx context.Context, scope Scope, query string, limi
 	if err := scope.validate(); err != nil {
 		return nil, err
 	}
-	if limit < 1 || limit > 1000 || len(query) > 1024 || !utf8.ValidString(query) || strings.ContainsRune(query, 0) {
+	if limit < 1 || limit > 1000 || !validFactQuery(query) {
+		return nil, ErrInvalid
+	}
+	return searchFacts(ctx, s.db, scope, query, limit)
+}
+
+func validFactQuery(query string) bool {
+	return len(query) <= 1024 && utf8.ValidString(query) && !strings.ContainsRune(query, 0) && len(strings.FieldsFunc(query, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsNumber(r) })) <= 32
+}
+
+func searchFacts(ctx context.Context, rq rowQuery, scope Scope, query string, limit int) ([]Fact, error) {
+	if scope.validate() != nil || limit < 1 || limit > 1000 || !validFactQuery(query) {
 		return nil, ErrInvalid
 	}
 	q := `SELECT ` + factColumns + ` FROM facts WHERE account=? AND user=? AND (expires_at IS NULL OR expires_at>?)`
@@ -193,7 +213,7 @@ func (s *Store) SearchFacts(ctx context.Context, scope Scope, query string, limi
 	}
 	q += ` ORDER BY importance DESC,updated_at DESC,id DESC LIMIT ?`
 	args = append(args, limit)
-	return s.readFacts(ctx, q, args...)
+	return readFacts(ctx, rq, q, args...)
 }
 
 func likePattern(v string) string {
@@ -206,11 +226,11 @@ func (s *Store) ExportFacts(ctx context.Context, scope Scope) ([]Fact, error) {
 	if err := scope.validate(); err != nil {
 		return nil, err
 	}
-	return s.readFacts(ctx, `SELECT `+factColumns+` FROM facts WHERE account=? AND user=? ORDER BY id LIMIT ?`, scope.Account, scope.User, maxFacts)
+	return readFacts(ctx, s.db, `SELECT `+factColumns+` FROM facts WHERE account=? AND user=? ORDER BY id LIMIT ?`, scope.Account, scope.User, maxFacts)
 }
 
-func (s *Store) readFacts(ctx context.Context, q string, args ...any) ([]Fact, error) {
-	rows, err := s.db.QueryContext(ctx, q, args...)
+func readFacts(ctx context.Context, rq rowQuery, q string, args ...any) ([]Fact, error) {
+	rows, err := rq.QueryContext(ctx, q, args...)
 	if err != nil {
 		return nil, storageError(ctx, err)
 	}
@@ -222,6 +242,9 @@ func (s *Store) readFacts(ctx context.Context, q string, args ...any) ([]Fact, e
 		var expires sql.NullInt64
 		if err = rows.Scan(&f.ID, &f.Content, &f.Category, &f.Source, &f.Confidence, &f.Importance, &created, &updated, &expires); err != nil {
 			return nil, storageError(ctx, err)
+		}
+		if f.ID <= 0 || f.validate() != nil {
+			return nil, ErrInvalid
 		}
 		f.CreatedAt = time.UnixMilli(created).UTC()
 		f.UpdatedAt = time.UnixMilli(updated).UTC()

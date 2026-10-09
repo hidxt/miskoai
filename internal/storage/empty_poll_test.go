@@ -52,7 +52,7 @@ func TestEmptyPollEvidenceLifecycle(t *testing.T) {
 				t.Fatal(err)
 			}
 			if err := ValidateBackup(ctx, backup); err != nil {
-				t.Fatalf("validate schema2 empty evidence backup: %v", err)
+				t.Fatalf("validate schema3 empty evidence backup: %v", err)
 			}
 			// Restore the validated completed snapshot to a fresh private child.
 			dir := filepath.Join(t.TempDir(), "private-restored")
@@ -74,7 +74,7 @@ func TestEmptyPollEvidenceLifecycle(t *testing.T) {
 			defer restored.Close()
 			assertEmptyPoll(t, restored, scope, id, "quarantined")
 			var version int
-			if err := restored.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil || version != 2 {
+			if err := restored.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil || version != 3 {
 				t.Fatalf("schema version=%d error=%v", version, err)
 			}
 		})
@@ -115,7 +115,7 @@ func TestEmptyPollFrameCapacity(t *testing.T) {
 }
 
 func TestEmptyPollSchema2SnapshotAdmission(t *testing.T) {
-	s, path := testStore(t)
+	s, path := testSchema2Store(t)
 	ctx := context.Background()
 	if _, err := s.db.Exec(`INSERT INTO poll_frames(account,user,cursor,body,state) VALUES('synthetic','user','',X'','quarantined')`); err != nil {
 		t.Fatal(err)

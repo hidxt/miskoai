@@ -25,6 +25,14 @@ The controlled unsafe conversion reads the SID starting in a validated ACCESS_AL
 
 Storage EOF/close reasoning was checked against actual Go1.27 database/sql (Rows.Next/Rows.close) and modernc.org/sqlite v1.60.1 rows.Close. Reviewer details and fixed six pre-scanner findings are in foundation-review.md. Dynamic evidence is synthetic local tests; no live API/QR/Linux/VPS pass is inferred.
 
+## Reviewed Storage3, summary and ACK checkpoint
+
+Verified Go1.27.2 source scan:34 files,5940 lines,45 findings; zero GolangErrors, zero high,7 medium G304,1 low G103 and37 low G104. Exit1 means findings remain. The frozen source includes reviewed Storage3, summary and ACK code; agent integration is not included. No suppression was added.
+
+The older gosec build could not read Go1.27.2 export-data version5 and its partial scan is invalid. The complete scan uses isolated development-only gosec v2.29.0 built with Go1.27.2 and golang.org/x/tools v0.51.0, whose official reader supports version5. This tool adjustment changes no application dependencies and does not use scanner AI features.
+
+Root inspected all11 additional G104 branches: admission3.go86/90/105/109/173/178/193/197, derived.go248 and profiles.go136/141. They close rows immediately before an unconditional Scan, validation or decode error return. A cleanup error cannot admit refused input. Successful iterations call closeValidatedRows and check iteration/close errors before committing. Earlier G304/G103/G104 dispositions remain applicable to their unchanged paths, with current line numbers shifted. Summary and ACK code introduce no scanner finding. Full final service security review remains pending.
+
 ## Text-core development rerun
 
 After storage2 and frozen text agent, product-only `gosec -fmt=json -out=.tools/gosec-text-core.json ./cmd/... ./internal/...` returned exit1. On this Windows shell its JSON was emitted to the captured output; root extracted and parsed that report into the ignored JSON artifact.25source files/3747lines,34findings:7mediumG304,1lowG103,26lowG104; no high and no Golang errors. No suppression or zero-warning claim.

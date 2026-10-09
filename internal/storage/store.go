@@ -22,6 +22,7 @@ var (
 	ErrNotFound = errors.New("scoped record not found")
 	ErrStorage  = errors.New("storage operation failed")
 	ErrCapacity = errors.New("storage capacity reached")
+	ErrStale    = errors.New("stale derived revision")
 )
 
 type Store struct{ db *sql.DB }
@@ -96,9 +97,35 @@ func Open(path string) (*Store, error) {
 		probe.SetMaxOpenConns(1)
 		probe.SetMaxIdleConns(1)
 		var version int
+		hasSidecar := false
 		e = validateManifest(probeCtx, probe)
 		if e == nil {
 			e = probe.QueryRowContext(probeCtx, "PRAGMA user_version").Scan(&version)
+			if e == nil && version >= 2 {
+				for _, suffix := range []string{"-wal", "-shm"} {
+					if info, sideErr := os.Lstat(abs + suffix); sideErr == nil {
+						if !info.Mode().IsRegular() {
+							e = ErrInvalid
+							break
+						}
+						hasSidecar = true
+					} else if !errors.Is(sideErr, os.ErrNotExist) {
+						e = ErrStorage
+						break
+					}
+				}
+				// A completed WAL-mode snapshot with no journals must be checked
+				// immutably. mode=ro may create empty WAL/SHM even on refusal.
+				if e == nil && !hasSidecar {
+					e = validateLegacyCapacity(probeCtx, probe)
+				}
+				if e == nil && !hasSidecar {
+					e = validateReceiveCapacity(probeCtx, probe)
+				}
+				if e == nil && !hasSidecar {
+					e = validateSchema3IfPresent(probeCtx, probe)
+				}
+			}
 			if e == nil && version == 1 {
 				for _, suffix := range []string{"-wal", "-shm"} {
 					if _, sideErr := os.Lstat(abs + suffix); sideErr == nil {
@@ -123,7 +150,7 @@ func Open(path string) (*Store, error) {
 		if e != nil {
 			return nil, e
 		}
-		if version == schemaVersion {
+		if version >= 2 && hasSidecar {
 			// Read the effective schema/data including any retained WAL only
 			// after the immutable main manifest established this is MiskoAI.
 			dsn.RawQuery = "mode=ro"
@@ -146,6 +173,9 @@ func Open(path string) (*Store, error) {
 			}
 			if e == nil {
 				e = validateReceiveCapacity(probeCtx, admission)
+			}
+			if e == nil {
+				e = validateSchema3IfPresent(probeCtx, admission)
 			}
 			if admission != nil {
 				if rollbackErr := admission.Rollback(); e == nil && rollbackErr != nil {

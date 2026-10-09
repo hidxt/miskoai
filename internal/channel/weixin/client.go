@@ -292,14 +292,11 @@ func (c *Client) SendText(ctx context.Context, to, contextToken, clientID, text 
 		Message
 		From string `json:"from_user_id"`
 	}{msg, ""}, metadata()}
-	var out struct {
-		Ret *int `json:"ret"`
+	raw, err := c.exchange(ctx, c.base, "POST", "/ilink/bot/sendmessage", body, true, true, 15*time.Second)
+	if err != nil {
+		return err
 	}
-	e := c.call(ctx, c.base, "POST", "/ilink/bot/sendmessage", body, true, true, 15*time.Second, &out)
-	if e == nil && out.Ret == nil {
-		return ErrOutcomeUnknown
-	}
-	return e
+	return sendAcknowledgement(raw)
 }
 
 // StartQR always uses the official fixed bootstrap endpoint. No token is sent.

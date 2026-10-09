@@ -1,6 +1,6 @@
 module github.com/hidxt/miskoai
 
-go 1.27.0
+go 1.27.2
 
 require (
 	golang.org/x/sys v0.48.0

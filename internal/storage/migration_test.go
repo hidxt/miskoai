@@ -46,7 +46,7 @@ func TestSchema1SnapshotMigratesAndForeignZeroFails(t *testing.T) {
 		t.Fatal(err)
 	}
 	var version int
-	if err = s.db.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != 2 {
+	if err = s.db.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != 3 {
 		t.Fatalf("migration: %d %v", version, err)
 	}
 	facts, err := s.SearchFacts(ctx, Scope{"a", "u"}, "synthetic", 10)
@@ -65,7 +65,7 @@ func TestSchema1SnapshotMigratesAndForeignZeroFails(t *testing.T) {
 	}
 	s.Close()
 	if err = ValidateBackup(ctx, dest); err != nil {
-		t.Fatalf("schema2 snapshot: %v", err)
+		t.Fatalf("schema3 snapshot: %v", err)
 	}
 	foreign := filepath.Join(dir, "foreign.db")
 	db, err = sql.Open("sqlite", foreign)
@@ -112,7 +112,7 @@ func TestInitializedSchemaIsCheckpointedBeforeReceiving(t *testing.T) {
 	}
 	defer probe.Close()
 	var version int
-	if err = probe.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != 2 {
+	if err = probe.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != 3 {
 		t.Fatalf("fresh main DB not durable before polls: %d %v", version, err)
 	}
 	if _, err = s.RecordPoll(ctx, scope, "", []byte("durable WAL evidence")); err != nil {
@@ -185,7 +185,7 @@ func TestLegacyOverCapacityMigrationPreservesSchema(t *testing.T) {
 func TestSchema2EffectiveWALAdmission(t *testing.T) {
 	for _, mode := range []string{"altered", "over-cap"} {
 		t.Run(mode, func(t *testing.T) {
-			s, path := testStore(t)
+			s, path := testSchema2Store(t)
 			var err error
 			if mode == "altered" {
 				_, err = s.db.Exec(`CREATE TABLE foreign_in_wal(value TEXT)`)
@@ -296,12 +296,15 @@ func TestAdmissionRejectsUnsafeRowsBeforeMutation(t *testing.T) {
 				}
 				var db *sql.DB
 				if mode == "schema2-wal" {
-					s, err := Open(path)
+					var err error
+					db, err = sql.Open("sqlite", path)
 					if err != nil {
 						t.Fatal(err)
 					}
-					db = s.db
-					t.Cleanup(func() { s.Close() })
+					if _, err = db.Exec(schema + schema2 + "PRAGMA journal_mode=WAL; PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+						t.Fatal(err)
+					}
+					t.Cleanup(func() { db.Close() })
 				} else {
 					var err error
 					db, err = sql.Open("sqlite", path)
