@@ -141,3 +141,9 @@ Real media verification remains deferred with all other real WeChat testing.
 
 Validation performed: read pinned public source and line-numbered cached
 files. No media code/tests/builds executed; this report makes no runtime claims.
+
+## Root follow-up before adoption
+
+Root independently inspected the pinned cached aes-ecb.ts, cdn-url.ts and pic-decrypt.ts implementations: ECB padded length, both incoming key encodings and source URL precedence match the evidence above. This does not adopt reference logging/unbounded arrayBuffer/plain-image fallback behavior. A Go media adapter must use the reviewed private spool/public-IP TLS policy, reject malformed keys/unsafe returned origins and never expose key/query/body in errors or model context.
+
+The original proposal's ret0-only sentence predates owner-approved D025. Any future sendmessage media path must reuse the same reviewed strict acknowledgement classifier as text: explicitret0 preserved, genuinely absentret accepted only with complete successful object/positiveuint64serverID/no error status; uncertain stillambiguous/no automatic retry. Real verification has resumed for text, but encrypted media, GIF animation and native sticker acceptance remain unverified. Media extracted text is untrusted external data, never copied into the genuine USER-evidence column used for candidate confirmation. Attachment-only handling may persist an empty genuine caption while retaining ID/state; it must not invent a user statement as summary provenance.

@@ -6,42 +6,24 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 
 	"github.com/hidxt/miskoai/internal/config"
+	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/storage"
 )
 
-func privateDir(dir string) error {
-	abs, err := filepath.Abs(dir)
-	if err != nil {
-		return errors.New("invalid private directory")
-	}
-	cwd, _ := os.Getwd()
-	if abs == filepath.VolumeName(abs)+string(os.PathSeparator) || abs == cwd {
-		return errors.New("use a dedicated data directory")
-	}
-	if err = os.MkdirAll(abs, 0700); err != nil {
-		return errors.New("cannot create private directory")
-	}
-	info, err := os.Lstat(abs)
-	if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-		return errors.New("private directory is not a real directory")
-	}
-	if runtime.GOOS != "windows" && info.Mode().Perm()&0077 != 0 {
-		return errors.New("data directory requires owner-only permissions")
-	}
-	return nil
-}
+func privateDir(dir string) error { return privatefs.EnsureDir(dir) }
 
 func initialize(c config.Config, out io.Writer) error {
 	if err := privateDir(c.DataDir); err != nil {
 		return err
 	}
-	file, err := os.OpenFile(filepath.Join(c.DataDir, "settings.json"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	file, err := privatefs.Create(filepath.Join(c.DataDir, "settings.json"))
 	if err != nil {
 		return errors.New("configuration already exists or cannot be created")
 	}
@@ -62,7 +44,11 @@ func doctor(c config.Config, out io.Writer) error {
 		return errors.New("cannot create diagnostic directory")
 	}
 	defer os.RemoveAll(dir)
-	db, err := storage.Open(filepath.Join(dir, "probe.db"))
+	private := filepath.Join(dir, "private")
+	if err := privatefs.EnsureDir(private); err != nil {
+		return err
+	}
+	db, err := storage.Open(filepath.Join(private, "probe.db"))
 	if err != nil {
 		return err
 	}
@@ -78,6 +64,22 @@ func doctor(c config.Config, out io.Writer) error {
 
 func backup(ctx context.Context, c config.Config, dest string, out io.Writer) error {
 	path := filepath.Join(c.DataDir, "miskoai.db")
+	if err := privatefs.CheckFile(path, math.MaxInt64); err != nil {
+		return err
+	}
+	for _, suffix := range []string{"-wal", "-shm"} {
+		if _, err := os.Lstat(path + suffix); errors.Is(err, os.ErrNotExist) {
+			continue
+		} else if err != nil {
+			return privatefs.ErrUnsafe
+		}
+		if err := privatefs.CheckFile(path+suffix, math.MaxInt64); err != nil {
+			return err
+		}
+	}
+	if err := privatefs.EnsureDir(filepath.Dir(dest)); err != nil {
+		return err
+	}
 	if info, err := os.Lstat(path); err != nil || !info.Mode().IsRegular() {
 		return errors.New("source database does not exist as a regular file")
 	}
@@ -102,7 +104,7 @@ func restore(ctx context.Context, c config.Config, source string, out io.Writer)
 		return err
 	}
 	lockPath := filepath.Join(c.DataDir, ".miskoai.lock")
-	lock, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	lock, err := privatefs.Create(lockPath)
 	if err != nil {
 		return errors.New("data directory locked; stop service and inspect stale locks before restore")
 	}
@@ -117,6 +119,9 @@ func restore(ctx context.Context, c config.Config, source string, out io.Writer)
 	if err != nil || sourceAbs == path {
 		return errors.New("invalid restore source")
 	}
+	if err := privatefs.CheckFile(sourceAbs, 256<<20); err != nil {
+		return err
+	}
 	info, err := os.Lstat(sourceAbs)
 	if err != nil || !info.Mode().IsRegular() || info.Size() < 16 || info.Size() > 256<<20 {
 		return errors.New("invalid restore backup file")
@@ -126,7 +131,11 @@ func restore(ctx context.Context, c config.Config, source string, out io.Writer)
 		return errors.New("cannot read restore source")
 	}
 	defer in.Close()
-	temp, err := os.CreateTemp(c.DataDir, "restore-*.tmp")
+	openedInfo, err := in.Stat()
+	if err != nil || !os.SameFile(info, openedInfo) || info.Size() != openedInfo.Size() || !info.ModTime().Equal(openedInfo.ModTime()) {
+		return errors.New("restore source changed")
+	}
+	temp, err := privatefs.Create(filepath.Join(c.DataDir, fmt.Sprintf("restore-%d.tmp", time.Now().UnixNano())))
 	if err != nil {
 		return errors.New("cannot create restore candidate")
 	}
@@ -140,6 +149,10 @@ func restore(ctx context.Context, c config.Config, source string, out io.Writer)
 	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
+	finalInfo, finalErr := in.Stat()
+	if finalErr != nil || finalInfo.Size() != openedInfo.Size() || !finalInfo.ModTime().Equal(openedInfo.ModTime()) || privatefs.CheckFile(sourceAbs, 256<<20) != nil {
+		return errors.New("restore source changed")
+	}
 	if err = storage.ValidateBackup(ctx, candidate); err != nil {
 		return errors.New("restore candidate is not a supported MiskoAI snapshot")
 	}
@@ -156,6 +169,9 @@ func restore(ctx context.Context, c config.Config, source string, out io.Writer)
 	if info, e := os.Lstat(path); e == nil {
 		if !info.Mode().IsRegular() {
 			return errors.New("restore target is not regular")
+		}
+		if err := privatefs.CheckFile(path, math.MaxInt64); err != nil {
+			return err
 		}
 		previous = filepath.Join(c.DataDir, fmt.Sprintf("pre-restore-%d.db", time.Now().UnixNano()))
 		if err = os.Rename(path, previous); err != nil {

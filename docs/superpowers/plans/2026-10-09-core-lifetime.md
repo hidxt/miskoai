@@ -27,7 +27,7 @@
 - Missing authorization, missing provider key and expired authorization produce honest distinct safe state, never a fabricated ready state.
 
 ## Task1: Shared lifecycle lock and stopped maintenance — Medium
-**Files:** create internal/maintenance/{lock.go,backup.go,restore.go,pause.go,maintenance_test.go}; modify internal/cli/{operations.go,operations_test.go} to delegate existing operations without unrelated refactor. Report docs/superpowers/reports/2026-10-09-maintenance.md.
+**Files:** create internal/maintenance/{lock.go,backup.go,restore.go,pause.go,maintenance_test.go}; modify internal/cli/{operations.go,cli_test.go} to delegate existing operations without unrelated refactor. Report docs/superpowers/reports/2026-10-09-maintenance.md.
 
 **Interfaces:**
 - `Acquire(dataDir string)(*Lock,error)` verifies privatefs, exclusively creates .miskoai.lock through privatefs.Create before payload, and retains ownership for lifetime. `(*Lock).Close()error` idempotently closes/removes only the acquired object; identity mismatch refuses removal. Existing lock is never guessed stale/deleted automatically. Safe errors only.

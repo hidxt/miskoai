@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/storage"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,7 +25,7 @@ func TestVersionAndUnknownCommand(t *testing.T) {
 
 func TestRestoreRejectsUnrelatedSQLite(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "private")
-	if err := os.Mkdir(dir, 0700); err != nil {
+	if err := privatefs.EnsureDir(dir); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("MISKOAI_DATA_DIR", dir)
@@ -50,6 +52,9 @@ func TestRestoreRejectsUnrelatedSQLite(t *testing.T) {
 
 func TestBackupRestoreRoundTrip(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "private")
+	if err := privatefs.EnsureDir(dir); err != nil {
+		t.Fatal(err)
+	}
 	t.Setenv("MISKOAI_DATA_DIR", dir)
 	s, err := storage.Open(filepath.Join(dir, "miskoai.db"))
 	if err != nil {
@@ -62,6 +67,9 @@ func TestBackupRestoreRoundTrip(t *testing.T) {
 	}
 	s.Close()
 	backup := filepath.Join(t.TempDir(), "private", "snapshot.db")
+	if err := privatefs.EnsureDir(filepath.Dir(backup)); err != nil {
+		t.Fatal(err)
+	}
 	var out bytes.Buffer
 	if err = Run([]string{"backup", backup}, &out); err != nil {
 		t.Fatal(err)
@@ -85,6 +93,91 @@ func TestBackupRestoreRoundTrip(t *testing.T) {
 	facts, err := s.ExportFacts(context.Background(), scope)
 	if err != nil || len(facts) != 1 || facts[0].Content != "explicit fixture fact" {
 		t.Fatalf("restore failed %#v %v", facts, err)
+	}
+}
+
+func TestBackupRejectsUnsafeSidecarBeforeMutation(t *testing.T) {
+	for _, suffix := range []string{"-wal", "-shm"} {
+		t.Run(suffix, func(t *testing.T) {
+			dir := filepath.Join(t.TempDir(), "private")
+			if err := privatefs.EnsureDir(dir); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("MISKOAI_DATA_DIR", dir)
+			main := filepath.Join(dir, "miskoai.db")
+			s, err := storage.Open(main)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err = s.Close(); err != nil {
+				t.Fatal(err)
+			}
+			wal := main + "-wal"
+			shm := main + "-shm"
+			unsafePath := main + suffix
+			safePath := shm
+			if suffix == "-shm" {
+				safePath = wal
+			}
+			broad := filepath.Join(t.TempDir(), "broad-synthetic")
+			if err := os.WriteFile(broad, []byte("unsafe synthetic journal"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(broad, 0644); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Rename(broad, unsafePath); err != nil {
+				t.Fatal(err)
+			}
+			if err := privatefs.CheckFile(unsafePath, math.MaxInt64); err == nil {
+				t.Fatal("unsafe fixture unexpectedly private")
+			}
+			f, err := privatefs.Create(safePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err = f.WriteString("unchanged synthetic shm"); err != nil {
+				f.Close()
+				t.Fatal(err)
+			}
+			if err = f.Close(); err != nil {
+				t.Fatal(err)
+			}
+			paths := []string{main, wal, shm}
+			contents := make([][]byte, 3)
+			infos := make([]os.FileInfo, 3)
+			for i, p := range paths {
+				contents[i], err = os.ReadFile(p)
+				if err != nil {
+					t.Fatal(err)
+				}
+				infos[i], err = os.Stat(p)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			dest := filepath.Join(t.TempDir(), "new-private", "snapshot.db")
+			var out bytes.Buffer
+			if err := Run([]string{"backup", dest}, &out); err == nil {
+				t.Fatal("unsafe sidecar accepted")
+			}
+			for i, p := range paths {
+				got, e := os.ReadFile(p)
+				if e != nil || !bytes.Equal(got, contents[i]) {
+					t.Fatal("database or sidecar bytes changed", i, e)
+				}
+				info, e := os.Stat(p)
+				if e != nil || !os.SameFile(info, infos[i]) || info.Mode() != infos[i].Mode() || info.Size() != infos[i].Size() || !info.ModTime().Equal(infos[i].ModTime()) {
+					t.Fatal("database or sidecar metadata changed", i, e)
+				}
+			}
+			if err := privatefs.CheckFile(unsafePath, math.MaxInt64); err == nil {
+				t.Fatal("unsafe sidecar permissions repaired")
+			}
+			if _, err := os.Stat(filepath.Dir(dest)); !os.IsNotExist(err) {
+				t.Fatal("backup destination created before refusal", err)
+			}
+		})
 	}
 }
 
@@ -118,7 +211,7 @@ func TestInitNeverOverwritesAndDoctorRedacts(t *testing.T) {
 
 func TestRestoreRejectsCorruptBackupWithoutReplacingData(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "private")
-	if err := os.Mkdir(dir, 0700); err != nil {
+	if err := privatefs.EnsureDir(dir); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("MISKOAI_DATA_DIR", dir)

@@ -18,6 +18,7 @@ import (
 
 	"github.com/hidxt/miskoai/internal/channel/weixin"
 	"github.com/hidxt/miskoai/internal/config"
+	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/provider"
 )
 
@@ -136,13 +137,9 @@ func saveAuthorization(c config.Config, status weixin.QRStatus) error {
 	if err := privateDir(c.DataDir); err != nil {
 		return err
 	}
-	file, err := os.OpenFile(filepath.Join(c.DataDir, "weixin-auth.json"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	file, err := privatefs.Create(filepath.Join(c.DataDir, "weixin-auth.json"))
 	if err != nil {
 		return errors.New("authorization file exists or cannot be created; inspect existing account before replacing")
-	}
-	if err = protectAuthorizationFile(file); err != nil {
-		file.Close()
-		return err
 	}
 	err = json.NewEncoder(file).Encode(authorization{status.BotToken, status.BotID, status.UserID, status.BaseURL})
 	syncErr := file.Sync()

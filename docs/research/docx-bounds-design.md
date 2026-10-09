@@ -55,3 +55,7 @@ Stream bounded chunks with strict UTF-8 validation and up to three carry bytes f
 - Expired contexts, cancellation during preflight/decode, worker saturation, exact-bound success and one-unit-over rejection.
 
 Commands used for evidence: Get-Content on required project policy documents; go env GOROOT; rg source-symbol searches; bounded source excerpts; go version. No runtime tests were executed. Parent integration must review the parser implementation and run synthetic, native Linux and resource tests before acceptance.
+
+## Root toolchain follow-up
+
+After the verified official toolchain update to Go1.27.2, root compared complete archive/zip and encoding/xml source directories against the installed Go1.27.0 reference using git diff --no-index --stat. Both returned exit0 with no differences. The pinned allocation/CRC/XML evidence still applies to these source files; parser implementation/adversarial/runtime/CPU/RSS acceptance remains pending.

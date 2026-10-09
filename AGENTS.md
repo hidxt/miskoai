@@ -3,7 +3,7 @@
 Read REQUIREMENTS.md, SECURITY.md, ARCHITECTURE.md, TASKS.md, MEMORY.md and DELIVERY.md before work. Preserve LICENSE and existing content. Module: github.com/hidxt/miskoai. Brand: MiskoAI; repository: miskoai.
 
 ## Responsibility
-The primary GPT-6.1 High agent owns architecture, scope decisions, integration, security, performance and acceptance. Child agents may use **only GPT-6.1 Medium or GPT-6.1 Low**. The primary chooses each task's effort explicitly; no alternate model. Harness identifier is gpt-6.1-sol with reasoning_effort medium or low.
+The primary GPT-6.1 High agent owns architecture, scope decisions, integration, security, performance and acceptance. Child agents may use **only GPT-6.1 Medium or GPT-6.1 Low**. The primary chooses each task's effort explicitly; no alternate model. Before every child dispatch/resume, report the exact model and reasoning effort to the user together with whole-project progress. Every progress report distinguishes implementation, local tests, native CI, live tests and final acceptance. Harness identifier is gpt-6.1-sol with reasoning_effort medium or low.
 Medium: protocols, provider/storage design, concurrency, complex fixes, security review. Low: bounded fixtures/tests, CLI/static views, templates, documentation. Low cannot change authentication/privacy/storage policy or architecture independently.
 
 ## Handoff and file ownership

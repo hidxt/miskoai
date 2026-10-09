@@ -2,7 +2,9 @@
 
 package cli
 
-import "os"
+import (
+	"github.com/hidxt/miskoai/internal/privatefs"
+	"os"
+)
 
-// Authorization files on non-Windows targets are created with mode 0600.
-func protectAuthorizationFile(file *os.File) error { return nil }
+func protectAuthorizationFile(file *os.File) error { return privatefs.ProtectEmpty(file) }
