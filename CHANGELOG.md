@@ -23,3 +23,5 @@
 No released application version yet. Hosted Linux evidence is not512MB/VPS or arm64-runtime acceptance; lifecycle/Web/media/final release remain open.
 
 - Added locally reviewed joined Core/controller administration with fixed authorization scope, shared model admission, bounded store leases, owned downloads and explicit restore reconciliation. Startup refuses residual journals with missing/empty main before mutation; compatible maintenance.BackupOwned preserves producer identity. Operational serve/Web integration and native Core/live/resource/release acceptance remain pending.
+
+- Locally reviewed private AES128ECB/PKCS7 compatibility codec with strict key spelling,4MiB plaintext/4MiB+16ciphertext streaming and completed identity-owned artifacts. CDN/format/channel integration and native/live/final acceptance remain pending.
