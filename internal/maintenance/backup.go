@@ -15,30 +15,40 @@ func Backup(ctx context.Context, s *storage.Store, destination string) error {
 	return backupWithOperations(ctx, s, destination, backupOperations{})
 }
 
+// BackupOwned preserves the verified snapshot producer's opened-handle identity
+// across validation and return. The caller must retain lifecycle ownership.
+func BackupOwned(ctx context.Context, s *storage.Store, destination string) (os.FileInfo, error) {
+	return backupOwnedWithOperations(ctx, s, destination, backupOperations{})
+}
+
 type backupOperations struct {
 	snapshot func(context.Context, *storage.Store, string) (os.FileInfo, error)
 	validate func(context.Context, string) error
 }
 
 func backupWithOperations(ctx context.Context, s *storage.Store, destination string, ops backupOperations) error {
+	_, err := backupOwnedWithOperations(ctx, s, destination, ops)
+	return err
+}
+func backupOwnedWithOperations(ctx context.Context, s *storage.Store, destination string, ops backupOperations) (os.FileInfo, error) {
 	if s == nil || ctx == nil {
-		return errMaintenance
+		return nil, errMaintenance
 	}
 	if ctx.Err() != nil {
-		return ctx.Err()
+		return nil, ctx.Err()
 	}
 	dest, e := privatefs.Resolve(destination)
 	if e != nil {
-		return e
+		return nil, e
 	}
 	if e = privatefs.EnsureDir(filepath.Dir(dest)); e != nil {
-		return e
+		return nil, e
 	}
 	if _, e = os.Lstat(dest); !errors.Is(e, os.ErrNotExist) {
-		return errMaintenance
+		return nil, errMaintenance
 	}
 	if e = noJournals(dest); e != nil {
-		return e
+		return nil, e
 	}
 	snapshot := ops.snapshot
 	if snapshot == nil {
@@ -48,10 +58,10 @@ func backupWithOperations(ctx context.Context, s *storage.Store, destination str
 	}
 	info, e := snapshot(ctx, s, dest)
 	if e != nil {
-		return errMaintenance
+		return nil, errMaintenance
 	}
 	if !backupIdentityMatches(dest, info) {
-		return errMaintenance
+		return nil, errMaintenance
 	}
 	validate := ops.validate
 	if validate == nil {
@@ -59,11 +69,11 @@ func backupWithOperations(ctx context.Context, s *storage.Store, destination str
 	}
 	if privatefs.CheckFile(dest, math.MaxInt64) != nil || validate(ctx, dest) != nil || !backupIdentityMatches(dest, info) {
 		if removeOwned(dest, info) != nil {
-			return errMaintenance
+			return nil, errMaintenance
 		}
-		return errMaintenance
+		return nil, errMaintenance
 	}
-	return nil
+	return info, nil
 }
 func backupIdentityMatches(path string, owned os.FileInfo) bool {
 	named, e := os.Lstat(path)

@@ -1,0 +1,49 @@
+# Allocation-aware image validation Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Root dispatch after codec acceptance; no live media or provider call is part of this task.
+
+**Goal:** Validate bounded PNG/JPEG/GIF contents only after structural preflight has accounted for decoder image buffers, progressive JPEG coefficients and all retained GIF frames.
+
+**Architecture:** Inspect an immutable, completed private artifact through ReaderAt/SectionReader without copying all input. A constant-space format scanner rejects unsupported/oversized structures before calling the Go1.27.2 decoder. Full decoding proves compressed-content validity; its image objects stay internal and are discarded after validation.
+
+**Tech Stack:** verified Go1.27.2 image/png, image/jpeg, image/gif, hash/crc32, io; no new decoder dependency/runtime.
+
+**Spec:** docs/superpowers/specs/2026-10-09-attachments-design.md and root source analysis docs/research/image-decode-bounds.md. The Go source remains in the verified private toolchain; adapted code must retain its BSD notice if copied. Prefer independent small structural scanners to copying decoders.
+
+## Global Constraints
+
+- Only GPT-6.1 Sol Medium (gpt-6.1-sol,medium), no delegation/network/private data/Git/global configuration changes. One512MB-target native process; actual512MB/RSS remains unverified.
+- Input<=4MiB, width/height1..8192, visible canvas pixels<=16,000,000. One outer actual media/parser admission is required later; no detached decoder goroutine.
+- Conservative admitted decoder-buffer estimate<=64MiB, GIF<=32frames, checked cumulative frame-pixel estimate before DecodeAll. These are initial internal admission defaults within the existing target, not measured heap/RSS/time guarantees. Scanner checks before every arithmetic/allocation-dependent admission.
+- Cooperative2s context checked in scanner/reader and before/after decoder; actual decode must return before the outer job frees admission. An arbitrary blocking ReaderAt or pure decoder computation cannot be forcibly canceled by context alone.
+- Files, MIME, extension and user filename are untrusted. Detect by signature and verify structure; no external URL or HTML interpretation.
+
+## Review Focus
+
+- Tiny progressive/CMYK/flex JPEG headers describing large rounded coefficient/plane allocations are rejected before full decoder invocation, even when visible pixels satisfy the old PoC cap.
+- A GIF with small first frame but many/larger later frames is fully preflighted before DecodeAll; frame offsets and logical canvas bounds cannot hide cumulative allocations.
+- Interlaced16bit PNG includes full and pass images plus row buffers in the conservative estimate; APNG is explicitly unsupported rather than silently treating an animation as a validated static PNG.
+- Truncated entropy/chunk/subblock data or wrong CRC never gets an accepted Info from a successful DecodeConfig-only shortcut.
+- Cancellation/overflow/unsupported structures return fixed safe errors, retain caller artifact ownership, and never abandon an actual decoder job.
+
+## Task1: Structural preflight and complete validation — Medium
+
+**Files:** create internal/media/{image.go,image_png.go,image_jpeg.go,image_gif.go,image_test.go}; report docs/superpowers/reports/2026-10-10-image-validation.md. No codec/CLI/provider/channel/CDN/storage edits.
+
+**Interfaces:**
+- `ValidateImage(ctx context.Context,input io.ReaderAt,size int64)(ImageInfo,error)` consumes only completed immutable bytes; refuses nil/size<=0/>4MiB. `ImageInfo{Format string; Width,Height,Frames int; Animated bool; EstimatedDecodeBytes int64}` contains no private path, caption, key or decoded pixels. Format is exactly png/jpeg/gif; static PNG/JPEG Frames1. Caller retains and closes artifact. Validate does not fetch, transcode, send or claim provider acceptance.
+- PNG scanner checks signature, exact first IHDR13bytes, supported legal depth/color/interlace fields, safe dimensions, bounded4096chunks, each declared length within remaining input, CRC, no duplicate IHDR, IDAT/IEND structure and exact terminal IEND. Reject acTL/fcTL/fdAT as unsupported. Conservative estimate `16*width*height + 2*(8*width+1) + 1MiB`: accounts for up to8bytes/pixel full image plus a simultaneously retained interlace pass, maximum two64bit rows and fixed decoder/flate metadata. Use checked int64 arithmetic and estimate<=64MiB before Decode. This may conservatively reject legal larger images; do not relax from visible pixel counts alone.
+- JPEG scanner walks the full bounded stream, segment lengths, byte-stuffed entropy/restart markers through exact EOI, with<=4096markers and no trailing bytes. Inspect one supported SOF0/SOF1/SOF2, precision8,1/3/4components, unique component IDs and sampling1..4, valid dimensions. Reject repeated/unsupported SOF before decoder. MaxH/MaxV and all component sampling come from that SOF, not only luma. `mx=ceil(width/(8*maxH))`, `my=ceil(height/(8*maxV))`, `R=(8*maxH*mx)*(8*maxV*my)`; conservative retained planes/black/conversion estimate `4*R + 4*width*height + 1MiB`, plus for progressive `256*mx*my*sum(h_i*v_i)`. Checked arithmetic and<=64MiB before Decode. Root verified Go1.27.2 scan.go13..54/155..167 and reader.go695/780: Gray/YCbCr/black allocations, MCU padding, all component coefficient blocks and possible simultaneous RGBA conversion. Reconfirm this source contract before future Go version upgrades; estimate is specific to the pinned decoder, not arbitrary future allocations.
+- GIF scanner checks GIF87a/89a, logical screen/color tables, every extension/subblock and every frame descriptor through exact trailer/no trailing data. Refuse unknown structural forms that cannot be bounded, descriptor zero dimension/out-of-canvas range,>32frames, missing frame/trailer or truncation. Track actual sum(frame width*height) with checked arithmetic before any DecodeAll. Estimate `sumFramePixels + 1MiB + frameCount*16KiB` accounts for retained Paletted pixels, per-frame palettes/metadata and bounded LZW/fixed tables;<=64MiB. Canvas visible pixel cap also applies. No full frame list in scanner; the decoder's<=32 list is bounded. This task does not allocate a canvas compositor/first-frame RGBA conversion; any later rendering adds its own overlapping allocation estimate.
+- Invoke the exact detected decoder only after scanner success using a context-aware bounded SectionReader. PNG/JPEG full Decode, GIF full DecodeAll. Require decoder dimensions/format/frame count match inspected info; reject decoder/read error/late cancellation with fixed invalid/unsupported/limit/IO errors, preserving context cancellation. No partial Info success. CRC/validity is not cryptographic authenticity. No DecodeConfig-only acceptance.
+- Private per-call decoder seam may prove oversized input is rejected before actual decoder entry; no exported/global runtime hook. Fixed small scan scratch<=32KiB, no allocation based on unvalidated lengths. Do not catch arbitrary panic and claim all malformed content safely parsed; meaningful finite adversarial/fuzz fixtures are required.
+
+- [ ] Runtime RED TestImagePNGAndJPEGCompleteValidity (generated Latin/synthetic small images and truncation/CRC/entropy), TestImageProgressiveSamplingEstimate (padded progressive/four-component/flex structures within old visible cap but over64MiB; decoder seam never called), TestImagePNG16BitInterlaceEstimate (pre-allocation refusal/APNG unsupported).
+- [ ] Runtime RED TestImageGIFAllFramesBounded (valid tiny animation, small-first/large-later,32 versus33frames, summed overbudget, offset overflow/truncation), TestImageCheckedArithmeticAndLimits (4MiB+1,8192+1,16M+1, malformed lengths, exact conservative estimate boundaries), TestImageCancellationAndOwnership (actual decoder held cancellation-aware, no detached return/caller file untouched/secret canary absent).
+- [ ] Add finite adversarial/fuzz seeds covering each structural scanner, bounded test inputs/time and no intentionally unguarded OOM/hang. Complete normal compressed decode examples must pass; fake headers alone do not prove a supported format.
+- [ ] Implement scanner/decoder contract with runtime RED before production code; no transformations/vision/library behavior or changes to current explicit PoC.
+- [ ] Run `go test -json ./internal/media ./internal/privatefs -count=1` and scoped vet under verified Go/offline caches; exact named pass/fail/skips and RED/GREEN required. Report conservative estimate assumptions and cancellation limits. Freeze for fresh Medium decoder/resource/security review and root integrated/native checks.
+
+## Root self-review and downstream limits
+
+This plan maps all five Review Focus conditions to tests. It covers only allocation-aware image validity from the attachments design. Codec/CDN gates supply immutable bounded bytes; downstream must add shared total admission, metadata digest/length checks, base64/JSON copies, GIF vision policy, library disk quotas, image upload/send and real backend evidence. Animated GIF validation means structurally valid retained animation, not native sticker or animated delivery. The estimates concern decoder-owned buffers plus conservative fixed overhead; they do not bound the entire Go heap, allocator/GC overlap or OS RSS. Do not report a512MB or hard2s acceptance without authorized native workload evidence. Routine internal cap decisions are root-owned conservative defaults; changing the target/provider/deployment requires the owner's explicit approval.

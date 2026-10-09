@@ -2,7 +2,7 @@
 
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
-Current engineering progress: **46%** =23of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
+Current engineering progress: **48%** =24of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
 
 - [x] 01. Root requirements/security/docs and public repository
 - [x] 02. Native CLI foundation and synthetic doctor
@@ -29,7 +29,7 @@ Current engineering progress: **46%** =23of50 delivery work packages at their st
 - [ ] 23. New strict-ACK live marker acceptance
 - [ ] 24. Live reconnect/auth-expiry recovery
 - [x] 25. Shared maintenance local gate
-- [ ] 26. Joined Core/controller administration
+- [x] 26. Joined Core/controller administration
 - [ ] 27. Loopback HTTP authentication boundary
 - [ ] 28. Fixed-scope Web management APIs
 - [ ] 29. Embedded usable management panel
@@ -55,4 +55,4 @@ Current engineering progress: **46%** =23of50 delivery work packages at their st
 - [ ] 49. Final delivery/documentation acceptance record
 - [ ] 50. Reviewed binary release
 
-Evidence state: maintenance local gate accepted after I1 scoped review and root final frozen-source normal-user Windows655pass/0fail/4platformskips/fullvet0. Restricted-token run637pass/18fail/4skip remains recorded and is not passing evidence. Production Windows49/Linux52 retained gosec findings, zero type errors; Linux2reportedHIGH UID conversions independently triaged nonactionable under target64bit UID ABI, no suppressions. Native maintenanceCI/publication pending; previous published e421940 nativeCI passed. Core notstarted. Four real provider probes ran once; allowance is spent. Owner confirmed controlled text delivery, but the new strict-ACK test still awaits a fresh marker. No VPS/arm64 runtime/power-cut/final release acceptance.
+Evidence state: maintenance local gate accepted after I1 scoped review and root final frozen-source normal-user Windows655pass/0fail/4platformskips/fullvet0. Restricted-token run637pass/18fail/4skip remains recorded and is not passing evidence. Production Windows49/Linux52 retained gosec findings, zero type errors; Linux2reportedHIGH UID conversions independently triaged nonactionable under target64bit UID ABI, no suppressions. Maintenance760e62c published and exact nativeCI37968978912 passed all configured steps; current Core working files excluded. Core locallyaccepted after fix1/re-review and root702pass/0fail/4platformskips/fullvet0; Core nativeCI/publication pending. Windows50/Linux53 static warnings retained,0typeerrors/same2Linux HIGH labels with unchanged prior UID disposition. Four real provider probes ran once; allowance is spent. Owner confirmed controlled text delivery, but the new strict-ACK test still awaits a fresh marker. No VPS/arm64 runtime/power-cut/final release acceptance.

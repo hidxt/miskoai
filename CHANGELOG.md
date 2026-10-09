@@ -21,3 +21,5 @@
 - Added reviewed shared lifecycle ownership and stopped backup/restore, bounded private candidates, strict restore pause marker and checked Linux directory synchronization. Backup identity now travels from exclusive/open handles through validation and owned-only failure cleanup; root normal-user Windows655entries/vet passed. Core/serve/Web remain pending.
 
 No released application version yet. Hosted Linux evidence is not512MB/VPS or arm64-runtime acceptance; lifecycle/Web/media/final release remain open.
+
+- Added locally reviewed joined Core/controller administration with fixed authorization scope, shared model admission, bounded store leases, owned downloads and explicit restore reconciliation. Startup refuses residual journals with missing/empty main before mutation; compatible maintenance.BackupOwned preserves producer identity. Operational serve/Web integration and native Core/live/resource/release acceptance remain pending.
