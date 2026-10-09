@@ -11,7 +11,7 @@
 **Spec:** docs/superpowers/specs/2026-10-09-core-web-design.md; REQUIREMENTS.md searchable retained history and memory CRUD/export.
 
 ## Global Constraints
-- Only GPT-6.1 Medium/Low children; no child delegation, actual private data, live calls, schema/quota changes or automatic data pruning.
+- Only GPT-6.1 Medium children; no child delegation, actual private data, live calls, schema/quota changes or automatic data pruning.
 - Fixed configured account/user scope comes from Core, never HTTP/model-selected scope.
 - One SQLite connection; helpers accept rowQuery and never call public Store methods while holding their transaction.
 - Existing message claims/state remain intact. History pages show completed nonempty chats; clear erases content and retains duplicate suppression.

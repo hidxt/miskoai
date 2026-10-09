@@ -1,6 +1,6 @@
 # Phase1 validation CLI plan
 
-> For agentic workers: use superpowers:executing-plans; the supplied user task authorizes routine implementation. Only GPT-6.1 Medium/Low children permitted.
+> For agentic workers: use superpowers:executing-plans; the supplied user task authorizes routine implementation. Only GPT-6.1 Medium children permitted.
 
 Goal: make protocol/provider/storage PoCs runnable from the same native binary without secrets in arguments. Spec: REQUIREMENTS.md, ARCHITECTURE.md and docs/superpowers/specs/2026-10-09-phase0-1-design.md.
 Architecture: internal/cli calls validated config, provider/channel/storage interfaces; no resident runtime beyond Go. Commands never claim a live pass from mock evidence. First implement init/doctor/config validate/backup/restore, then opt-in provider and QR probes. Stop external probes until the user supplies credentials and approves costs/account use. Phase2 business development depends on Phase1 live gates in the master task.

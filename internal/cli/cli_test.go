@@ -5,7 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"github.com/hidxt/miskoai/internal/config"
+	"github.com/hidxt/miskoai/internal/maintenance"
 	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/storage"
 	"math"
@@ -117,6 +119,9 @@ func TestBackupRestoreRoundTrip(t *testing.T) {
 	if err = Run([]string{"restore", backup}, &out); err != nil {
 		t.Fatal(err)
 	}
+	if !strings.Contains(out.String(), "prior database retained: true") || !strings.Contains(out.String(), "external channels paused") {
+		t.Fatal("CLI omitted honest restore state", out.String())
+	}
 	s, err = storage.Open(filepath.Join(dir, "miskoai.db"))
 	if err != nil {
 		t.Fatal(err)
@@ -125,6 +130,71 @@ func TestBackupRestoreRoundTrip(t *testing.T) {
 	facts, err := s.ExportFacts(context.Background(), scope)
 	if err != nil || len(facts) != 1 || facts[0].Content != "explicit fixture fact" {
 		t.Fatalf("restore failed %#v %v", facts, err)
+	}
+}
+
+func TestBackupCLIRefusesLifecycleOwner(t *testing.T) {
+	d := filepath.Join(t.TempDir(), "private")
+	if e := privatefs.EnsureDir(d); e != nil {
+		t.Fatal(e)
+	}
+	t.Setenv("MISKOAI_DATA_DIR", d)
+	s, e := storage.Open(filepath.Join(d, "miskoai.db"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = s.Close(); e != nil {
+		t.Fatal(e)
+	}
+	l, e := maintenance.Acquire(d)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer l.Close()
+	dest := filepath.Join(d, "snapshot.db")
+	var out bytes.Buffer
+	if e = Run([]string{"backup", dest}, &out); e == nil {
+		t.Fatal("backup opened database while lifecycle owned")
+	}
+	if _, e = os.Stat(dest); !os.IsNotExist(e) {
+		t.Fatal("refused backup created target")
+	}
+}
+
+type maintenanceOutputFailure struct{}
+
+func (maintenanceOutputFailure) Write([]byte) (int, error) {
+	return 0, errors.New("synthetic output failure")
+}
+func TestMaintenanceOutputFailureRetainsCompletedState(t *testing.T) {
+	d := filepath.Join(t.TempDir(), "private")
+	if e := privatefs.EnsureDir(d); e != nil {
+		t.Fatal(e)
+	}
+	t.Setenv("MISKOAI_DATA_DIR", d)
+	s, e := storage.Open(filepath.Join(d, "miskoai.db"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = s.Close(); e != nil {
+		t.Fatal(e)
+	}
+	dest := filepath.Join(d, "snapshot.db")
+	if e = Run([]string{"backup", dest}, maintenanceOutputFailure{}); e == nil {
+		t.Fatal("backup output failure ignored")
+	}
+	if e = storage.ValidateBackup(context.Background(), dest); e != nil {
+		t.Fatal("completed backup lost on output failure", e)
+	}
+	if e = Run([]string{"restore", dest}, maintenanceOutputFailure{}); e == nil {
+		t.Fatal("restore output failure ignored")
+	}
+	paused, e := maintenance.RestorePaused(d)
+	if e != nil || !paused {
+		t.Fatal("restore pause lost on output failure", e)
+	}
+	if e = storage.ValidateBackup(context.Background(), filepath.Join(d, "miskoai.db")); e != nil {
+		t.Fatal("completed restore lost on output failure", e)
 	}
 }
 

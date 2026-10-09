@@ -1,16 +1,16 @@
 # MiskoAI task ledger
 
-2026-10-09. Primary owner: GPT-6.1 High; Medium/Low selected per task.
+2026-10-09. Primary owner: GPT-6.1 High; all child tasks use GPT-6.1 Medium.
 
 | Phase | Deliverable / acceptance | Owner | Dependencies | Status |
 |---|---|---|---|---|
 | 0 | inspect existing files/name/Public repo; base docs; minimal compile | High | existing LICENSE | complete; initial docs committed before code |
-| 1 | pinned official WeChat protocol; providers mock/live matrix; SQLite FTS5 and backup PoC | High + Medium protocol/storage/review + Low evidence/licenses/tests | 0; credentials for live tests | all4live cloud probes passed; QR/direct text delivery verified with owner, strict ack live gate pending; media/reconnect/expiry remain open |
+| 1 | pinned official WeChat protocol; providers mock/live matrix; SQLite FTS5 and backup PoC | High + Medium protocol/storage/review + Medium evidence/licenses/tests | 0; credentials for live tests | all4live cloud probes passed; QR/direct text delivery verified with owner, strict ack live gate pending; media/reconnect/expiry remain open |
 | 2 | bounded chat pipeline, provider/channel, dedup/recovery | High + Medium | 1 protocol evidence | agent and durable serial service implemented/reviewed; native service unit/vet/race passed; Core lifetime pending |
 | 3 | scoped facts/context/summary/history and FTS retrieval/CRUD | Medium reviewed by High | SQLite PoC | Storage3, summary and agent integration locally reviewed/verified; authenticated management pending |
 | 4 | personality profiles and natural reply policy | High | 2/3 | builtin/custom persistent profiles integrated and locally reviewed; Web editor pending |
-| 5 | search, media, bounded documents/stickers | Medium + Low fixtures | 1/2 | pending |
-| 6 | embedded authenticated Web, CLI, doctor/backup/restore | High + Low view | storage/core | pending |
+| 5 | search, media, bounded documents/stickers | Medium implementation/fixtures | 1/2 | pending |
+| 6 | embedded authenticated Web, CLI, doctor/backup/restore | High + Medium view | storage/core | pending |
 | 7 | Linux amd64/arm64 builds and real 2C/512MB test | High | integrated features; authorized server | waiting server for live test |
 | 8 | review/scans/licenses/regression/docs/binary release | High + Medium reviewer | previous phases | pending |
 
@@ -47,3 +47,9 @@ Runtime configuration localaccepted: fresh GPT-6.1 Medium independent spec/quali
 Native Linux runtime configuration checkpoint a3f6e9a: [run37928840789](https://github.com/hidxt/miskoai/actions/runs/37928840789) succeeded on exact a3f6e9a72cea1423b61fd300bccfcc689f0eb0b9. Root verified unit/integration, vet, native Linux race, govulncheck, full-history policy and Linux amd64/arm64 build steps. Includes strict persisted settings/explicit private credentials/auth and reviewed raw-path correction. Current management-storage work is excluded. Hosted CI does not establish actual WeChat/media, arm64 runtime or 512MB/VPS acceptance.
 
 Scoped management storage local gate accepted: fresh independent GPT-6.1 Medium specification/quality review approved0findings; root full verifiedGo1.27.2 Windows584pass/0fail/6platformskips and fullvet0. Scoped fact/history pages and complete one-row streamed64MiB memory export implemented with no schema/quota change. Complete production gosec39files7181lines47retained findings,0GolangErrors/nohigh; unchanged5mediumG304/2lowG103/40lowG104 and no new management.go finding. NativeCI/publication pending for this patch; a3f6e9a strict-config nativeCI already passed. Next maintenance/Core, then Web/media/realWX/512MB/finalrelease. No actual private DB migration or remote calls.
+
+Native Linux management storage checkpoint e421940: [run37930667657](https://github.com/hidxt/miskoai/actions/runs/37930667657) succeeded on exact e421940c03dfce1eeae22cc1aef0f4c3508f1a36. Root verified unit/integration, vet, native Linux race, govulncheck, full-history policy and Linux amd64/arm64 builds. Includes reviewed scoped pagination/export and existing configuration/privatefs; current maintenance working source excluded. Hosted CI is not actual512MB/VPS, arm64 runtime or real WeChat/media acceptance.
+
+Owner model update 2026-10-09: all future child dispatches/resumes use only GPT-6.1 Medium (gpt-6.1-sol, reasoning_effort medium). Earlier Low assignments are superseded, including UI/tests/documentation. Model/effort and whole-project progress are announced before every dispatch/resume.
+
+Maintenance Task1 localaccepted 2026-10-10: same Medium I1 scoped re-review approved, no unresolved blocking task finding. Root final verifiedGo1.27.2 frozen-source normal-user Windows655pass/0fail/4explicit platformskips/fullvet0. An initial restricted-token637pass/18fail/4skip run and two-fixture normal-user comparison are retained separately; no product/test/ACL relaxation. Production Windows44files7949lines49findings/0typeerrors/noHIGH; Linux static44files7767lines52findings/0typeerrors with2reportedHIGH UID conversions independently triaged nonactionable under normal64bitLinux UID ABI. No suppression/zero-warning/native-runtime claim. Full evidence/disposition in docs/research/maintenance-review.md, linux-uid-scan-triage.md and gosec-disposition.md. Directory durability/partial-marker/rollback recovery rulings remain explicit; no actual private restore. Maintenance nativeCI/development publication pending; Core next, Web/attachments/liveWeChat/512MB/finalrelease open. Engineering progress46%=23of50 packages, not final acceptance, per docs/superpowers/project-progress.md. All future children GPT-6.1 Sol Medium only.

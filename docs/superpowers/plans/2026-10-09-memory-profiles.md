@@ -12,7 +12,7 @@
 
 ## Global Constraints
 - Go modular monolith; SQLite; one native resident process; Linux amd64/arm64,2C/512MB target.
-- Only GPT-6.1 Medium/Low child configurations; no delegation by children.
+- Only GPT-6.1 Medium child configurations; no delegation by children.
 - No real provider/WeChat calls/private-data service start while owner defers validation.
 - Fixed account/user scope; generated summaries/candidates never automatically become confirmed facts; no private payload in status/logs.
 - Facts retain existing10000global/8MiB and4MiB per-scope bounds; messages/dedup survive memory clearing.

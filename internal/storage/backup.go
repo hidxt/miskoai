@@ -8,42 +8,106 @@ import (
 // Backup uses SQLite's consistent snapshot primitive rather than copying the
 // live database/WAL files. The target must not already exist.
 func (s *Store) Backup(ctx context.Context, dest string) error {
+	_, err := s.BackupOwned(ctx, dest)
+	return err
+}
+
+// BackupOwned returns identity captured from an owned open snapshot handle.
+// Callers must retain this evidence, rather than infer ownership from a later
+// pathname observation, when validating or cleaning up the destination.
+func (s *Store) BackupOwned(ctx context.Context, dest string) (os.FileInfo, error) {
+	return s.backupOwned(ctx, dest, backupOperations{})
+}
+
+type backupOperations struct {
+	vacuum       func(context.Context, string) error
+	closeCreated func(*os.File) error
+	reopen       func(string) (*os.File, error)
+}
+
+func (s *Store) backupOwned(ctx context.Context, dest string, ops backupOperations) (owned os.FileInfo, err error) {
+	if s == nil || s.db == nil || ctx == nil {
+		return nil, ErrInvalid
+	}
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
 	path, err := privatePath(dest)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
-		return ErrInvalid
+		return nil, ErrInvalid
 	}
-	if err = file.Close(); err != nil {
-		_ = os.Remove(path)
-		return ErrStorage
+	created, err := file.Stat()
+	if err != nil {
+		file.Close()
+		return nil, ErrStorage
 	}
 	ok := false
 	defer func() {
 		if !ok {
-			_ = os.Remove(path)
+			if !backupIdentityMatches(path, created) || os.Remove(path) != nil {
+				owned = nil
+				err = ErrStorage
+			}
 		}
 	}()
-	if _, err = s.db.ExecContext(ctx, "VACUUM INTO ?", path); err != nil {
-		return storageError(ctx, err)
+	closeCreated := ops.closeCreated
+	if closeCreated == nil {
+		closeCreated = func(f *os.File) error { return f.Close() }
 	}
-	if err = os.Chmod(path, 0600); err != nil {
-		return ErrStorage
+	if err = closeCreated(file); err != nil {
+		return nil, ErrStorage
+	}
+	if !backupIdentityMatches(path, created) {
+		return nil, ErrStorage
+	}
+	vacuum := ops.vacuum
+	if vacuum == nil {
+		vacuum = func(ctx context.Context, path string) error {
+			_, e := s.db.ExecContext(ctx, "VACUUM INTO ?", path)
+			return e
+		}
+	}
+	if err = vacuum(ctx, path); err != nil {
+		return nil, storageError(ctx, err)
+	}
+	if !backupIdentityMatches(path, created) {
+		return nil, ErrStorage
 	}
 	// Ensure the completed backup is flushed before reporting success.
-	file, err = os.OpenFile(path, os.O_RDWR, 0600)
+	reopen := ops.reopen
+	if reopen == nil {
+		reopen = func(path string) (*os.File, error) { return os.OpenFile(path, os.O_RDWR, 0600) }
+	}
+	file, err = reopen(path)
 	if err != nil {
-		return ErrStorage
+		return nil, ErrStorage
+	}
+	opened, err := file.Stat()
+	if err != nil || !os.SameFile(opened, created) || !backupIdentityMatches(path, created) {
+		file.Close()
+		return nil, ErrStorage
+	}
+	if err = file.Chmod(0600); err != nil {
+		file.Close()
+		return nil, ErrStorage
 	}
 	syncErr := file.Sync()
+	owned, statErr := file.Stat()
 	closeErr := file.Close()
-	if syncErr != nil || closeErr != nil {
-		return ErrStorage
+	if syncErr != nil || statErr != nil || closeErr != nil || !os.SameFile(owned, created) || !backupIdentityMatches(path, created) {
+		return nil, ErrStorage
 	}
 	ok = true
-	return nil
+	return owned, nil
+}
+
+func backupIdentityMatches(path string, created os.FileInfo) bool {
+	named, err := os.Lstat(path)
+	return err == nil && created != nil && named.Mode().IsRegular() && os.SameFile(named, created)
 }
 
 func (s *Store) Integrity(ctx context.Context) error {

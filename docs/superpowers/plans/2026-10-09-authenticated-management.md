@@ -1,6 +1,6 @@
 # Authenticated Embedded Management Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Execute serial task/review gates; the Low view task cannot alter authentication or backend policy.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Execute serial task/review gates; the Medium view task cannot alter authentication or backend policy.
 
 **Goal:** Make the reviewed native controller usable through a bounded authenticated loopback panel and serve/status CLI.
 
@@ -11,7 +11,7 @@
 **Spec:** docs/superpowers/specs/2026-10-09-core-web-design.md.
 
 ## Global Constraints
-- Requires reviewed Core/config/privatefs/maintenance/management-storage; no child live/private-data testing, delegation, staging or commit. Children only GPT-6.1 Medium/Low.
+- Requires reviewed Core/config/privatefs/maintenance/management-storage; no child live/private-data testing, delegation, staging or commit. Children only GPT-6.1 Medium.
 - Exact loopback IP/port Host, exact configured HTTP Origin on state changes, no forwarded trust/CORS/public binding. One native process, Linux amd64/arm64,512MB target.
 - Credentials only request bodies/private environment, never URL/log/status/static assets. No model-controlled scope/permissions.
 - Bounded requests/sessions/downloads, complete strict JSON, cancellation and actual joins. Static UI textContent/escaped text only; no HTML interpretation of user/model/profile data.
@@ -58,8 +58,8 @@
 - [ ] Implement methods/endpoints with existing controllers. Add only narrowly missing ActiveProfile forwarding to owned core/management.go/test; never SQL in HTTP.
 - [ ] Run web/core/maintenance/storage/config tests/vet; report/freeze for fresh Medium spec/security review and root integrated checks.
 
-## Task3: Embedded usable panel — Low
-**Files:** create internal/web/{assets.go,assets_test.go,assets/index.html,assets/app.js,assets/style.css}; report docs/superpowers/reports/2026-10-09-web-view.md. Low cannot edit auth/server/backend/config/storage files.
+## Task3: Embedded usable panel — Medium
+**Files:** create internal/web/{assets.go,assets_test.go,assets/index.html,assets/app.js,assets/style.css}; report docs/superpowers/reports/2026-10-09-web-view.md. The view implementer cannot edit auth/server/backend/config/storage files.
 
 **Interfaces:** `Assets()http.Handler` serves only exact embedded /,/app.js,/style.css with correct MIME; no filesystem fallback or arbitrary path traversal. Task4 composes New(options,Application(controller),Assets()).
 

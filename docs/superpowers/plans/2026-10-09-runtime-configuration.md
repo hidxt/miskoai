@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - One native Go process; SQLite; embedded HTML/CSS/vanilla JS; Linux amd64/arm64 and2C/512MB target. No new dependency or resident runtime.
-- Children use only GPT-6.1 Medium/Low; root owns architecture and actual private-data operations.
+- Children use only GPT-6.1 Medium; root owns architecture and actual private-data operations.
 - Credentials stay environment or explicitly configured verified owner-only files; no guessed file paths. No credentials in settings, status, errors, command arguments or browser responses.
 - File/directory privacy must be established before payload read/write: Unix0600/0700 or Windows owner-only DACL, no symlink/reparse or unsafe inherited-reader access.
 - Environment overrides stored values; explicitly present invalid/empty environment values remain errors, never silently bypassed.

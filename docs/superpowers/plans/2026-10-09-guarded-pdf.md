@@ -11,7 +11,7 @@
 **Spec:** docs/superpowers/specs/2026-10-09-attachments-design.md and docs/research/pdf-bounds-design.md. TXT/DOCX parser/admission gates precede application integration.
 
 ## Global Constraints
-- Children only GPT-6.1 Medium/Low, no delegation/network/actual files/live provider/channel calls. Root supplies verified source/license; do not fetch another upstream version.
+- Children only GPT-6.1 Medium, no delegation/network/actual files/live provider/channel calls. Root supplies verified source/license; do not fetch another upstream version.
 - Input4MiB/pages64/all-stage decoded8MiB/outputUTF8 text128KiB; one admitted parser and cooperative2s context, no abandoned timer goroutine/hard deadline/RSS guarantee.
 - Shared parser ceilings:32768 object/xref/container nodes;32 xref revisions; graph/lexer/page depth64; individual token64KiB; aggregate retained token/container payload8MiB; filters4; predictor row4KiB; active streams256; operands256; dictionary scopes64; CMap entries8192; each code<=4bytes, each mapped UTF16 replacement<=1024bytes; global work32Mi operations, decremented on attempted reads (including EOF), resolution, interpreter actions and CMap comparisons/expansion.
 - All guards before allocation/append/metadata multiplication. No budget resets across page, indirect resolution, object-stream chain or filter stage. Safe constant errors, no raw bytes/value formatting/debug output.
@@ -54,3 +54,5 @@
 
 ## Root gate and self-review
 Research was a candidate only; adopting code requires both independent gates, root full-source manual review, complete notice inventory and compatible native/resource results. Do not publish source/binary until notices integrated. TXT/DOCX/transport/excerpt/sticker have separate plans. Every Review Focus is covered by named tests. Core and extraction share the same checked budget, not an unsafe wrapper around raw upstream APIs. Explicit subset errors preserve requested safety/resource route; any inability to meet functional/resource goals is reported for root decision rather than bypassed. Owner's standing autonomy supplies implementation method; no routine extra approval pause.
+
+Root TDD preflight: runtime RED for cycle/EOF/work guards must use finite instrumented ReaderAt seams or small metered fixtures that terminate before any unguarded loop/OOM. Never execute an unrestricted intentionally cyclic parser or huge allocation as the RED demonstration. Add the finite reproduction first, then prove guarded failure and canceled actual worker join.

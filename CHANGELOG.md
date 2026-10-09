@@ -18,4 +18,6 @@
 - Extended send acknowledgement under explicit owner approval: preserve explicit ret=0; absent ret requires complete successful JSON, positive uint64 message_id and no error status. Uncertain sends remain claimed and are never automatically replayed. Controlled live delivery was confirmed; fresh strict-ACK validation remains pending.
 - Updated Go baseline to1.27.2 for official standard-library security fixes. Reviewed checkpoint358fc7a passed native Linux CI unit/integration, vet, race, govulncheck, full-history policy scan and amd64/arm64 cross-builds. Static gosec findings are retained and triaged rather than presented as zero warnings.
 
+- Added reviewed shared lifecycle ownership and stopped backup/restore, bounded private candidates, strict restore pause marker and checked Linux directory synchronization. Backup identity now travels from exclusive/open handles through validation and owned-only failure cleanup; root normal-user Windows655entries/vet passed. Core/serve/Web remain pending.
+
 No released application version yet. Hosted Linux evidence is not512MB/VPS or arm64-runtime acceptance; lifecycle/Web/media/final release remain open.
