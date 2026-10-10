@@ -2,7 +2,7 @@
 
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
-Current engineering progress: **60%** =30of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
+Current engineering progress: **62%** =31of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
 
 Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root763pass/0fail/4platformskips/fullvet0; independent reviewer usage-limit exit means no final verdict and package27 remains unchecked. Root inline sharedpublictransport constructor scoped38pass/0fail/0skip/vet0; full corrected-export root772pass/0fail/4platformskips/fullvet0 verified, fresh review still pending, package32 remains unchecked. No completion credit for partial tasks or a failed/missing review. Latest published nativeCI is codec/Coref6fcb3c/37976808001. Actual/live/resource/final gates below remain open.
 
@@ -35,7 +35,7 @@ Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root76
 - [x] 27. Loopback HTTP authentication boundary
 - [x] 28. Fixed-scope Web management APIs
 - [x] 29. Embedded usable management panel
-- [ ] 30. Native serve/status lifetime integration
+- [x] 30. Native serve/status lifetime integration
 - [x] 31. Private bounded media codec
 - [x] 32. Audited CDN download/upload transport
 - [x] 33. Allocation-aware image/GIF validation
@@ -92,3 +92,8 @@ Root synthetic browser initial actual flows passed wrong-passwordrefusal/inputcl
 
 
 2026-10-10 exact UI native checkpoint: dab6c53ecccbfaeddfc1d7c4fa0f2388dec24ae8 normal development publication includes18explicitpaths, publicindex228files/sixfrozenhashesmatch, staged18/working232/history723policy0findings and Gitleaks21commits0. Initial auto-review public-push rejection resolved by original user master task's explicit Public-maintenance/Push mandate plus read-only existingorigin evidence; same normal push then approved, no bypass/force/mainmerge/release. Exact nativeCI38042004429/job114183942231 completedSUCCESS; root read all unit/integration,vet,nativeLinuxrace,govulncheck,full-historypolicy and Linuxamd64/arm64build steps and confirmed overallworkflow/SHA. Excludes current CDN working files; optional Node regression not run by Go workflow. Engineering **56%**=28of50; prior failed005e34a CI remains history. Native CI does not prove actual arm64 execution/512MBRSS/live WeChat/media/final acceptance. Four cloud probes allowance spent, fresh strictACK marker unanswered, nativebrowserfile-save/filepickerrestore final45open. CDN onlygpt-6.1-sol/medium continues offline implementation/finalfreeze; not credited yet.
+
+
+Current native serve/status local acceptance: engineering **62%** (31of50). Package30 accepted at its root local gate: fresh ONLYgpt-6.1-sol/medium spec Approved/quality Approved with1deferredMinor, frozen full1016namedpass/0fail/4existingplatformskip/fullvet0, complete static59Windows/62Linux retained warnings with two new nonactionable request-cookie/loginJSON warnings each recorded, all seven hashes unchanged. Windowsamd64/Linuxamd64/arm64 builds exit0 and structural/notice/hash checks passed. Two new synthetic compiledCLI fixtures started and authenticated status returned expected unconfigured state/zero logical attempts; Ctrl-C closed listeners/locks. Second parent independently recorded actual Go child_exit0/oneinterrupt/forcedfalse, both postchecks listener rebind+maintenance lock reacquire/Close passed. Wrapper PowerShell exit1 is separate and not product exit. Stopped status returned fixedsafeerror/exit1. No product process left running; no actual auth/DB/provider/WeChat/CDN effects.
+
+Serve/status public development publication and exact nativeCI are NEXT, not yet accepted. Latest published/native90491a1/38052284640 ALLSUCCESS excludesCLI. Owner authorized continuous routine work while asleep; only actual dangerous/undecidable scope decisions need confirmation. Real WeChat explicitly deferred; paid allowance spent/actualschema2 unchanged/arm64 execution and512MB/final gates open. Earlier pause/60%/IN_PROGRESS entries below are historical. Full root evidence docs/research/serve-status-root-verification.md.

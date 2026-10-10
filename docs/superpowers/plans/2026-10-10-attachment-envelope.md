@@ -61,3 +61,13 @@
 ## Root downstream gate
 
 This package is durable data and pure normalization only. The later agent pipeline must forward the DTO, allow empty caption only with validated attachment, durably ClaimMessage before Download, retain one actual media/parser admission, use shared vision transport, label bounded document excerpts, keep original USER provenance, and reuse one strict-ACK send. Reject/failed/ambiguous outcomes stay durable and cannot replay. Default service activation waits for that complete local/review/native gate. Existing paid allowance is spent; additional live media/model tests require their own bounded authorization. No real migration/private startup/WeChat image/GIF/512MB/final acceptance is authorized or claimed by this plan. Schema4 evolution uses the existing SQLite route; a database-route/quota/safety/target scope change requires owner approval, not an internal plan assumption.
+
+## Root Task1 preflight and test ownership ruling
+
+| Tasks/interface | Producer and consumer | Finding/ruling |
+|---|---|---|
+| Task1 self | compatible schema4 DTO/manifest/admission vs runtime legacy/capacity tests | Existing schemaVersion3 expectations in fresh Open/restore/migration fixtures must advance explicitly; pinned legacy schema1/2/3 DDL and refusal immutability remain exact. Root grants narrow ownership of internal/storage/migration_test.go, empty_poll_test.go and schema3_test.go ONLY for genuinely current-version expectation/labels and supplementary pinned schema3 fixture coverage. No weakening, deletion or unrelated rewrites. Cost if wrong: tests could hide legacy rejection; fresh review must compare every changed existing assertion against fixture setup. |
+| Task2 self | pure normalization vs authorized identity/provenance/codec input checks | No operational default normalizer/Service.work switch; DTO Validate remains Task1 shared interface, not duplicated validation. No conflict found. |
+| Task1 -> Task2 | storage.Attachment + optional InboxEntry pointer, bounds/key precedence | Task2 begins after frozen/accepted Task1 interface. Metadata inside same8MiB quota and genuine caption semantics match. No shared concurrent writer. |
+
+One Task1 writer only. Root CLI publication uses the frozen accepted CLI and explicit paths; do not stage or alter root docs/CLI. Current engineering62%, package34 no credit from partial Task1.
