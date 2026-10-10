@@ -1,5 +1,7 @@
 # MiskoAI
 
+Current engineering progress is **66%** (33of50). TXT/Markdown extraction passed independent review and root1175test/vet local gates; DOCX/PDF remain under guarded development. The service still handles text only while claimed attachment integration is built. Latest vision native checkpoint6e18957/38074211708 passed; TXT/Markdown publication remains a separate pending gate. Real WeChat/media, arm64 execution,512MB measurements and final acceptance remain open.
+
 A lightweight AI WeChat companion built in Go, using SQLite, DeepSeek official cloud APIs and Ollama hosted Web Search. Targets native Linux amd64/arm64 on 2 vCPU / 512MB machines. Development has started; this repository is **not yet a production release**. See DELIVERY.md for actual implemented/tested status.
 
 ## Intended deployment
@@ -58,3 +60,6 @@ Latest attachment envelope local gate2026-10-11: engineering **64%**=32of50. Roo
 
 
 2026-10-11 verified native checkpoint: engineering **64%**. Attachment development081725ac1af5cf126b5457ba8845d9f7ce82feb3 normally pushed0e7dd94..081725a; exact [nativeCI38073232152](https://github.com/hidxt/miskoai/actions/runs/38073232152)/job114274781547 completedSUCCESS. Root verified exact overallSHA/run and EVERY setup,unit/integration,vet,nativeLinuxrace,govulncheck,full-historypolicy,amd64/arm64build and cleanup stepSUCCESS. Includes reviewed normalization/nativefixture correction; excludes vision/current document working files. Failed0e7dd94/native38070812447 remains historical with subsequentstepsSKIPPED. Publication17explicitpaths/public261allHEADblobsexact/emptyindex; staged17working264history837policy0 precommit, postcommithistory854working266policy0, Gitleaks27commits~2482389bytes0 and finalpublic261~2299548bytes0. No force/mainmerge/release or actualprivate migration/startup. HostedCI is distinct from actualWeChat/media/arm64runtime/512MBRSS/finalacceptance.
+
+
+2026-10-11 exact vision native checkpoint: engineering **66%**, unchanged33of50. Vision6e189572ca62e81cb2775ab1718f5fd29078be59/[nativeCI38074211708](https://github.com/hidxt/miskoai/actions/runs/38074211708)/job114277667072 completedSUCCESS. Root independently verified exact overallSHA/run and EVERY configured setup,unit/integration,vet,nativeLinuxrace,govulncheck,full-historypolicy,Linuxamd64/arm64build and cleanup stepSUCCESS. Includes reviewed providerprimitives, excludes currentTXT/MD/ZIP source. TXT/MD root1175pass/vet0 acceptedlocally; its publication/native gate isNEXT. ZIPgroundwork active ONLYgpt-6.1-sol/medium, no37credit. Fullimagepipeline35 remainsopen. EarliernativeIN_PROGRESS text is historical. No actualprivate startup/migration/newpaid/CDN/WeChatcall/arm64execution/512MBRSS/finalacceptance claimed.
