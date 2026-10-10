@@ -79,3 +79,8 @@ D044: Correct GIF image-preflight estimate to sumFramePixels+sumInterlacedFrameP
 ## D046 — standalone image local acceptance and pinned estimate boundary
 
 2026-10-10: root accepts allocation-aware PNG/JPEG/GIF validation only after fresh Medium dual approval and independent full961pass/0fail/4platformskip/vet0/static0new. Pinned Go1.27.2 buffer estimates include all GIF interlace allocations per D044; maintain conservative64MiB admission without whole-heap/RSS/hard-timeout claims. Downstream owns shared actual-lifetime admission, digest/length and encoded request overlaps. Cost if wrong: reverse validator admission/integration and reassess pinned decoder source before release; no actual service or resource acceptance granted. Engineering60%; exactrootreport docs/research/image-validation-root-verification.md.
+
+
+## D047 — Web bind readiness and later CLI lifetime coordination
+
+A stable read-only startup-event channel closes only after canonical binding succeeds and Serve starts; failed/canceled/duplicate lifetimes do not newly signal. Keep listener ownership and actual handler joins in Web. Later CLI observes context/Run result alongside Ready, starts Core only after startup with live context, cancels/joins both actual runs before Close. Status authenticates to fixed local HTTP and never opens DB. Existing approved Core/Web design and root autonomous mandate cover this internal prerequisite; no actual service action. Cost if wrong: reversible small channel/CLI sequencing changes before release; root local965tests/vet0/fresh dual review supports readiness only. Engineering60%, package30pending.

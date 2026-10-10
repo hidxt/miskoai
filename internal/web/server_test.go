@@ -16,6 +16,194 @@ const testPassword = "synthetic-password-canary"
 const testHost = "127.0.0.1:17432"
 const testOrigin = "http://127.0.0.1:17432"
 
+func readinessAddress(t *testing.T) string {
+	t.Helper()
+	l, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = l.Close() })
+	addr := l.Addr().String()
+	if err := l.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return addr
+}
+
+func assertReadyOpen(t *testing.T, ready <-chan struct{}) {
+	t.Helper()
+	if ready == nil {
+		t.Fatal("Ready returned a nil channel")
+	}
+	select {
+	case <-ready:
+		t.Fatal("readiness signaled without successful binding")
+	default:
+	}
+}
+
+// Register cancellation and the actual goroutine join before making assertions.
+func startReadinessRun(t *testing.T, s *Server) (context.CancelFunc, <-chan struct{}, *error) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	var result error
+	t.Cleanup(func() {
+		cancel()
+		select {
+		case <-done:
+		case <-time.After(10 * time.Second):
+			t.Error("readiness Run cleanup did not join")
+		}
+	})
+	go func() { result = s.Run(ctx); close(done) }()
+	return cancel, done, &result
+}
+
+func awaitReadiness(t *testing.T, s *Server, done <-chan struct{}, result *error) {
+	t.Helper()
+	select {
+	case <-s.Ready():
+	case <-done:
+		t.Fatalf("Run ended before readiness: %v", *result)
+	case <-time.After(time.Second):
+		t.Fatal("successful binding did not signal readiness")
+	}
+}
+
+// Missing the successful-bind notification or allocating a fresh channel per
+// call breaks consumers waiting before startup.
+func TestHTTPReadyStableSuccessfulBind(t *testing.T) {
+	addr := readinessAddress(t)
+	s, err := New(Options{Listen: addr, Password: testPassword}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ready := s.Ready()
+	assertReadyOpen(t, ready)
+	if ready != s.Ready() {
+		t.Fatal("Ready channel changed before Run")
+	}
+	_, done, result := startReadinessRun(t, s)
+	awaitReadiness(t, s, done, result)
+	if ready != s.Ready() {
+		t.Fatal("Ready channel changed during Run")
+	}
+	client := &http.Client{Timeout: time.Second, Transport: &http.Transport{Proxy: nil}}
+	t.Cleanup(client.CloseIdleConnections)
+	response, err := client.Get("http://" + addr + "/api/bootstrap")
+	if err != nil {
+		t.Fatalf("ready listener unavailable: %v", err)
+	}
+	t.Cleanup(func() { _ = response.Body.Close() })
+	if response.StatusCode != 200 {
+		t.Fatalf("ready listener bootstrap status: %d", response.StatusCode)
+	}
+	_, _ = io.Copy(io.Discard, response.Body)
+	_ = response.Body.Close()
+}
+
+// Signaling before Listen succeeds would allow workers on an occupied address.
+func TestHTTPReadyBindFailure(t *testing.T) {
+	occupied, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = occupied.Close() })
+	s, err := New(Options{Listen: occupied.Addr().String(), Password: testPassword}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ready := s.Ready()
+	assertReadyOpen(t, ready)
+	if err := s.Run(context.Background()); err == nil || err.Error() != "web_bind" {
+		t.Fatalf("bind refusal: %v", err)
+	}
+	assertReadyOpen(t, ready)
+	if err := s.Run(context.Background()); err == nil || err.Error() != "web_lifetime" {
+		t.Fatalf("failed lifetime reused: %v", err)
+	}
+	assertReadyOpen(t, s.Ready())
+	if s.Ready() != ready {
+		t.Fatal("Ready channel changed after bind failure")
+	}
+}
+
+// A canceled Run on an occupied address must return nil without trying to bind;
+// neither cancellation nor nil-context refusal is a successful startup event.
+func TestHTTPReadyPreCancelled(t *testing.T) {
+	occupied, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = occupied.Close() })
+	s, err := New(Options{Listen: occupied.Addr().String(), Password: testPassword}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ready := s.Ready()
+	if err := s.Run(nil); err == nil || err.Error() != "web_context" {
+		t.Fatalf("nil context refusal: %v", err)
+	}
+	assertReadyOpen(t, ready)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	cancel()
+	if err := s.Run(ctx); err != nil {
+		t.Fatalf("pre-canceled Run: %v", err)
+	}
+	assertReadyOpen(t, ready)
+	if err := s.Run(context.Background()); err == nil || err.Error() != "web_lifetime" {
+		t.Fatalf("canceled lifetime reused: %v", err)
+	}
+	assertReadyOpen(t, s.Ready())
+	if s.Ready() != ready {
+		t.Fatal("Ready channel changed after canceled Run")
+	}
+}
+
+// Duplicate Run must not close twice, and readiness must stay historically
+// closed after actual shutdown releases the listener.
+func TestHTTPReadySingleUseAndShutdown(t *testing.T) {
+	addr := readinessAddress(t)
+	s, err := New(Options{Listen: addr, Password: testPassword}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ready := s.Ready()
+	assertReadyOpen(t, ready)
+	cancel, done, result := startReadinessRun(t, s)
+	awaitReadiness(t, s, done, result)
+	if err := s.Run(context.Background()); err == nil || err.Error() != "web_lifetime" {
+		t.Fatalf("running lifetime reused: %v", err)
+	}
+	cancel()
+	select {
+	case <-done:
+		if *result != nil {
+			t.Fatalf("shutdown: %v", *result)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("Run did not actually join after cancellation")
+	}
+	if err := s.Run(context.Background()); err == nil || err.Error() != "web_lifetime" {
+		t.Fatalf("shutdown lifetime reused: %v", err)
+	}
+	if s.Ready() != ready {
+		t.Fatal("Ready channel changed after shutdown")
+	}
+	select {
+	case <-ready:
+	default:
+		t.Fatal("successful startup notification lost after shutdown")
+	}
+	rebound, err := net.Listen("tcp4", addr)
+	if err != nil {
+		t.Fatalf("Run returned with listener retained: %v", err)
+	}
+	t.Cleanup(func() { _ = rebound.Close() })
+}
+
 // Swallowing ErrAbortHandler would append a JSON error to committed download
 // bytes and turn an interrupted chunked response into an apparently complete one.
 func TestHTTPAbortPreservesInterruptedResponse(t *testing.T) {

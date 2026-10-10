@@ -25,6 +25,8 @@ Root independently parsed all final events, package outcomes, scanner statistics
 
 ## Scope and remaining obligations
 
+Publication follow-up: normal development736af8f0ec31ff254a558e2634c7666a6e1fac28 includes15explicitpaths/publicindex242/6imagehashesmatch, policy staged15/working242/fullhistory762 zero findings and Gitleaks23commits/index zero findings. ExactnativeCI38051668735/job114211884438 on this SHA completedSUCCESS; root read every configured test/vet/nativeLinuxrace/govulncheck/historypolicy/amd64-arm64build/setup-cleanup stepSUCCESS. [Image native run](https://github.com/hidxt/miskoai/actions/runs/38051668735). Includes image, excludes readiness/CLI; prior pending text below is historical. No actual arm64/512MB/live/final acceptance inferred.
+
 Input4MiB, dimensions8192, visible16M pixels, GIF32frames and64MiB decoder-buffer estimate are conservative admission rules. PNG/JPEG full Decode and GIF full DecodeAll occur only after format-specific structural and allocation preflight; APNG refuses. D044 includes the sum of every interlaced frame's second pixel allocation. Errors are fixed, cancellation remains synchronous and caller-owned immutable completed bytes are not closed or replayed.
 
 Estimates depend on pinned Go1.27.2 decoder allocation structure, not total heap/allocator/GC/RSS or a hard two-second guarantee. An arbitrary blocked ReaderAt/decoder cannot be forcibly interrupted. Compressed validity follows the pinned decoder's accepted semantics, including disclosed GIF LZW tolerance.

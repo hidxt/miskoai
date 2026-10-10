@@ -42,6 +42,7 @@ type Server struct {
 	joined                sync.WaitGroup
 	workCtx               context.Context
 	cancelWork            context.CancelFunc
+	ready                 chan struct{}
 }
 
 // New accepts only canonical literal loopback addresses and a bounded UTF-8 password.
@@ -59,8 +60,12 @@ func New(o Options, application, assets http.Handler) (*Server, error) {
 		network = "tcp6"
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Server{host: o.Listen, origin: "http://" + o.Listen, network: network, password: sha256.Sum256([]byte(o.Password)), application: application, assets: assets, now: time.Now, random: rand.Reader, nonces: make(map[[32]byte]time.Time), sessions: make(map[[32]byte]session), workCtx: ctx, cancelWork: cancel}, nil
+	return &Server{host: o.Listen, origin: "http://" + o.Listen, network: network, password: sha256.Sum256([]byte(o.Password)), application: application, assets: assets, now: time.Now, random: rand.Reader, nonces: make(map[[32]byte]time.Time), sessions: make(map[[32]byte]session), workCtx: ctx, cancelWork: cancel, ready: make(chan struct{})}, nil
 }
+
+// Ready reports the completed successful-bind startup event, not ongoing health.
+// Consumers must also observe their context and the actual Run result.
+func (s *Server) Ready() <-chan struct{} { return s.ready }
 
 // Handler enforces admission, exact Host, authentication and same-origin mutations.
 func (s *Server) Handler() http.Handler { return http.HandlerFunc(s.serveHTTP) }
@@ -238,6 +243,7 @@ func (s *Server) Run(ctx context.Context) error {
 	httpServer := &http.Server{Handler: s.Handler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 8 << 10, ErrorLog: log.New(safeLogWriter{}, "", 0)}
 	served := make(chan error, 1)
 	go func() { served <- httpServer.Serve(listener) }()
+	close(s.ready)
 	select {
 	case err = <-served:
 	case <-ctx.Done():

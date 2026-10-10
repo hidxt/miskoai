@@ -43,6 +43,8 @@
 
 ## Root design ruling and coverage check
 
+Task1: complete at local gate (base539501c, publication pending; fresh review Spec/Quality Approved0findings). Root full965namedpass/0fail/4existingplatformskip/fullvet0, targetedproductionWebstatic2MEDIUMretained/0Goerrors/0nosec/0new/0removed. Three hashes match immutable243file export. Package30 remains open; engineering60%. Root evidence docs/research/web-readiness-root-verification.md. CLI can now implement the dependent approved coordination; no private service authorized.
+
 Ruling: a stable channel is the smallest notification that preserves Web listener ownership. A repeated-bind probe can race another process; a listener/callback API would expand ownership and allow unintended binding choices. Cost if wrong: the small notification/API and CLI sequencing require reversible rework; no actual service or deployment is activated.
 
 Each Review Focus condition maps to the named readiness fixtures or existing actual handler-join fixture and later CLI Task4 failure/cancel tests. This prerequisite implements no CLI itself and earns no independent package30 completion credit. CLI will run Web first, await successful startup with noncanceled context, then run Core; any sibling ending cancels/joins both actual lifetimes before Core.Close. No provider/SQLite/channel/deployment/safety/resource-target change, paid request, actual database migration or real WeChat action is authorized here.
