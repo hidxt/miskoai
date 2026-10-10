@@ -278,6 +278,13 @@ func TestHTTPHandlerAdmissionAndShutdown(t *testing.T) {
 		cancel()
 		t.Fatal("listener never ready")
 	}
+	// Hold a legitimately admitted TCP connection with no request header.
+	// The later started HTTP handler proves the listener accepted both.
+	idleConnection, err := net.Dial("tcp4", addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer idleConnection.Close()
 	req, _ := http.NewRequest("GET", "http://"+addr+"/api/held", nil)
 	req.AddCookie(c)
 	requestDone := make(chan struct{})
@@ -314,11 +321,21 @@ func TestHTTPHandlerAdmissionAndShutdown(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-	case <-time.After(3 * time.Second):
+	// A new TCP connection may legitimately remain in net/http shutdown
+	// until ReadHeaderTimeout (5s) or StateNew quiescence (>5s), plus polling.
+	// This is only a test watchdog; held-handler return is asserted above.
+	case <-time.After(10 * time.Second):
 		t.Fatal("Run did not return")
 	}
 	<-joined
 	<-requestDone
+	if err := idleConnection.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	var probe [1]byte
+	if n, err := idleConnection.Read(probe[:]); n != 0 || err != io.EOF {
+		t.Fatalf("Run returned without closing idle TCP connection: bytes=%d error=%v", n, err)
+	}
 }
 
 func TestApplicationDeadlinesAndSafeFallback(t *testing.T) {
