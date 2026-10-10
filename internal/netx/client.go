@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -65,40 +64,16 @@ func New(base string, allowed []string, timeout time.Duration, max int64) (*Clie
 	if timeout <= 0 || timeout > 2*time.Minute || max <= 0 || max > 8<<20 {
 		return nil, errors.New("invalid transport bounds")
 	}
-	transport := &http.Transport{DialContext: safeDial, TLSHandshakeTimeout: 10 * time.Second, ResponseHeaderTimeout: timeout, MaxIdleConns: 4, MaxIdleConnsPerHost: 2, MaxConnsPerHost: 2, IdleConnTimeout: 60 * time.Second, DisableCompression: true, MaxResponseHeaderBytes: 32 << 10}
+	transport, err := NewPublicTransport(timeout)
+	if err != nil {
+		return nil, err
+	}
 	return &Client{http: &http.Client{Transport: transport, Timeout: timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, base: u, timeout: timeout, max: max, sem: make(chan struct{}, 2)}, nil
 }
 
 // SetTransport supplies an application-owned transport for deterministic offline tests.
 // Configure it before concurrent use. It cannot be reached from model or HTTP input.
 func (c *Client) SetTransport(t http.RoundTripper) { c.http.Transport = t }
-
-func safeDial(ctx context.Context, network, address string) (net.Conn, error) {
-	host, port, err := net.SplitHostPort(address)
-	if err != nil {
-		return nil, errors.New("invalid remote address")
-	}
-	addresses, err := net.DefaultResolver.LookupNetIP(ctx, "ip", host)
-	if err != nil {
-		return nil, errors.New("remote DNS failure")
-	}
-	if len(addresses) == 0 {
-		return nil, errors.New("remote DNS empty")
-	}
-	for _, ip := range addresses {
-		if !PublicIP(ip) {
-			return nil, errors.New("private remote address rejected")
-		}
-	}
-	d := net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}
-	for _, ip := range addresses {
-		conn, e := d.DialContext(ctx, network, net.JoinHostPort(ip.String(), port))
-		if e == nil {
-			return conn, nil
-		}
-	}
-	return nil, errors.New("remote connection failure")
-}
 
 func PublicIP(ip netip.Addr) bool {
 	ip = ip.Unmap()

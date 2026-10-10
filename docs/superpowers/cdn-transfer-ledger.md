@@ -1,0 +1,21 @@
+# SDD ledger — plan: docs/superpowers/plans/2026-10-10-cdn-transfer.md
+
+Root owns acceptance/publication. All future children are GPT-6.1 Sol Medium only (`gpt-6.1-sol`, `medium`), with no delegation; exact model/effort and xx% project progress precede every dispatch/resume. The existing authorized codex/foundation branch is used. No real network or private-data work is included.
+
+2026-10-10 preflight: private media codec is locally reviewed and nativeCI37976808001 passed exact f6fcb3c. Task1 constructor is independent of frozen Web authentication. Web's fresh reviewer exited on a usage limit before its final verdict; Web remains unaccepted and frozen. Engineering progress50%.
+
+| Tasks | Shared contract checked | Finding / ruling |
+|---|---|---|
+| 1 / 2 | NewPublicTransport returns transport, consumed by NewCDN | Transport enforces public-IP pinning/TLS/connection/header limits only. CDN must separately authorize exact URL, no redirects/credentials/retries, response bounds and one actual transfer lifetime. |
+| 1 internal | Existing netx.New and safeDial versus constructor and fixtures | Preserve existing cloud validation/admission/request behavior. Private per-call lookup/dial seams exercise the same production address-set guard without global hooks or real DNS/connections. |
+| 2 internal | Codec completed artifacts versus download/upload/Close | Codec identity ownership and actual joined body lifetime remain required; no transfer implementation starts before constructor review. |
+
+Ruling: root executes Task1 inline under executing-plans/TDD while the account limit prevents child execution — ordinary independent local work proceeds under the owner's autonomy mandate; no child model substitution, no edits to frozen Web/codec source and no acceptance/publication until a fresh permitted reviewer can complete. Cost if wrong: the unaccepted local refactor must be revised or discarded; its code does not start any real request or service. The unavailable review is recorded rather than replaced by root self-review.
+
+Task1: inprogress, root inline. Owned internal/netx/client.go, new transport.go/transport_test.go and author report; base f6fcb3cba1e4524648602bbcaa68495f3449dd25. Task2 notstarted. Progress remains50%: constructor is a partial transport package and earns no package completion credit.
+
+Task1 implementation frozen after runtimeRED8namedfailures (missing behavior, not compiler errors) → scopedGREEN38pass/0fail/0skip/vet0 on verified offlineGo1.27.2. Report docs/superpowers/reports/2026-10-10-cdn-transport.md. Root full integration/static scans are next; independent review unavailable and required, no task acceptance/commit/live/network. Task2 remains notstarted.
+
+Root export correction: first Go-only snapshot omitted embedded notices and syntheticPNG, fulltest/vet1 and scans with type error invalid; retained evidence. New complete export2 has118publicsource/policy/plan files, byte-matched owned hashes and same17203-byte patch/SHA256bcfda34380e73974ecea03877e7647c2887b2846d234e113bc222135dad2f992. Corrected complete Windows57/Linuxstatic60 retainedwarnings/0typeerrors/0nosec, no netx warning. Root actual normal-user Windows fulltest772pass/0fail/4existingplatformskips/fullvet0 and unchanged source hashes verified; root report docs/research/cdn-transport-root-verification.md, ready independent brief .tools/reviews/cdn-transport-review-brief.md. Engineering50%, review required and no publication or Task2 start.
+
+Task1: complete LOCALGATE (basef6fcb3c frozenpatch; fresh /root/cdn_transport_review ONLYGPT-6.1 Sol Medium spec/qualityApproved0Critical/Important/Minor). Root resolved unchanged JSON/SSE/retry evidence via exact diff/scoped/full actual runs; downstream native/live/resource requirements remain separate. No fixes/extra tests required. Engineering52% after separate Webauth gate, no constructor-only package32 credit. Exactmodel/effort+52% announced before review dispatch. Task2 notstarted; the single implementation child /root/web_management owns WebAPI while root handles publication of these accepted frozen checkpoints.
