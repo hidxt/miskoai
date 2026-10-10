@@ -1,6 +1,10 @@
 # MiskoAI task ledger
 
-Current2026-10-10: engineering **56%** =28of50 equal local/phase work packages. Requirements remain REQUIREMENTS.md; exact completed checklist is docs/superpowers/project-progress.md. Local completion does not grant live/resource/final acceptance.
+Explicit owner reboot pause2026-10-10: engineering **56%**. CDN FIX1 same-reviewer Spec/Quality Approved0new findings; corrected immutable234file export prepared, root independent probe exit0 and two static runs exit1 completed but outputs not yet fully triaged. Root full corrected test process intentionally stopped before completion; partial log is NOT pass evidence, vet pending. Image original author remains HOLD/WIP, no active child. Resume from MEMORY pause section; no CDN acceptance/publication until complete corrected root gates. Latest public/native remains dab6c53/38042004429; live/final gates unchanged.
+
+Current2026-10-10: engineering **58%** =29of50 equal local/phase work packages. Requirements remain REQUIREMENTS.md; exact completed checklist is docs/superpowers/project-progress.md. Local completion does not grant live/resource/final acceptance.
+
+Resumed CDN Task2 local gate accepted: corrected frozen root full882namedpass/0fail/4existingWindowsplatformskips/fullvet0; independent original-symptom probe4pass; same Medium reviewApprovedI1/M1/0newissues. Static57Windows/60Linuxwarnings/0Goerrors/0nosec,2newLOW sites removed/0new versus initialCDN. Five hashes unchanged after root runs. Package32 complete locally, newpublication/nativeCIpending; image original author next resumes preservedWIP, package33notcredited. Reboot pause and earlier pending checkpoints below are historical. No live/private/generalservice/final acceptance.
 
 | Phase | Deliverable | Current evidence / remaining work |
 |---|---|---|
@@ -9,15 +13,18 @@ Current2026-10-10: engineering **56%** =28of50 equal local/phase work packages. 
 |2|Durable scoped text pipeline|Serial service, agent, controller reviewed/local+native; operational serve/status remainsopen|
 |3|Memory/history/candidates|Scoped storage3/FTS/CAS/summary/candidate provenance/Core/WebAPI implemented and reviewed|
 |4|Personality|Builtin/custom persistent profiles integrated; panel create/edit/select/delete locally verified|
-|5|Media/documents/stickers|Codec accepted; shared public transport constructor accepted; CDN transfer Task2 next; image/GIF, attachments, vision, documents/library/reply integration open|
+|5|Media/documents/stickers|Codec/sharedpublictransport/CDN Task2 locallyaccepted; image/GIF, attachments, vision, documents/library/reply integration open|
 |6|Web/CLI/maintenance|Auth/API/panel local gates passed; CLI serve/status pending. Native file save/file-picker restore remains final browser regression|
-|7|Linux/512MB|Prerequisite7a8ead4 nativeCI38028793488 allstepsSUCCESS; newUI publication/native pending; actual512MB server notsupplied/arm64execution unverified|
+|7|Linux/512MB|Prerequisite7a8ead4 nativeCI38028793488 allstepsSUCCESS; UI dab6c53 published/nativeCI38042004429/job114183942231 allconfiguredstepsSUCCESS; actual512MB server notsupplied/arm64execution unverified|
 |8|Release acceptance|Final integration/security/licenses/UI/resources/artifact/release gates pending; no release/main merge|
 
 Latest UI gate: original fresh Medium review I1ChangesRequired; rootbrowser found I2named-control collision and I3mobile overflow. Original author fixed scoped app/style, same reviewerApproved0newunresolved. Root corrected frozen Windows833namedpass/0fail/4existingplatformskips/fullvet0, realapp NodeVM4pass, actual browser profilecompletefields/save/reopen and mobile375px/nooverflow. Auth/settings/scoped facts/highID/candidates/history/clear/logout/CSRF flows tested synthetically; no Core.Run/live calls. Exactsource/hashes/limits: docs/research/web-view-root-verification.md.
 
-Next serial implementation: approved CDN Task2, only GPT-6.1 Sol Medium; UI sixfiles frozen, root owns integration/publication/docs. Do not redo completed auth/API/codec/shared-transport tasks. Later native serve/status requires precise bind-before-channel-start coordination; current Server.Run has no readiness interface.
+Current serial implementation: approved CDN Task2, only GPT-6.1 Sol Medium; UI sixfiles frozen, root owns integration/publication/docs. Do not redo completed auth/API/codec/shared-transport tasks. Later native serve/status requires precise bind-before-channel-start coordination; current Server.Run has no readiness interface.
 
 All child dispatches/resumes ONLY gpt-6.1-sol/medium, model+xx%+implementation/local/native/live/final state announced first. Root reads source/diff and runs integrated checks; fresh reviewer where practical. No concurrent file edits. Scope/provider/SQLite/channel/deployment/safety/512MB changes require owner approval; routine internals already authorized.
 
 Historical detailed checkpoints preserved byte-for-byte in [TASKS archive](docs/history/2026-10-10-tasks.md). Their older pending/model statements are historical, superseded by current constraints/evidence.
+
+
+CDN recovery checkpoint: engineering56%; initial root immutable233file source full872namedpass/0fail/4existingplatformskip/fullvet0, static59Windows/62Linuxwarnings with2newLOW/0Goerrors, but fresh Medium review I1Important earlyuploadsuccess blocksacceptance. Root independent runtimeRED4namedfail/0pass confirms unconsumed/partial/readerror despitevalidresponse. OriginalCDNauthor ONLYgpt-6.1-sol/medium resumed FIX1; same reviewer scopedrecheck then correctedrootgates. Imageauthor samepermittedmodel is HOLD/WIP,5newfiles preserved/focusedGREEN only/noacceptance, unfinishedsource excluded from CDNtests. D044 corrects GIF estimate by sumInterlacedFramePixels under unchanged64MiB/512MBtarget. Detailed root ledger docs/research/cdn-transfer-root-verification.md. Nativepublicdab6c53/38042004429 allstepsSUCCESS excludesCDN/image; live/final unchanged.

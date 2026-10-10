@@ -60,3 +60,12 @@ Prerequisite public commit `7a8ead407ad724bb3adcb2e5603e1d08c359ff31`, [native r
 Authorized four finite cloud probes already passed once; allowance spent. Owner confirmed earlier controlled text delivery, retained ambiguous/no replay. Fresh strictACK marker remains unanswered; real media/reconnect/expiry unverified. Actual private DB remains schema2; no operational service or migration started. No512MB VPS supplied, no RSS/arm64 execution/final security-license-artifact-release acceptance inferred.
 
 TASKS.md, MEMORY.md and DELIVERY.md were compressed into current constraints/evidence. Their complete prior byte content is preserved in `docs/history/2026-10-10-{tasks,memory,delivery}.md`; historical pending/model statements are superseded by current rules. No requirement, denominator or product scope was changed. Next serial implementation is CDN Task2 with only new owned transfer files and offline tests.
+
+## Development publication follow-up
+
+Normal development commit `dab6c53ecccbfaeddfc1d7c4fa0f2388dec24ae8` contains exactly18 inspected paths (view sixfiles, optional client regression script, root evidence/state/archives). CDN working files were excluded. Index export228publicfiles matched six frozen hashes. Staged policy18contents, working policy232contents and full-history policy723contents:0findings/exit0. Gitleaks index export~1846607bytes and history21commits/~2016692bytes:0findings/exit0. Fullhistory scans preceded push.
+
+Initial automatic approval rejected the public push for insufficient recognized payload/destination authorization. Root performed read-only verification of the user's original master task's explicit Public-maintenance/Push instructions and existing origin `hidxt/miskoai`, then resubmitted the same normal push with this evidence; approval allowed it. No indirect execution or bypass. Normal push7a8ead4..dab6c53 succeeded. No main merge or release. Exact [native CI38042004429](https://github.com/hidxt/miskoai/actions/runs/38042004429) is in progress at this follow-up; no result is claimed yet. Current Go workflow does not execute the optional Node fixture.
+
+
+Exact native follow-up: run38042004429/job114183942231 on dab6c53ecccbfaeddfc1d7c4fa0f2388dec24ae8 completedSUCCESS. Root read every configured unit/integration,vet,native Linux race,govulncheck,full-history policy and Linuxamd64/arm64build step and confirmed overallworkflow/SHA. This includes the view, excludes current CDN working files, and does not execute optional Node regressions or grant final UI/live/512MB acceptance. Engineering56%.

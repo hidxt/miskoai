@@ -1,5 +1,9 @@
 # SDD ledger — plan: docs/superpowers/plans/2026-10-10-cdn-transfer.md
 
+Task2: complete LOCALGATE (2026-10-10, originalauthorFIX1; same fresh GPT-6.1 Sol Medium review Spec/QualityApprovedI1Important/M1Minor addressed,0newfindings). Root read completeinitial/amendeddiff and production; corrected frozen full882namedpass/0fail/4existingplatformskip/fullvet0 and independent originalsymptom4REDfail→4GREENpass. Complete staticWindows57/Linux60retainedwarnings/0Goerrors/0nosec/0new/2removed. Exact5replacementhashes/234fileexport rootverifiedbefore/after. Engineering58%=29of50; newdevelopmentpublication/nativeCIpending, no live/private/resource/finalclaim. Detailed docs/research/cdn-transfer-root-verification.md supersedes old Task2notstarted statements below.
+
+Ruling: require actual exact request-byte consumption and no nonEOFreadfailure after the existing borrow mutex joins before confirming upload success; earlyvalidHTTPresponse alone is insufficient under pinnedGo transport. Preserve cancellation/priorerror precedence, emptyparameteronrefusal, callerownership and no replay. Cost if conservative: incomplete uploads refuse without automatic retry. Idempotent fixture release precedes joined clientcleanup so regressions fail boundedly rather than hanging.
+
 Root owns acceptance/publication. All future children are GPT-6.1 Sol Medium only (`gpt-6.1-sol`, `medium`), with no delegation; exact model/effort and xx% project progress precede every dispatch/resume. The existing authorized codex/foundation branch is used. No real network or private-data work is included.
 
 2026-10-10 preflight: private media codec is locally reviewed and nativeCI37976808001 passed exact f6fcb3c. Task1 constructor is independent of frozen Web authentication. Web's fresh reviewer exited on a usage limit before its final verdict; Web remains unaccepted and frozen. Engineering progress50%.
