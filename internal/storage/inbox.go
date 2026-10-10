@@ -20,6 +20,7 @@ type InboxEntry struct {
 	Scope                         Scope
 	MessageID, Text, ContextToken string
 	ReceivedAt                    time.Time
+	Attachment                    *Attachment
 }
 
 func validField(v string, max int) bool {
@@ -103,9 +104,15 @@ func (s *Store) ResolvePoll(ctx context.Context, scope Scope, frameID int64, nex
 	if frameID <= 0 || !validField(nextCursor, 16384) || len(entries) > 256 {
 		return ErrInvalid
 	}
-	for _, e := range entries {
+	attachments := make([][]byte, len(entries))
+	for i, e := range entries {
 		if e.Scope != scope || !validMessageID(e.MessageID) || !validField(e.Text, 16384) || !validField(e.ContextToken, 16384) || e.ReceivedAt.IsZero() || e.ReceivedAt.UnixMilli() <= 0 {
 			return ErrInvalid
+		}
+		var err error
+		attachments[i], err = encodeAttachment(e.Attachment)
+		if err != nil {
+			return err
 		}
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -128,11 +135,14 @@ func (s *Store) ResolvePoll(ctx context.Context, scope Scope, frameID int64, nex
 	if cur != previous {
 		return ErrInvalid
 	}
-	var count, bytes int
-	if err = tx.QueryRowContext(ctx, `SELECT count(*),coalesce(sum(length(CAST(text AS BLOB))+length(CAST(context_token AS BLOB))),0) FROM inbox`).Scan(&count, &bytes); err != nil {
-		return storageError(ctx, err)
+	if err = validateReceiveRows(ctx, tx); err != nil {
+		return err
 	}
-	for _, e := range entries {
+	count, bytes, err := receiveQueueBudget(ctx, tx)
+	if err != nil {
+		return err
+	}
+	for i, e := range entries {
 		var exists int
 		if err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM inbox WHERE account=? AND user=? AND message_id=? UNION ALL SELECT 1 FROM messages WHERE account=? AND user=? AND id=?)`, scope.Account, scope.User, e.MessageID, scope.Account, scope.User, e.MessageID).Scan(&exists); err != nil {
 			return storageError(ctx, err)
@@ -140,14 +150,25 @@ func (s *Store) ResolvePoll(ctx context.Context, scope Scope, frameID int64, nex
 		if exists != 0 {
 			continue
 		}
-		if count >= 1024 || bytes+len(e.Text)+len(e.ContextToken) > 8<<20 {
+		if count >= 1024 || bytes+len(e.Text)+len(e.ContextToken)+len(attachments[i]) > 8<<20 {
 			return ErrCapacity
 		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO inbox(account,user,message_id,text,context_token,received_at) VALUES(?,?,?,?,?,?)`, scope.Account, scope.User, e.MessageID, e.Text, e.ContextToken, e.ReceivedAt.UTC().UnixMilli()); err != nil {
+		result, insertErr := tx.ExecContext(ctx, `INSERT INTO inbox(account,user,message_id,text,context_token,received_at) VALUES(?,?,?,?,?,?)`, scope.Account, scope.User, e.MessageID, e.Text, e.ContextToken, e.ReceivedAt.UTC().UnixMilli())
+		if insertErr != nil {
+			err = insertErr
 			return storageError(ctx, err)
 		}
+		if attachments[i] != nil {
+			sequence, e := result.LastInsertId()
+			if e != nil {
+				return storageError(ctx, e)
+			}
+			if _, e = tx.ExecContext(ctx, `INSERT INTO inbox_attachments(sequence,body) VALUES(?,?)`, sequence, attachments[i]); e != nil {
+				return storageError(ctx, e)
+			}
+		}
 		count++
-		bytes += len(e.Text) + len(e.ContextToken)
+		bytes += len(e.Text) + len(e.ContextToken) + len(attachments[i])
 	}
 	if _, err = tx.ExecContext(ctx, `INSERT INTO channel_cursors(account,user,cursor) VALUES(?,?,?) ON CONFLICT(account) DO UPDATE SET cursor=excluded.cursor WHERE channel_cursors.user=excluded.user`, scope.Account, scope.User, nextCursor); err != nil {
 		return storageError(ctx, err)
@@ -210,7 +231,7 @@ func (s *Store) PendingInbox(ctx context.Context, scope Scope, limit int) ([]Inb
 	if err = validateReceiveRows(ctx, tx); err != nil {
 		return nil, err
 	}
-	rows, err := tx.QueryContext(ctx, `SELECT sequence,message_id,text,context_token,received_at FROM inbox WHERE account=? AND user=? ORDER BY sequence LIMIT ?`, scope.Account, scope.User, limit)
+	rows, err := tx.QueryContext(ctx, `SELECT i.sequence,i.message_id,i.text,i.context_token,i.received_at,a.body FROM inbox i LEFT JOIN inbox_attachments a ON a.sequence=i.sequence WHERE i.account=? AND i.user=? ORDER BY i.sequence LIMIT ?`, scope.Account, scope.User, limit)
 	if err != nil {
 		return nil, storageError(ctx, err)
 	}
@@ -219,8 +240,15 @@ func (s *Store) PendingInbox(ctx context.Context, scope Scope, limit int) ([]Inb
 	for rows.Next() {
 		e := InboxEntry{Scope: scope}
 		var ms int64
-		if err = rows.Scan(&e.Sequence, &e.MessageID, &e.Text, &e.ContextToken, &ms); err != nil {
+		var body []byte
+		if err = rows.Scan(&e.Sequence, &e.MessageID, &e.Text, &e.ContextToken, &ms, &body); err != nil {
 			return nil, storageError(ctx, err)
+		}
+		if body != nil {
+			e.Attachment, err = decodeAttachment(body)
+			if err != nil {
+				return nil, err
+			}
 		}
 		e.ReceivedAt = time.UnixMilli(ms).UTC()
 		entries = append(entries, e)

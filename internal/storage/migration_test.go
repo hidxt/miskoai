@@ -46,7 +46,7 @@ func TestSchema1SnapshotMigratesAndForeignZeroFails(t *testing.T) {
 		t.Fatal(err)
 	}
 	var version int
-	if err = s.db.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != 3 {
+	if err = s.db.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != schemaVersion {
 		t.Fatalf("migration: %d %v", version, err)
 	}
 	facts, err := s.SearchFacts(ctx, Scope{"a", "u"}, "synthetic", 10)
@@ -112,7 +112,7 @@ func TestInitializedSchemaIsCheckpointedBeforeReceiving(t *testing.T) {
 	}
 	defer probe.Close()
 	var version int
-	if err = probe.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != 3 {
+	if err = probe.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != schemaVersion {
 		t.Fatalf("fresh main DB not durable before polls: %d %v", version, err)
 	}
 	if _, err = s.RecordPoll(ctx, scope, "", []byte("durable WAL evidence")); err != nil {

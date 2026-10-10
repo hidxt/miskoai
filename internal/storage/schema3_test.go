@@ -19,7 +19,7 @@ func TestSchema3FreshManifest(t *testing.T) {
 	if err := s.db.QueryRow("PRAGMA user_version").Scan(&v); err != nil {
 		t.Fatal(err)
 	}
-	if v != 3 {
+	if v != schemaVersion {
 		t.Fatalf("memory/profile storage requires schema3, got %d", v)
 	}
 	if err := validateManifest(context.Background(), s.db); err != nil {
@@ -323,7 +323,7 @@ func TestSchema2MainSchema3WALAdmissionAndCheckpoint(t *testing.T) {
 			}
 			defer probe.Close()
 			var v int
-			if e = probe.QueryRow("PRAGMA user_version").Scan(&v); e != nil || v != 3 {
+			if e = probe.QueryRow("PRAGMA user_version").Scan(&v); e != nil || v != schemaVersion {
 				t.Fatalf("upgrade main not checkpointed %d %v", v, e)
 			}
 		})

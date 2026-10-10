@@ -74,7 +74,7 @@ func TestEmptyPollEvidenceLifecycle(t *testing.T) {
 			defer restored.Close()
 			assertEmptyPoll(t, restored, scope, id, "quarantined")
 			var version int
-			if err := restored.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil || version != 3 {
+			if err := restored.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil || version != schemaVersion {
 				t.Fatalf("schema version=%d error=%v", version, err)
 			}
 		})

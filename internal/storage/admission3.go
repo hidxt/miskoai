@@ -10,7 +10,7 @@ func validateSchema3IfPresent(ctx context.Context, q rowQuery) error {
 	if v == 2 {
 		return validateSequenceMetadata(ctx, q, v)
 	}
-	if v != 3 {
+	if v != 3 && v != 4 {
 		return nil
 	}
 	if e := validateDerivedCapacity(ctx, q); e != nil {
@@ -115,7 +115,7 @@ func validateDerivedCapacity(ctx context.Context, q rowQuery) error {
 func validateSequenceMetadata(ctx context.Context, q rowQuery, version int) error {
 	countQuery := "SELECT count(*)>2 FROM sqlite_sequence"
 	allowed := `name NOT IN ('poll_frames','inbox') OR typeof(seq)<>'integer' OR seq<0`
-	if version == 3 {
+	if version == 3 || version == 4 {
 		countQuery = "SELECT count(*)>3 FROM sqlite_sequence"
 		allowed = `name NOT IN ('poll_frames','inbox','candidates') OR typeof(seq)<>'integer' OR seq<0`
 	} else if version != 2 {
@@ -136,7 +136,7 @@ func validateSequenceMetadata(ctx context.Context, q rowQuery, version int) erro
 	if e := validateSequence(ctx, q, "inbox", "sequence"); e != nil {
 		return e
 	}
-	if version == 3 {
+	if version == 3 || version == 4 {
 		return validateSequence(ctx, q, "candidates", "id")
 	}
 	return nil

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const schemaVersion = 3
+const schemaVersion = 4
 
 const schema = `
 CREATE TABLE facts (
@@ -81,6 +81,13 @@ CREATE TABLE profile_selections (
 PRAGMA user_version=3;
 `
 
+const schema4 = `
+CREATE TABLE inbox_attachments (
+ sequence INTEGER PRIMARY KEY REFERENCES inbox(sequence) ON DELETE CASCADE, body BLOB NOT NULL
+);
+PRAGMA user_version=4;
+`
+
 func (s *Store) migrate(ctx context.Context) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -122,6 +129,12 @@ func (s *Store) migrate(ctx context.Context) error {
 		if _, err = tx.ExecContext(ctx, schema3); err != nil {
 			return storageError(ctx, err)
 		}
+		version = 3
+	}
+	if version == 3 {
+		if _, err = tx.ExecContext(ctx, schema4); err != nil {
+			return storageError(ctx, err)
+		}
 	}
 	return storageError(ctx, tx.Commit())
 }
@@ -158,12 +171,6 @@ func validateReceiveCapacity(ctx context.Context, q rowQuery) error {
 		return storageError(ctx, err)
 	}
 	if count > 4 || bytes > 8<<20 {
-		return ErrCapacity
-	}
-	if err := q.QueryRowContext(ctx, `SELECT count(*),coalesce(sum(length(CAST(text AS BLOB))+length(CAST(context_token AS BLOB))),0) FROM inbox`).Scan(&count, &bytes); err != nil {
-		return storageError(ctx, err)
-	}
-	if count > 1024 || bytes > 8<<20 {
 		return ErrCapacity
 	}
 	return validateReceiveRows(ctx, q)
@@ -267,6 +274,12 @@ func closeValidatedRows(ctx context.Context, rows *sql.Rows) error {
 }
 
 func validateReceiveRows(ctx context.Context, q rowQuery) error {
+	if _, _, err := receiveQueueBudget(ctx, q); err != nil {
+		return err
+	}
+	if err := validateAttachments(ctx, q); err != nil {
+		return err
+	}
 	scope := []boundedColumn{{"account", 256, "text"}, {"user", 256, "text"}}
 	frames := append(append([]boundedColumn{}, scope...), boundedColumn{"cursor", 16384, "text"}, boundedColumn{"state", 16, "text"}, boundedColumn{"body", 2 << 20, "blob"})
 	if err := validateRowShape(ctx, q, "poll_frames", frames, `typeof(id)<>'integer' OR id<=0`); err != nil {
