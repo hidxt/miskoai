@@ -2,7 +2,7 @@
 
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
-Current engineering progress: **58%** =29of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
+Current engineering progress: **60%** =30of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
 
 Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root763pass/0fail/4platformskips/fullvet0; independent reviewer usage-limit exit means no final verdict and package27 remains unchecked. Root inline sharedpublictransport constructor scoped38pass/0fail/0skip/vet0; full corrected-export root772pass/0fail/4platformskips/fullvet0 verified, fresh review still pending, package32 remains unchecked. No completion credit for partial tasks or a failed/missing review. Latest published nativeCI is codec/Coref6fcb3c/37976808001. Actual/live/resource/final gates below remain open.
 
@@ -38,7 +38,7 @@ Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root76
 - [ ] 30. Native serve/status lifetime integration
 - [x] 31. Private bounded media codec
 - [x] 32. Audited CDN download/upload transport
-- [ ] 33. Allocation-aware image/GIF validation
+- [x] 33. Allocation-aware image/GIF validation
 - [ ] 34. Bounded attachment receive/storage envelope
 - [ ] 35. Shared DeepSeek vision attachment pipeline
 - [ ] 36. TXT/Markdown document extraction

@@ -1,5 +1,11 @@
 # CDN transfer: root verification ledger
 
+## Development publication — 2026-10-10
+
+Normal development commit539501ca5251cf41f593c8c869dfa3dedb27c631 was pushed dab6c53..539501c to existing codex/foundation. Exactly17 inspected paths include accepted CDN fivefiles and root state/evidence/decisions; imageWIP and later readinessplan excluded. Public index export234files matched all5frozenSHA256 values. Staged17contents/working239then240contents policy0findings/exit0. Complete policy scans beforecommit751contents and aftercommit759contents,0findings/exit0; Gitleaks publicindex~1932636bytes and complete22commithistory~2106687bytes,0findings/exit0. Ignore/status/stageddiff/contentidentity checked; index empty aftercommit. Normal push authorized by original owner Public-maintenance/Push mandate and verifiedexistingorigin, no force/mainmerge/release.
+
+Exact nativeCI38050566507 on539501ca5251cf41f593c8c869dfa3dedb27c631 is IN_PROGRESS at this checkpoint, no result inferred. It includesCDN and excludesimage/readinessWIP. Engineering58%; root separately resumes original image author ONLYgpt-6.1-sol/medium, own5imagefiles+report, no concurrent filewriter. Readinessplan is root-owned plannedprerequisiteonly/noimplementation/noextra packagecredit. Live/paid/private/resource/final boundaries unchanged.
+
 ## Corrected local acceptance — 2026-10-10
 
 Engineering **58%**=29of50 after package32 completed at its local gate. Root resumed fresh full native Windows Go1.27.2 `go test -json ./... -count=1` and `go vet ./...` against immutable corrected234publicfile export, excluding imageWIP. Both actual exits0; JSON independently parsed **882 named passes,0 failures,4 existing platform skips**;14testedpackages pass and2no-testpackages skip; fullvet diagnostic file0bytes. Platform skips: TestPrivateDirNeverRepairsExisting, TestPrivateSymlinkTraversal, TestLockRejectsMovedDirectory, TestExistingParentPermissionsArePreserved. No skipped gate is silently passed. Five main/export hashes independently unchanged after commands. Logs .tools/reviews/cdn-transfer-fix1-root-tests2.jsonl and cdn-transfer-fix1-root-vet2.txt. Interruptedpriorlog remainsnonpassing historical evidence.
@@ -70,3 +76,8 @@ Image validation work was started only after the initial CDN implementation froz
 Root recorded D044 after independently verifying GIF uninterlace's second pixel array: add sumInterlacedFramePixels to the conservative image estimate, same64MiB threshold/512MB target. This is a downstream planned correctness adjustment, not accepted image implementation.
 
 Latest accepted public/native checkpoint remains UI `dab6c53ecccbfaeddfc1d7c4fa0f2388dec24ae8`, run38042004429/job114183942231 all configured success; excludes CDN/image WIP. Finite cloud allowance spent, fresh strictACK marker unanswered, real media/reconnect/expiry and512MB server gates open. No actual private DB migration or service startup, final acceptance, merge or release.
+
+
+## Exact CDN native outcome — 2026-10-10
+
+Root confirmed overall run38050566507 and job114208672308 COMPLETED SUCCESS on exact539501ca5251cf41f593c8c869dfa3dedb27c631. EVERY configured unit/integration,vet,nativeLinuxrace,govulncheck,fullhistorypolicy,Linuxamd64/arm64build and setup/cleanup step succeeded. [Native run](https://github.com/hidxt/miskoai/actions/runs/38050566507). Includes accepted CDN, excludes image/readiness; no actual arm64 execution,512MBRSS,live media or final acceptance inferred. Earlier pending-publication/IN_PROGRESS entries are historical.

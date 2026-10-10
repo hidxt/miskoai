@@ -46,4 +46,6 @@
 
 ## Root self-review and downstream limits
 
+Task1: complete at local gate (base539501c, publication pending; fresh review Spec/Quality Approved0findings). Root immutable integrated961namedpass/0fail/4existingplatformskips/fullvet0, both complete static configurations0new/0removed versus accepted CDN. Six hashes unchanged. Package33 credited; engineering60%. Image-specific native/live/resource/final gates remain open. Exact evidence: docs/research/image-validation-root-verification.md.
+
 This plan maps all five Review Focus conditions to tests. It covers only allocation-aware image validity from the attachments design. Codec/CDN gates supply immutable bounded bytes; downstream must add shared total admission, metadata digest/length checks, base64/JSON copies, GIF vision policy, library disk quotas, image upload/send and real backend evidence. Animated GIF validation means structurally valid retained animation, not native sticker or animated delivery. The estimates concern decoder-owned buffers plus conservative fixed overhead; they do not bound the entire Go heap, allocator/GC overlap or OS RSS. Do not report a512MB or hard2s acceptance without authorized native workload evidence. Routine internal cap decisions are root-owned conservative defaults; changing the target/provider/deployment requires the owner's explicit approval.
