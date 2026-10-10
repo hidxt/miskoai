@@ -43,7 +43,7 @@ type DeepSeek struct {
 }
 
 func NewDeepSeek(base, key, model string) (*DeepSeek, error) {
-	if strings.TrimSpace(model) == "" || len(model) > 128 || strings.ContainsAny(key, "\r\n") || len(key) > 1024 {
+	if !validModel(model) || strings.ContainsAny(key, "\r\n") || len(key) > 1024 {
 		return nil, errors.New("invalid model configuration")
 	}
 	c, err := netx.New(base, []string{"api.deepseek.com"}, 60*time.Second, 2<<20)
@@ -53,6 +53,16 @@ func NewDeepSeek(base, key, model string) (*DeepSeek, error) {
 	return &DeepSeek{c, key, model}, nil
 }
 
+func validModel(model string) bool { return strings.TrimSpace(model) != "" && len(model) <= 128 }
+
+// WithModel selects a model without creating another transport or admission pool.
+func (d *DeepSeek) WithModel(model string) (*DeepSeek, error) {
+	if d == nil || d.transport == nil || !validModel(model) {
+		return nil, errors.New("invalid model configuration")
+	}
+	return &DeepSeek{transport: d.transport, key: d.key, model: model}, nil
+}
+
 func (d *DeepSeek) request(messages []Message, maxTokens int, stream bool) (map[string]any, error) {
 	if d.key == "" {
 		return nil, errors.New("DeepSeek key is not configured")
@@ -60,37 +70,52 @@ func (d *DeepSeek) request(messages []Message, maxTokens int, stream bool) (map[
 	if len(messages) == 0 || len(messages) > 40 || maxTokens < 1 || maxTokens > 4096 {
 		return nil, errors.New("model request bounds exceeded")
 	}
-	textBytes := 0
+	textBytes, images, inlineBytes := 0, 0, 0
 	for _, m := range messages {
 		if m.Role != "system" && m.Role != "user" && m.Role != "assistant" {
 			return nil, errors.New("invalid message role")
 		}
 		switch content := m.Content.(type) {
 		case string:
+			if len(content) > (64<<10)-textBytes {
+				return nil, errors.New("context byte budget exceeded")
+			}
 			textBytes += len(content)
 		case []ContentPart:
 			if m.Role != "user" || len(content) > 4 {
 				return nil, errors.New("invalid image message")
 			}
-			images := 0
 			for _, p := range content {
 				switch p.Type {
 				case "text":
+					if p.ImageURL != nil {
+						return nil, errors.New("invalid text content fields")
+					}
+					if len(p.Text) > (64<<10)-textBytes {
+						return nil, errors.New("context byte budget exceeded")
+					}
 					textBytes += len(p.Text)
 				case "image_url":
+					if p.Text != "" {
+						return nil, errors.New("invalid image content fields")
+					}
 					images++
-					if p.ImageURL == nil || (!strings.HasPrefix(p.ImageURL.URL, "data:image/png;base64,") && !strings.HasPrefix(p.ImageURL.URL, "data:image/jpeg;base64,") && !strings.HasPrefix(p.ImageURL.URL, "data:image/gif;base64,")) {
+					if images > 1 {
+						return nil, errors.New("one image per request is supported")
+					}
+					if p.ImageURL == nil {
 						return nil, errors.New("only validated inline images are accepted")
 					}
-					if len(p.ImageURL.URL) > 6<<20 {
+					if len(p.ImageURL.URL) > (6<<20)-inlineBytes {
 						return nil, netx.ErrLimit
 					}
+					if !validImageDetail(p.ImageURL.Detail) || !canonicalInlineURL(p.ImageURL.URL) {
+						return nil, errors.New("invalid inline image fields")
+					}
+					inlineBytes += len(p.ImageURL.URL)
 				default:
 					return nil, errors.New("invalid content type")
 				}
-			}
-			if images > 1 {
-				return nil, errors.New("one image per request is supported")
 			}
 		default:
 			return nil, errors.New("invalid model content")
