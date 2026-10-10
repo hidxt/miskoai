@@ -6,13 +6,28 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
 func TestAttachmentSchemaLegacyCompatibility(t *testing.T) {
 	for version := 1; version <= 4; version++ {
 		t.Run(string(rune('0'+version)), func(t *testing.T) {
-			path := filepath.Join(t.TempDir(), "fixture.db")
+			dir := filepath.Join(t.TempDir(), "private")
+			if err := os.Mkdir(dir, 0700); err != nil {
+				t.Fatal(err)
+			}
+			info, err := os.Stat(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if runtime.GOOS != "windows" && info.Mode().Perm() != 0700 {
+				t.Fatalf("fixture parent mode = %o, want 0700", info.Mode().Perm())
+			}
+			path := filepath.Join(dir, "fixture.db")
+			if _, err := privatePath(path); err != nil {
+				t.Fatalf("fixture parent admission: %v", err)
+			}
 			db, err := sql.Open("sqlite", path)
 			if db != nil {
 				t.Cleanup(func() { db.Close() })
@@ -104,7 +119,21 @@ func TestAttachmentSchemaRefusalImmutable(t *testing.T) {
 func TestAttachmentLegacyRefusalPreservesPinnedSchema(t *testing.T) {
 	for version := 1; version <= 3; version++ {
 		t.Run(string(rune('0'+version)), func(t *testing.T) {
-			path := filepath.Join(t.TempDir(), "bad-legacy.db")
+			dir := filepath.Join(t.TempDir(), "private")
+			if err := os.Mkdir(dir, 0700); err != nil {
+				t.Fatal(err)
+			}
+			info, err := os.Stat(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if runtime.GOOS != "windows" && info.Mode().Perm() != 0700 {
+				t.Fatalf("fixture parent mode = %o, want 0700", info.Mode().Perm())
+			}
+			path := filepath.Join(dir, "bad-legacy.db")
+			if _, err := privatePath(path); err != nil {
+				t.Fatalf("fixture parent admission: %v", err)
+			}
 			db, err := sql.Open("sqlite", path)
 			if db != nil {
 				t.Cleanup(func() { db.Close() })

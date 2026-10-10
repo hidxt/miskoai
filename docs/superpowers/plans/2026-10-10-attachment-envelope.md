@@ -54,9 +54,9 @@
 - Exactly one supported encrypted item and no other nontext item creates image/file descriptor; zero genuine caption permitted. More than one attachment or unsupported voice/video creates Kind unsupported and genuine caption, after structural bounds/authorized identity. Do not silently choose a first item; do not decode unconsumed attachment keys on unsupported descriptors. Empty text-only messages retain existing rejection rather than becoming fabricated attachment messages.
 - FullURL precedence is stored as supplied bounded data; future CDN independently validates it before request. Metadata limits match Task1, including encoded whole16KiB. No raw item JSON persisted as unbounded secondary evidence, no key/name/query in safe errors or genuine caption.
 
-- [ ] Runtime RED TestAuthorizedAttachmentNormalization, TestAttachmentConsumedAliasesRefuse, TestAttachmentCaptionOnlyProvenance, TestMultipleUnsupportedItemsAreExplicit, TestAttachmentMetadataAndKeysBounded. Assert foreign user/group/recipient never triggers key validation/side effect, exact image/file/key precedence/optional length/MD5, empty-caption supported descriptor, text-only unchanged, additional attachments unsupported, duplicate aliases/types/huge inputs refuse, no placeholder/key/file extraction in Text, status expiry wins safely.
-- [ ] Implement pure bounded decoder, with private seams only where necessary to prove refusal-before-parse. No public network or Service.Run activation.
-- [ ] Run offline service/channel/storage/media tests/vet, report actual results and behavior limits, freeze for fresh Medium protocol/provenance review. Root reruns integrated checks and native gate before the later claimed processing pipeline is wired.
+- [x] Runtime RED TestAuthorizedAttachmentNormalization, TestAttachmentConsumedAliasesRefuse, TestAttachmentCaptionOnlyProvenance, TestMultipleUnsupportedItemsAreExplicit, TestAttachmentMetadataAndKeysBounded. Assert foreign user/group/recipient never triggers key validation/side effect, exact image/file/key precedence/optional length/MD5, empty-caption supported descriptor, text-only unchanged, additional attachments unsupported, duplicate aliases/types/huge inputs refuse, no placeholder/key/file extraction in Text, status expiry wins safely.
+- [x] Implement pure bounded decoder, with private seams only where necessary to prove refusal-before-parse. No public network or Service.Run activation.
+- [x] Run offline service/channel/storage/media tests/vet, report actual results and behavior limits, freeze for fresh Medium protocol/provenance review. Root reruns integrated checks and native gate before the later claimed processing pipeline is wired.
 
 ## Root downstream gate
 
@@ -79,3 +79,5 @@ Task1 preflight Ruling: existing TestClearMemoryKeepsAllClaimsAndReceiveEvidence
 Task1 preflight record D051: preserve existing legacy ValidateBackup admission versus Open distinction. Schema4 adds bounded companion/combined-quota validation; versions1/2/3 retain original exact manifest/integrity and existing derived/profile/sequence path, with full Open pre-mutation admission unchanged. First suite39failures/intermediate results are retained, not passing evidence or weakened tests.
 
 Task1 local gate accepted2026-10-11 after fresh dual approval/root1059pass/vet0/static+secret disposition; root evidence docs/research/attachment-storage-root-verification.md. Task2 started only after this gate; package34 remains pending62%.
+
+Task2 local gate accepted2026-10-11 after I1 fix/scopeddualapproval and rootfull1127pass/vet0/static+secret gates. Correctednative fixture followup scopedApproved, nativepublication/CI pending. Package34 now64%, defaultreceivertext-only; no pipeline/private/live/resource/final claim.
