@@ -1,9 +1,26 @@
 package web
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
+
+func TestStrictRawRequestObject(t *testing.T) {
+	object, e := strictRawRequestObject(strings.NewReader(`{"id":"9223372036854775807","importance":100,"expires_at":null}`), 1024, "id", "importance", "expires_at")
+	if e != nil || string(object["importance"]) != "100" || string(object["expires_at"]) != "null" {
+		t.Fatal(e, object)
+	}
+	var id string
+	if e := json.Unmarshal(object["id"], &id); e != nil || id != "9223372036854775807" {
+		t.Fatal(e, id)
+	}
+	for _, body := range []string{`{"id":1,"\u0069d":2}`, `{"id":1} {}`, `{"id":1,"unknown":2}`, `{}`, `{"id":"\ud800"}`} {
+		if _, e := strictRawRequestObject(strings.NewReader(body), 1024, "id"); e == nil {
+			t.Fatal("accepted", body)
+		}
+	}
+}
 
 func TestStrictRequestObject(t *testing.T) {
 	good := `{"password":"synthetic","nonce":"ok"}`

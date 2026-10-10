@@ -78,7 +78,12 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 	defer func() { s.mu.Lock(); s.active--; s.mu.Unlock(); s.joined.Done() }()
 	defer func() {
-		if recover() != nil {
+		if value := recover(); value != nil {
+			// A committed download cannot become a JSON error response. Let
+			// net/http interrupt it without logging a caller-controlled panic.
+			if value == http.ErrAbortHandler {
+				panic(value)
+			}
 			safeError(w, 500, "web_internal")
 		}
 	}()

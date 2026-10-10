@@ -13,6 +13,24 @@ import (
 // strictRequestObject validates complete bounded input before materializing only
 // known required string fields. Decoded keys detect escaped aliases.
 func strictRequestObject(r io.Reader, capBytes int64, fields ...string) (map[string]string, error) {
+	object, err := strictRawRequestObject(r, capBytes, fields...)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string, len(object))
+	for name, raw := range object {
+		var value string
+		if len(raw) == 0 || raw[0] != '"' || json.Unmarshal(raw, &value) != nil {
+			return nil, errors.New("web_json")
+		}
+		result[name] = value
+	}
+	return result, nil
+}
+
+// strictRawRequestObject shares only complete, bounded exact-object traversal.
+// Each caller retains responsibility for the allowed scalar types and ranges.
+func strictRawRequestObject(r io.Reader, capBytes int64, fields ...string) (map[string]json.RawMessage, error) {
 	invalid := errors.New("web_json")
 	if r == nil || capBytes < 1 || capBytes > 1<<20 {
 		return nil, invalid
@@ -30,7 +48,7 @@ func strictRequestObject(r io.Reader, capBytes int64, fields ...string) (map[str
 	for _, field := range fields {
 		allowed[field] = true
 	}
-	result := make(map[string]string, len(fields))
+	result := make(map[string]json.RawMessage, len(fields))
 	for decoder.More() {
 		key, err := decoder.Token()
 		if err != nil {
@@ -43,12 +61,8 @@ func strictRequestObject(r io.Reader, capBytes int64, fields ...string) (map[str
 		if _, exists := result[name]; exists {
 			return nil, invalid
 		}
-		token, err := decoder.Token()
-		if err != nil {
-			return nil, invalid
-		}
-		value, ok := token.(string)
-		if !ok {
+		var value json.RawMessage
+		if err := decoder.Decode(&value); err != nil {
 			return nil, invalid
 		}
 		result[name] = value

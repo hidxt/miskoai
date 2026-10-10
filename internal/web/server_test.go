@@ -16,6 +16,64 @@ const testPassword = "synthetic-password-canary"
 const testHost = "127.0.0.1:17432"
 const testOrigin = "http://127.0.0.1:17432"
 
+// Swallowing ErrAbortHandler would append a JSON error to committed download
+// bytes and turn an interrupted chunked response into an apparently complete one.
+func TestHTTPAbortPreservesInterruptedResponse(t *testing.T) {
+	s := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		_, _ = io.WriteString(w, "synthetic-partial")
+		w.(http.Flusher).Flush()
+		panic(http.ErrAbortHandler)
+	}))
+	cookie, _ := login(t, s)
+	server := httptest.NewServer(s.Handler())
+	defer server.Close()
+	client := server.Client()
+	client.Timeout = 2 * time.Second
+	r, err := http.NewRequest("GET", server.URL+"/api/download", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Host = testHost
+	r.AddCookie(cookie)
+	response, err := client.Do(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, readErr := io.ReadAll(response.Body)
+	closeErr := response.Body.Close()
+	if readErr != io.ErrUnexpectedEOF || closeErr != nil || response.StatusCode != 200 || string(body) != "synthetic-partial" {
+		t.Fatalf("abort must interrupt without appended JSON: status=%d body=%q read=%v close=%v", response.StatusCode, body, readErr, closeErr)
+	}
+	s.joined.Wait()
+	s.mu.Lock()
+	active := s.active
+	s.mu.Unlock()
+	if active != 0 {
+		t.Fatal("aborted handler retained admission")
+	}
+}
+
+func TestHTTPAbortSentinelPropagatesAndReleasesAdmission(t *testing.T) {
+	s := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic(http.ErrAbortHandler) }))
+	cookie, _ := login(t, s)
+	var caught any
+	func() {
+		defer func() { caught = recover() }()
+		request(s, "GET", "/api/download", "", cookie, "", "")
+	}()
+	if caught != http.ErrAbortHandler {
+		t.Fatal("HTTP abort sentinel was swallowed")
+	}
+	s.joined.Wait()
+	s.mu.Lock()
+	active := s.active
+	s.mu.Unlock()
+	if active != 0 {
+		t.Fatal("aborted handler retained admission")
+	}
+}
+
 func newTestServer(t *testing.T, app http.Handler) *Server {
 	t.Helper()
 	s, e := New(Options{Listen: testHost, Password: testPassword}, app, nil)
