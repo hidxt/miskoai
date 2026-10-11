@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"github.com/hidxt/miskoai/internal/agent"
+	"github.com/hidxt/miskoai/internal/attachment"
 	"github.com/hidxt/miskoai/internal/channel/weixin"
 	"github.com/hidxt/miskoai/internal/config"
 	"github.com/hidxt/miskoai/internal/maintenance"
+	"github.com/hidxt/miskoai/internal/media"
 	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/provider"
 	"github.com/hidxt/miskoai/internal/service"
@@ -25,7 +27,10 @@ type Channel interface {
 	SendText(context.Context, string, string, string, string) error
 }
 type Dependencies struct {
-	Model          agent.Model
+	Model agent.Model
+	// Vision and Images are borrowed synchronous dependencies. Supply both or neither.
+	Vision         agent.Model
+	Images         agent.ImageProcessor
 	Search         agent.Searcher
 	ChannelFactory func(config.Authorization) (Channel, error)
 }
@@ -47,6 +52,9 @@ type Controller struct {
 	auth                                                   config.Authorization
 	scope                                                  storage.Scope
 	model                                                  agent.Model
+	vision                                                 agent.Model
+	images                                                 agent.ImageProcessor
+	cdn                                                    *media.CDN
 	search                                                 agent.Searcher
 	channel                                                Channel
 	providerReady                                          bool
@@ -71,6 +79,10 @@ type Controller struct {
 }
 
 func New(cfg config.Config, d Dependencies) (c *Controller, err error) {
+	// Reject partial borrowed media dependencies before filesystem effects.
+	if (d.Vision == nil) != (d.Images == nil) {
+		return nil, ErrConfiguration
+	}
 	s := cfg.EffectiveSettings()
 	if s == (config.Settings{}) || s != (config.Settings{Listen: cfg.Listen, DeepSeekURL: cfg.DeepSeekURL, Model: cfg.Model, VisionModel: cfg.VisionModel, WeixinURL: cfg.WeixinURL, MaxOutput: cfg.MaxOutput, ContextBytes: cfg.ContextBytes, ContextTokens: cfg.ContextTokens}) || len(cfg.AdminPassword) < 16 || len(cfg.AdminPassword) > 256 || !utf8.ValidString(cfg.AdminPassword) {
 		return nil, ErrConfiguration
@@ -90,8 +102,12 @@ func New(cfg config.Config, d Dependencies) (c *Controller, err error) {
 		return nil, ErrUnavailable
 	}
 	var ownedStore *storage.Store
+	var ownedCDN *media.CDN
 	defer func() {
 		if err != nil {
+			if ownedCDN != nil && ownedCDN.Close() != nil {
+				err = ErrUnavailable
+			}
 			if ownedStore != nil && ownedStore.Close() != nil {
 				err = ErrUnavailable
 			}
@@ -129,10 +145,29 @@ func New(cfg config.Config, d Dependencies) (c *Controller, err error) {
 	ownedStore = c.store
 	c.providerReady = d.Model != nil || cfg.DeepSeekKey != ""
 	c.model = d.Model
+	c.vision, c.images = d.Vision, d.Images
 	if c.model == nil {
-		c.model, e = provider.NewDeepSeek(s.DeepSeekURL, cfg.DeepSeekKey, s.Model)
+		var text *provider.DeepSeek
+		text, e = provider.NewDeepSeek(s.DeepSeekURL, cfg.DeepSeekKey, s.Model)
 		if e != nil {
 			return nil, ErrConfiguration
+		}
+		c.model = text
+		if c.vision == nil {
+			// Clone the original before counted wrappers; both share admission.
+			c.vision, e = text.WithModel(s.VisionModel)
+			if e != nil {
+				return nil, ErrConfiguration
+			}
+			c.cdn, e = media.NewCDN()
+			if e != nil {
+				return nil, ErrUnavailable
+			}
+			ownedCDN = c.cdn
+			c.images, e = attachment.NewImageProcessor(dir, c.cdn)
+			if e != nil {
+				return nil, ErrConfiguration
+			}
 		}
 	}
 	c.search = d.Search

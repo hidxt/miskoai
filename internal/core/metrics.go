@@ -103,9 +103,12 @@ type countedModel struct {
 
 func (m *countedModel) Chat(ctx context.Context, msg []provider.Message, n int) (provider.Reply, error) {
 	m.c.mu.Lock()
-	if m.operation == "summary" {
+	switch m.operation {
+	case "summary":
 		increment(&m.c.metrics.SummaryAttempts)
-	} else {
+	case "vision":
+		increment(&m.c.metrics.VisionAttempts)
+	default:
 		increment(&m.c.metrics.ChatAttempts)
 	}
 	m.c.mu.Unlock()

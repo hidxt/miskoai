@@ -735,7 +735,7 @@ func TestNormalizeAllowedTextMissingContextAndInvalidTimestamp(t *testing.T) {
 		}
 	}
 }
-func TestUnsupportedMediaDoesNotReachHandler(t *testing.T) {
+func TestMalformedMediaQuarantinesWithoutHandlerEffects(t *testing.T) {
 	s, _ := storeFor(t)
 	var calls atomic.Int32
 	raw := []byte(`{"msgs":[{"from_user_id":"user","message_type":1,"message_state":2,"context_token":"token","item_list":[{"type":2,"image_item":{}}]}],"get_updates_buf":"media"}`)
@@ -749,12 +749,21 @@ func TestUnsupportedMediaDoesNotReachHandler(t *testing.T) {
 		calls.Add(1)
 		return agent.Result{State: "sent"}, nil
 	}))
-	cancel, _ := start(t, v)
-	eventually(t, func() bool { cur, e := s.Cursor(context.Background(), scope); return e == nil && cur == "media" })
+	cancel, done := start(t, v)
+	eventually(t, func() bool { return v.Snapshot().Channel == "quarantined" })
+	cur, e := s.Cursor(context.Background(), scope)
+	if e != nil || cur != "" || v.Snapshot().LastCode != "protocol" {
+		t.Fatal("malformed media advanced cursor or lost protocol classification", cur, e)
+	}
 	if calls.Load() != 0 || v.Snapshot().Received != 0 {
 		t.Fatal("unsupported media processed")
 	}
 	cancel()
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("malformed media service did not join")
+	}
 }
 func TestClosedStoragePausesWithoutPolling(t *testing.T) {
 	s, _ := storeFor(t)

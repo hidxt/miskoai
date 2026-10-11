@@ -248,6 +248,7 @@ type cancelDownload struct {
 	sent     bool
 	done     chan struct{}
 	canceled chan struct{}
+	entered  chan struct{}
 	release  chan struct{}
 	closed   atomic.Int32
 }
@@ -265,6 +266,7 @@ func (d *cancelDownload) Read(p []byte) (int, error) {
 		}
 		return n, nil
 	}
+	close(d.entered)
 	<-d.ctx.Done()
 	close(d.canceled)
 	<-d.release
@@ -294,7 +296,7 @@ func (w flushingResponseWriter) Write(p []byte) (int, error) {
 	return n, e
 }
 func TestDownloadHTTPClientCancelsDuringTransfer(t *testing.T) {
-	d := &cancelDownload{done: make(chan struct{}), canceled: make(chan struct{}), release: make(chan struct{})}
+	d := &cancelDownload{done: make(chan struct{}), canceled: make(chan struct{}), entered: make(chan struct{}), release: make(chan struct{})}
 	s := newTestServer(t, newApplication(cancelStreamFixture{d: d}))
 	cookie, csrf := login(t, s)
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.Handler().ServeHTTP(flushingResponseWriter{w}, r) }))
@@ -325,6 +327,13 @@ func TestDownloadHTTPClientCancelsDuringTransfer(t *testing.T) {
 	bytes := make([]byte, 4096)
 	if _, e := io.ReadFull(resp.Body, bytes); e != nil {
 		t.Fatal(e)
+	}
+	// Partial bytes can arrive before CopyN calls the reader again. This test
+	// owns a held underlying read, so establish that entry before cancellation.
+	select {
+	case <-d.entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("server reader did not enter held read")
 	}
 	cancel()
 	select {
@@ -363,6 +372,104 @@ func TestDownloadHTTPClientCancelsDuringTransfer(t *testing.T) {
 	}
 	if d.closed.Load() != 1 {
 		t.Fatal("close count", d.closed.Load())
+	}
+}
+
+// Hold the first flushed write until the real HTTP request is canceled. Returning
+// a successful partial write then lets downloadReader's next-call guard decide
+// whether the underlying reader is entered; it does not force a write failure.
+type cancelBeforeNextWriter struct {
+	flushingResponseWriter
+	ctx      context.Context
+	release  <-chan struct{}
+	observed chan struct{}
+}
+
+func (w cancelBeforeNextWriter) Write(p []byte) (int, error) {
+	n, e := w.flushingResponseWriter.Write(p)
+	if e == nil {
+		select {
+		case <-w.ctx.Done():
+			close(w.observed)
+		case <-w.release:
+		case <-time.After(5 * time.Second):
+			return n, errors.New("cancel write barrier watchdog")
+		}
+	}
+	return n, e
+}
+
+func TestDownloadHTTPClientCancelsBeforeNextRead(t *testing.T) {
+	d := &cancelDownload{done: make(chan struct{}), canceled: make(chan struct{}), entered: make(chan struct{}), release: make(chan struct{})}
+	s := newTestServer(t, newApplication(cancelStreamFixture{d: d}))
+	cookie, csrf := login(t, s)
+	observed, returned := make(chan struct{}), make(chan struct{})
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer close(returned)
+		s.Handler().ServeHTTP(cancelBeforeNextWriter{flushingResponseWriter{w}, r.Context(), d.release, observed}, r)
+	}))
+	ts.Config.ErrorLog = log.New(io.Discard, "", 0)
+	ts.Start()
+	defer ts.Close()
+	var releaseOnce sync.Once
+	release := func() { releaseOnce.Do(func() { close(d.release) }) }
+	defer release()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	r, e := http.NewRequestWithContext(ctx, "POST", ts.URL+"/api/export", strings.NewReader(`{}`))
+	if e != nil {
+		t.Fatal(e)
+	}
+	r.Host = testHost
+	r.AddCookie(cookie)
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("Origin", testOrigin)
+	r.Header.Set("X-MiskoAI-CSRF", csrf)
+	client := ts.Client()
+	client.Timeout = 5 * time.Second
+	resp, e := client.Do(r)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer resp.Body.Close()
+	partial := make([]byte, 4096)
+	if _, e := io.ReadFull(resp.Body, partial); e != nil {
+		t.Fatal(e)
+	}
+	if resp.StatusCode != http.StatusOK || resp.ContentLength != 16384 || string(partial) != strings.Repeat("x", 4096) {
+		t.Fatal("unexpected partial response", resp.StatusCode, resp.ContentLength)
+	}
+	cancel()
+	remainder, readErr := io.ReadAll(resp.Body)
+	if readErr == nil || len(partial)+len(remainder) >= 16384 {
+		t.Fatal("canceled response was not aborted/truncated", len(remainder), readErr)
+	}
+	select {
+	case <-returned:
+	case <-time.After(5 * time.Second):
+		t.Fatal("cancellation before next read did not return handler")
+	}
+	select {
+	case <-observed:
+	default:
+		t.Fatal("write barrier did not observe request cancellation")
+	}
+	select {
+	case <-d.entered:
+		t.Fatal("canceled wrapper entered underlying next read")
+	default:
+	}
+	select {
+	case <-d.done:
+	default:
+		t.Fatal("artifact not closed before handler returned")
+	}
+	s.joined.Wait()
+	s.mu.Lock()
+	active := s.active
+	s.mu.Unlock()
+	if active != 0 || d.closed.Load() != 1 {
+		t.Fatal("canceled handler did not release admission/close once", active, d.closed.Load())
 	}
 }
 

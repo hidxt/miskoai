@@ -137,3 +137,13 @@ Ruling: accept package37 local implementation only after root1352-pass/full-vet0
 ## D064: Agent image Task2 local gate and executor recovery
 
 Accept Task2 after root1382/fullvet0/fresh independent review and unchanged source identities. No35 credit before Core/service Task3. Preserve unsupported-file handling, empty USER provenance, mandatory profile/current image, callback lifetime and unknown-send no-replay. PDF usage-limit interruption and606s EOF baseline failure are unaccepted evidence; no repeat of unguarded hanging baseline. Primary may execute the already-authorized dependent plan while child quota is unavailable, with an independent permitted Medium reviewer before acceptance. Cost: no native/live/resource claims from partial work; final review waits for available permitted reviewer.
+
+
+## D065: Shared vision local completion and native fixture diagnosis
+
+Accept package35 at the stated local gate after all three image tasks, root1400/fullvet0, frozen identity/static/secret gates and fresh Medium SpecApproved/QualityApproved0Critical0Important1Minor. Defer Core M1 closure assertion precision to final43/45; runtime cleanup is established by source ordering, not that invalid-request assertion. Preserve accepted normalizer semantics: valid foreign-user entries drop before media-key inspection and may advance a valid frame cursor; consumed malformed media quarantines without cursor advancement. The narrowly granted old malformed fixture retains its original frame and verifies quarantine/zero effects. Record Agent native race-step failure as the actual Web fixture failure, with no data-race report and later gates skipped. Correct only after a finite deterministic reproduction; unchanged reruns do not diagnose. Keep PDF unaccepted and require sole writer handoff/join before Web correction. No live/private/resource/final credit is added.
+
+
+## D066: Test-only HTTP cancellation scheduling correction
+
+Root verified finite deterministic compiled RED and corrected focused2/Web83/full1401/fullvet0, exact source/evidence identities and fresh Medium review0findings. Synchronize entry before cancel in the held-reader fixture; separately force cancellation before the next read with real HTTP and verify the production guard avoids that read, aborts the body and closes/joins/releases exactly once. Keep production cancellation/auth/admission/deadlines untouched. The failed CI exact schedule remains unknown; same-class proof is sufficient for the fixture correction, not a claim of replay. All production Go/module/workflow bytes are identical to the complete Core static scan, so retain those warnings/dispositions without a redundant scan. Corrected publication/native verification remains mandatory.

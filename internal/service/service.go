@@ -187,7 +187,7 @@ func (s *Service) poll(ctx context.Context, cancel context.CancelFunc) {
 			}
 			frame = &storage.PollFrame{ID: id, Scope: s.scope, Cursor: cursor, Body: raw, State: "pending"}
 		}
-		entries, next, err := normalize(frame.Body, s.scope, time.Now().UTC())
+		entries, next, err := normalizeAttachments(frame.Body, s.scope, time.Now().UTC())
 		if err != nil {
 			if errors.Is(err, weixin.ErrAuthExpired) || errors.Is(err, weixin.ErrUnauthorized) {
 				s.pause(cancel, "authorization")
@@ -248,7 +248,7 @@ func (s *Service) work(ctx context.Context, cancel context.CancelFunc) {
 			if ctx.Err() != nil {
 				return
 			}
-			r, handleErr := s.handler.Handle(ctx, agent.Incoming{Account: e.Scope.Account, User: e.Scope.User, ID: e.MessageID, Text: e.Text, ContextToken: e.ContextToken})
+			r, handleErr := s.handler.Handle(ctx, agent.Incoming{Account: e.Scope.Account, User: e.Scope.User, ID: e.MessageID, Text: e.Text, ContextToken: e.ContextToken, Attachment: e.Attachment})
 			if ctx.Err() != nil {
 				return
 			}
