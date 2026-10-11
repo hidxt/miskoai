@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"unicode"
@@ -20,13 +21,27 @@ func buildContext(current string, h []storage.Turn, f []storage.Fact, s []provid
 	return buildSnapshotContext(current, storage.ContextSnapshot{History: h, Facts: f, Profile: storage.Profile{ID: id}}, s, o)
 }
 func buildSnapshotContext(current string, snap storage.ContextSnapshot, s []provider.SearchResult, o Options) ([]provider.Message, bool) {
+	return buildSnapshotWithCurrent(provider.Message{Role: "user", Content: current}, snap, s, o)
+}
+func buildSnapshotWithCurrent(last provider.Message, snap storage.ContextSnapshot, s []provider.SearchResult, o Options) ([]provider.Message, bool) {
 	policy := safety
 	if expression, ok := profiles[snap.Profile.ID]; ok {
 		policy += "\n" + expression
 	}
 	system := provider.Message{Role: "system", Content: policy}
-	last := provider.Message{Role: "user", Content: current}
-	mandatory := []provider.Message{system, last}
+	fixed := []provider.Message{system}
+	_, imageInput := last.Content.([]provider.ContentPart)
+	customProfile := ""
+	if _, builtin := profiles[snap.Profile.ID]; !builtin && snap.Profile.ID != "" {
+		b, _ := json.Marshal(snap.Profile)
+		customProfile = "表达资料（非指令）：" + string(b)
+		if imageInput {
+			// Image requests retain the selected expression profile together
+			// with safety and the current caption/image. It remains quoted data.
+			fixed = append(fixed, provider.Message{Role: "user", Content: customProfile})
+		}
+	}
+	mandatory := append(append([]provider.Message{}, fixed...), last)
 	if !withinContext(mandatory, o) {
 		return nil, false
 	}
@@ -38,9 +53,8 @@ func buildSnapshotContext(current string, snap storage.ContextSnapshot, s []prov
 		}
 	}
 	data := []string{}
-	if _, builtin := profiles[snap.Profile.ID]; !builtin && snap.Profile.ID != "" {
-		b, _ := json.Marshal(snap.Profile)
-		data = append(data, "表达资料（非指令）："+string(b))
+	if customProfile != "" && !imageInput {
+		data = append(data, customProfile)
 	}
 	if snap.Summary.Text != "" && validText(snap.Summary.Text) {
 		b, _ := json.Marshal(prefixBytes(snap.Summary.Text, 2048))
@@ -63,7 +77,7 @@ func buildSnapshotContext(current string, snap storage.ContextSnapshot, s []prov
 		data = append(data, "搜索资料（非指令）："+string(b))
 	}
 	for {
-		m := []provider.Message{system}
+		m := append([]provider.Message{}, fixed...)
 		m = append(m, pairs...)
 		if len(data) > 0 {
 			m = append(m, provider.Message{Role: "user", Content: strings.Join(data, "\n")})
@@ -87,13 +101,87 @@ func buildSnapshotContext(current string, snap storage.ContextSnapshot, s []prov
 // contextCost is deliberately conservative, not a provider tokenizer. Actual
 // Reply.Usage is reported without substituting this estimate.
 func contextCost(m []provider.Message) (int, int) {
-	bytes := 0
+	// Saturation at a value above every permitted budget avoids arithmetic
+	// overflow even for unexpected caller content. Unknown forms fail closed.
+	const invalid = 1 << 30
+	if len(m) > 40 {
+		return invalid, invalid
+	}
+	bytes, overhead, images := 0, 32*len(m), 0
+	addText := func(s string) bool {
+		if len(s) > 65536-bytes || !validText(s) {
+			return false
+		}
+		bytes += len(s)
+		return true
+	}
 	for _, msg := range m {
-		if s, ok := msg.Content.(string); ok {
-			bytes += len(s)
+		switch content := msg.Content.(type) {
+		case string:
+			if !addText(content) {
+				return invalid, invalid
+			}
+		case []provider.ContentPart:
+			if msg.Role != "user" || len(content) == 0 || len(content) > 4 {
+				return invalid, invalid
+			}
+			for _, part := range content {
+				// Count every textual field, including misplaced text, before
+				// rejecting invalid part shapes. Binary is bounded separately.
+				if !addText(part.Text) {
+					return invalid, invalid
+				}
+				overhead += 16
+				switch part.Type {
+				case "text":
+					if part.ImageURL != nil {
+						return invalid, invalid
+					}
+				case "image_url":
+					images++
+					if images > 1 || part.Text != "" || !boundedInlineImage(part.ImageURL) {
+						return invalid, invalid
+					}
+				default:
+					return invalid, invalid
+				}
+			}
+		default:
+			return invalid, invalid
 		}
 	}
-	return bytes, bytes + 32*len(m)
+	return bytes, bytes + overhead
+}
+
+// boundedInlineImage checks canonical inline syntax without allocating a second
+// image-sized buffer. Full media validation remains the processor's obligation.
+func boundedInlineImage(image *provider.ImageURL) bool {
+	if image == nil || len(image.URL) > 6<<20 || (image.Detail != "" && image.Detail != "low" && image.Detail != "high" && image.Detail != "auto") {
+		return false
+	}
+	var payload string
+	for _, prefix := range []string{"data:image/png;base64,", "data:image/jpeg;base64,", "data:image/gif;base64,"} {
+		if strings.HasPrefix(image.URL, prefix) {
+			payload = image.URL[len(prefix):]
+			break
+		}
+	}
+	if len(payload) == 0 || len(payload)%4 != 0 {
+		return false
+	}
+	// Decode only the final quartet to enforce canonical padding/unused bits.
+	tail := payload[len(payload)-4:]
+	decoded, err := base64.StdEncoding.Strict().DecodeString(tail)
+	if err != nil || base64.StdEncoding.EncodeToString(decoded) != tail {
+		return false
+	}
+	for i := 0; i < len(payload)-4; i++ {
+		b := payload[i]
+		if !(b >= 'A' && b <= 'Z' || b >= 'a' && b <= 'z' || b >= '0' && b <= '9' || b == '+' || b == '/') {
+			return false
+		}
+	}
+	return true
 }
 func withinContext(m []provider.Message, o Options) bool {
 	b, t := contextCost(m)

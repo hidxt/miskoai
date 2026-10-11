@@ -25,7 +25,10 @@ type Searcher interface {
 type Sender interface {
 	SendText(context.Context, string, string, string, string) error
 }
-type Incoming struct{ Account, User, ID, Text, ContextToken string }
+type Incoming struct {
+	Account, User, ID, Text, ContextToken string
+	Attachment                            *storage.Attachment
+}
 type Options struct {
 	Account, User, Profile                 string
 	MaxOutput, ContextBytes, ContextTokens int
@@ -38,6 +41,8 @@ type Result struct {
 type Agent struct {
 	store     *storage.Store
 	model     Model
+	vision    Model
+	images    ImageProcessor
 	search    Searcher
 	sender    Sender
 	opts      Options
@@ -91,8 +96,17 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	if in.Account != a.opts.Account || in.User != a.opts.User {
 		return failure("rejected", "scope")
 	}
-	if !validField(in.Account, 256) || !validField(in.User, 256) || !validField(in.ID, 512) || !validField(in.ContextToken, 16384) || !validText(in.Text) || strings.TrimSpace(in.Text) == "" || len(in.Text) > 16384 {
+	if !validField(in.Account, 256) || !validField(in.User, 256) || !validField(in.ID, 512) || !validField(in.ContextToken, 16384) || !validText(in.Text) || len(in.Text) > 16384 || in.Attachment == nil && strings.TrimSpace(in.Text) == "" {
 		return failure("rejected", "input")
+	}
+	// Descriptor access follows exact scope and genuine caption validation.
+	// Copy validated metadata so subsequent work uses this admitted descriptor.
+	if in.Attachment != nil {
+		descriptor := *in.Attachment
+		if descriptor.Validate() != nil {
+			return failure("rejected", "input")
+		}
+		in.Attachment = &descriptor
 	}
 	ctx, cancel := context.WithTimeout(parent, 90*time.Second)
 	defer cancel()
@@ -115,13 +129,23 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	if !claimed {
 		return Result{State: "duplicate"}, nil
 	}
-	text, code, handled := a.command(ctx, in.Text)
+	var text, code string
 	var usage provider.Usage
-	if !handled {
+	if in.Attachment != nil {
 		if len(in.Text) > 8192 {
 			text, code = limitReply, "limit"
 		} else {
-			text, usage, code = a.answer(ctx, in.Text)
+			text, usage, code = a.answerImage(ctx, in.Text, *in.Attachment)
+		}
+	} else {
+		var handled bool
+		text, code, handled = a.command(ctx, in.Text)
+		if !handled {
+			if len(in.Text) > 8192 {
+				text, code = limitReply, "limit"
+			} else {
+				text, usage, code = a.answer(ctx, in.Text)
+			}
 		}
 	}
 	if ctx.Err() != nil {

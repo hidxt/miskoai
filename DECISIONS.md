@@ -132,3 +132,8 @@ Ruling: original DOCX implementer round1 must replace blanket same-WordML skippi
 ## D063: Restricted DOCX extraction local gate
 
 Ruling: accept package37 local implementation only after root1352-pass/full-vet0/frozen identity and scoped I1 re-review gate. Keep explicit WordML unsupported policy and lexical/ZIP/output admission; D062 declaration Minor is open for final43/45. Cost: narrower legal Word compatibility, cooperative rather than forced deadline, no rendered stories or declaration-conformance promise. File-chat integration/native/live/resource/final gates remain separate; engineering68%=34of50, no35/38 credit.
+
+
+## D064: Agent image Task2 local gate and executor recovery
+
+Accept Task2 after root1382/fullvet0/fresh independent review and unchanged source identities. No35 credit before Core/service Task3. Preserve unsupported-file handling, empty USER provenance, mandatory profile/current image, callback lifetime and unknown-send no-replay. PDF usage-limit interruption and606s EOF baseline failure are unaccepted evidence; no repeat of unguarded hanging baseline. Primary may execute the already-authorized dependent plan while child quota is unavailable, with an independent permitted Medium reviewer before acceptance. Cost: no native/live/resource claims from partial work; final review waits for available permitted reviewer.
