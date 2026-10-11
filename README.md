@@ -1,6 +1,6 @@
 # MiskoAI
 
-Current engineering progress is **70%** (35of50). TXT/Markdown, restricted DOCX and shared vision attachment integration passed independent review and root local gates. Core/service images plus the test-only HTTP cancellation correction passed1401 local tests and full vet, awaiting development publication/native CI. The older Agent native CI38136011777 failed the cancellation fixture; its skipped later checks remain recorded. Deterministic diagnosis and fresh review confirm the corrected test covers cancellation both before and during a held read. DOCX native CI38116792278 passed all12 steps. PDF remains in development and unaccepted; DOCX declaration and Core CDN-close assertion Minors remain deferred to final review. Real WeChat/media, actual arm64 execution,512MB measurements and final acceptance remain open.
+Engineering progress: **70%** (35/50 local delivery packages). Private PDF core passed corrected full1497/vet0 and fresh review with two explicit Task2 follow-ups; page/text extraction is not accepted. Core/Web7ce6a4e passed exact nativeCI38137673635/all12steps. PDF publication/native verification, live WeChat, actual512MB workloads and final acceptance remain separate.
 
 A lightweight AI WeChat companion built in Go, using SQLite, DeepSeek official cloud APIs and Ollama hosted Web Search. Targets native Linux amd64/arm64 on 2 vCPU / 512MB machines. Development has started; this repository is **not yet a production release**. See DELIVERY.md for actual implemented/tested status.
 
