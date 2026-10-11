@@ -112,3 +112,13 @@ D058: Planned DOCX extraction validates three fixed XML parts, matching Transiti
 
 
 D059: Accept restricted ZIP metadata/integrity local groundwork after freshMedium0findings/root1224pass-vet0. Contiguous precentral ranges exclude envelopes/gaps/hidden records; colon names and signatureless descriptor CRC equal to signature refuse conservatively. Cost: narrower legalZIP subset; no arbitrary filesystem extraction/relationship or quota change. Retain G115 HIGH scannerlabel with guarded-cast proof rather than suppression. PublicDOCX staysunsupported untilTask3; no37credit/66% unchanged.
+
+
+## D060: Claimed image lifetime primitive local gate
+
+Ruling: accept the synchronous shared-CDN image processor after independent task review and root1276-pass/full-vet0 frozen-source gate. Keep one outer admission through actual consumer/model and artifact cleanup; retain successful usage at the later agent boundary even when cleanup fails. The callback and completed immutable private artifact remain explicit contracts; cooperative cancellation never releases an unfinished worker. Cost if these later ownership contracts are violated: concurrency/privacy/resource failures; Task2/3 tests and root checks are mandatory before completeimage credit or operational integration. Existing static warnings are retained with0new fingerprints; native/live/RSS/final gates remain separate. Engineering66% unchanged.
+
+
+## D061: Concise active recovery ledgers with exact historical archives
+
+Ruling: at the image Task1/ZIP native phase boundary, archive complete TASKS/MEMORY/DELIVERY bytes under dated docs/history files and replace active ledgers with concise current constraints, gates, owner authorization, child ownership and nextwork. Verify exact archivebytes/SHA256 and link each record; preserve all earlier archives and rulings. This avoids re-reading contradictory historicalpause/pending states and reduces recovery overhead under the owner faster-progress request. Cost if active summary omits detail: consult the preserved linkedrecords and subsystemevidence; no historicaltest/result/content deletion or scope change is authorized. Engineering66% unchanged.
