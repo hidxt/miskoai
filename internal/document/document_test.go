@@ -31,7 +31,7 @@ func TestParserValidationBeforeRead(t *testing.T) {
 		{"nilcontext", nil, TXT, 1, ErrInvalid}, {"negative", context.Background(), TXT, -1, ErrInvalid},
 		{"oversize", context.Background(), TXT, 4*1024*1024 + 1, ErrLimit},
 		{"unknown", context.Background(), Format("PRIVATE-CANARY/path"), 1, ErrUnsupported},
-		{"docx", context.Background(), DOCX, 1, ErrUnsupported}, {"pdf", context.Background(), PDF, 1, ErrUnsupported},
+		{"docx-oversize", context.Background(), DOCX, maxInputBytes + 1, ErrLimit}, {"pdf", context.Background(), PDF, 1, ErrUnsupported},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			r := &countReader{}

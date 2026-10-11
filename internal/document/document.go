@@ -59,7 +59,7 @@ func (p *Parser) Extract(ctx context.Context, format Format, input io.ReaderAt, 
 	if size > maxInputBytes {
 		return Result{}, ErrLimit
 	}
-	if format != TXT && format != Markdown {
+	if format != TXT && format != Markdown && format != DOCX {
 		return Result{}, ErrUnsupported
 	}
 	ctx, cancel := context.WithDeadline(ctx, entered.Add(parseTimeout))
@@ -75,6 +75,9 @@ func (p *Parser) Extract(ctx context.Context, format Format, input io.ReaderAt, 
 	defer func() { <-p.admission }()
 	if err := checkWork(ctx); err != nil {
 		return Result{}, err
+	}
+	if format == DOCX {
+		return extractDOCX(ctx, input, size)
 	}
 	text, err := extractText(ctx, checkedReaderAt{input: input, size: size})
 	if err != nil {

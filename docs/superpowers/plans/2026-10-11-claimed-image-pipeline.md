@@ -1,6 +1,6 @@
 # Claimed image attachment pipeline implementation plan
 
-Root design2026-10-11; current engineering **66%**. Task1 local gate is accepted; Task2/3 remain dependent implementation gates. Existing owner authorization covers routine internals; no actual private startup/migration, external media/model call or expanded live-test allowance is inferred. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium); no alternate effort/model or delegation.
+Root design2026-10-11; current engineering **68%**. Task1 local gate is accepted; Task2/3 remain dependent implementation gates. Existing owner authorization covers routine internals; no actual private startup/migration, external media/model call or expanded live-test allowance is inferred. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium); no alternate effort/model or delegation.
 
 Goal: route one authorized, durably claimed image through the existing private CDN/decrypt/full-image-validation/inline-encoding/shared-model boundaries and the existing one-send text reply state machine. Preserve genuine caption provenance, cancellation joins, transport quotas and ambiguity/no-replay behavior. Files initially receive a fixed unsupported reply; document parsing and outbound images have their separate plans.
 

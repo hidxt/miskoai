@@ -122,3 +122,13 @@ Ruling: accept the synchronous shared-CDN image processor after independent task
 ## D061: Concise active recovery ledgers with exact historical archives
 
 Ruling: at the image Task1/ZIP native phase boundary, archive complete TASKS/MEMORY/DELIVERY bytes under dated docs/history files and replace active ledgers with concise current constraints, gates, owner authorization, child ownership and nextwork. Verify exact archivebytes/SHA256 and link each record; preserve all earlier archives and rulings. This avoids re-reading contradictory historicalpause/pending states and reduces recovery overhead under the owner faster-progress request. Cost if active summary omits detail: consult the preserved linkedrecords and subsystemevidence; no historicaltest/result/content deletion or scope change is authorized. Engineering66% unchanged.
+
+
+## D062: Honest unsupported DOCX story wrappers and tracked declaration Minor
+
+Ruling: original DOCX implementer round1 must replace blanket same-WordML skipping with explicit non-story exclusions and complete supported extraction or ErrUnsupported/zero for unsupported main-story containers. Independent Important I1 and root finite customXml/moveTo RED prove silent-prefix success violates the existing complete-or-honest-unsupported requirement. This is routine correction within D058, not a scope or quota change. Cost: legitimate unsupported Word constructs may refuse; documentation must identify the restricted subset. Minor I2 XML declaration grammar/uniqueness/placement is independently reproduced and deferred to final43/45 review, outside the blocking fix loop; all resource bounds remain enforced and no execution escape was shown. Cost of deferral: malformed declaration packages may still return extracted text; final review must triage it, never silently discard it. Engineering66% unchanged.
+
+
+## D063: Restricted DOCX extraction local gate
+
+Ruling: accept package37 local implementation only after root1352-pass/full-vet0/frozen identity and scoped I1 re-review gate. Keep explicit WordML unsupported policy and lexical/ZIP/output admission; D062 declaration Minor is open for final43/45. Cost: narrower legal Word compatibility, cooperative rather than forced deadline, no rendered stories or declaration-conformance promise. File-chat integration/native/live/resource/final gates remain separate; engineering68%=34of50, no35/38 credit.
