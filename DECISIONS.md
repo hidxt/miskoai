@@ -106,3 +106,9 @@ D056: Planned claimed-image composition retains one outer media processor per Co
 
 
 D057: Accept strictTXT/Markdown local parser with single initializedParser/call-entrycooperative2s, synchronous checkedReaderAt/fixed4096+3UTF8carry and complete128KiBoutput refusal. StriponlyoneinitialBOM/preserveinerttext; caller mustreuseperCore/completedimmutabletruthfulinput. Cost: arbitraryblocked reader retainsadmission beyonddeadline andDOCX/PDF remainunsupported untilserialguardedgates; noforcedinterrupt/RSS/operationalclaim. FreshpermittedMediumapproval/root1175pass/vet0/static0new/publicscan0 supports package36localcredit/66%, native/live/finalseparate.
+
+
+D058: Planned DOCX extraction validates three fixed XML parts, matching Transitional/Strict main-story namespace and internal main-part relationship, unambiguous content type/consumed attributes, lexical admission before XML Token and main-body-only text semantics. Cost: legal packages using other main-part paths or alternate/imported stories remain unsupported; main-body extraction does not promise headers, notes, graphics or rendered pagination. This is routine implementation preflight within approved restricted DOCX design, not new channel/SQLite/provider/deployment/safety/resource scope or local acceptance. Exact8MiB decode/128KiB output/64logical pages/one call-entry2s Parser budgets retained; package37 remains open.
+
+
+D059: Accept restricted ZIP metadata/integrity local groundwork after freshMedium0findings/root1224pass-vet0. Contiguous precentral ranges exclude envelopes/gaps/hidden records; colon names and signatureless descriptor CRC equal to signature refuse conservatively. Cost: narrower legalZIP subset; no arbitrary filesystem extraction/relationship or quota change. Retain G115 HIGH scannerlabel with guarded-cast proof rather than suppression. PublicDOCX staysunsupported untilTask3; no37credit/66% unchanged.

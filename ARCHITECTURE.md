@@ -37,3 +37,6 @@ Shared vision provider primitives are locally accepted after root1145pass/vet0 a
 
 
 TXT/Markdown extraction is locally accepted with one reused Parser and a cooperative call-entry two-second deadline, fixed UTF8 read chunks, and complete128KiB output admission. Only genuine caption remains USER provenance; extracted text will be labeled external evidence by later agent integration. DOCX/PDF refuse without reads until their guarded serial tasks pass. Root1175pass/vet0/freshreview0findings; publication/native verification remains separate.
+
+
+Restricted ZIP local groundwork passed fresh independent review and root1224-pass/full-vet0 frozen-source checks. Metadata admission precedes stdlib allocation; every member has bounded decoded size, independent CRC including zero and exact compressed exhaustion. Only three fixed XML parts are retained; public DOCX/PDF remain unsupported until their extraction gates. This adds no package37 credit; engineering66% remains33of50. Native ZIP publication/CI pending, TXT5e20de6/native38074949613 allstepsSUCCESS. Full attachment pipeline, liveWeChat,512MB and final acceptance remain open.
