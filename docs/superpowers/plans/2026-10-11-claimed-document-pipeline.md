@@ -12,6 +12,8 @@
 
 ## Global constraints
 
+2026-10-12 primary execution refinement: Task1 lifetime and Task2 Agent groundwork may be prepared in separate isolated copies of the accepted313-file PDF-core checkpoint while PDF extraction is the sole writer in the main checkout. Each preparation owns only its explicit processor or Agent paths and uses the fixed existing document.Result/Parser and planned DocumentProcessor interface; neither can activate file chat, modify the main checkout or receive completion credit. Supported PDF fixture, real processor-Agent combination, root acceptance and final adoption wait for the guarded extraction and independent task gates. Core Task3 remains serial after those gates. This changes preparation scheduling only, preserving one product writer in the main checkout, all scopes/caps/providers and the final dependency requirements below.
+
 - Children ONLY GPT-6.1 Sol Medium (`gpt-6.1-sol`, `reasoning_effort medium`, isolated fork); no children from workers. One product writer; primary frozen checks and readonly reviews may overlap it.
 - Input4MiB, decoded8MiB, complete extraction128KiB UTF8, pages64, one media operation through actual download/parse/model/Close; document parser cooperative2s includes its own waiting/reading. Existing Agent90s total context and CDN30s remain. No detached worker, hard deadline or RSS guarantee.
 - Preserve DeepSeek official deepseek-flash text/vision/shared transport2, Ollama hosted search, scope/claim-before-effects, quotas, one send and ambiguity/no replay. Real WeChat deferred, finite paid allowance spent, actual private schema2 unchanged.

@@ -486,7 +486,13 @@ func (r *reader) resolve(parent objptr, x interface{}) value {
 		}
 	}
 	switch x.(type) {
-	case nil, bool, int64, float64, string, name, dict, array, stream:
+	case stream:
+		v := value{r, parent, x}
+		if x.(stream).parsed {
+			v.streamExtent()
+		}
+		return v
+	case nil, bool, int64, float64, string, name, dict, array:
 		return value{r, parent, x}
 	}
 	fail(errMalformed)
@@ -712,7 +718,10 @@ func (d *decodedReader) Read(p []byte) (int, error) {
 	}
 	return n, e
 }
-func (v value) reader() (result *streamReader) {
+
+// streamExtent validates every actual resolved stream's declared body boundary
+// and closing syntax, including image streams that extraction never decodes.
+func (v value) streamExtent() (stream, int64) {
 	if v.r == nil {
 		fail(errMalformed)
 	}
@@ -722,13 +731,40 @@ func (v value) reader() (result *streamReader) {
 	if !ok {
 		fail(errMalformed)
 	}
-	if len(b.streams) >= maxStreams {
-		fail(errLimit)
-	}
 	lengthVal := v.key("Length")
 	length, ok := lengthVal.data.(int64)
 	if !ok || length < 0 || s.offset < 0 || s.offset > v.r.end || length > v.r.end-s.offset {
 		fail(errMalformed)
+	}
+	// Only lexer-produced streams represent actual parsed objects. Private
+	// synthetic decoder fixtures have no syntax tail to validate.
+	if s.parsed {
+		if s.ptr == (objptr{}) {
+			fail(errMalformed)
+		}
+		tail := v.r.bufferAt(s.offset + length)
+		first := tail.readByte()
+		tail.unreadByte()
+		if length > 0 && first != '\r' && first != '\n' {
+			var last [1]byte
+			if _, e := v.r.f.ReadAt(last[:], s.offset+length-1); e != nil && e != io.EOF {
+				fail(errMalformed)
+			}
+			if last[0] != '\r' && last[0] != '\n' {
+				fail(errMalformed)
+			}
+		}
+		if tail.readToken() != keyword("endstream") || tail.readToken() != keyword("endobj") {
+			fail(errMalformed)
+		}
+	}
+	return s, length
+}
+func (v value) reader() (result *streamReader) {
+	s, length := v.streamExtent()
+	b := v.r.b
+	if len(b.streams) >= maxStreams {
+		fail(errLimit)
 	}
 	b.retain(64)
 	result = &streamReader{b: b}

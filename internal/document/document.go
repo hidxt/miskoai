@@ -9,6 +9,8 @@ import (
 	"io"
 	"reflect"
 	"time"
+
+	"github.com/hidxt/miskoai/internal/pdfsafe"
 )
 
 type Format string
@@ -59,7 +61,7 @@ func (p *Parser) Extract(ctx context.Context, format Format, input io.ReaderAt, 
 	if size > maxInputBytes {
 		return Result{}, ErrLimit
 	}
-	if format != TXT && format != Markdown && format != DOCX {
+	if format != TXT && format != Markdown && format != DOCX && format != PDF {
 		return Result{}, ErrUnsupported
 	}
 	ctx, cancel := context.WithDeadline(ctx, entered.Add(parseTimeout))
@@ -78,6 +80,25 @@ func (p *Parser) Extract(ctx context.Context, format Format, input io.ReaderAt, 
 	}
 	if format == DOCX {
 		return extractDOCX(ctx, input, size)
+	}
+	if format == PDF {
+		text, pages, err := pdfsafe.Extract(ctx, input, size)
+		if err != nil {
+			switch {
+			case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+				return Result{}, canceled(err)
+			case errors.Is(err, pdfsafe.ErrLimit):
+				return Result{}, ErrLimit
+			case errors.Is(err, pdfsafe.ErrUnsupported):
+				return Result{}, ErrUnsupported
+			default:
+				return Result{}, ErrInvalid
+			}
+		}
+		if err := checkWork(ctx); err != nil {
+			return Result{}, err
+		}
+		return Result{Text: text, Pages: pages, Format: PDF}, nil
 	}
 	text, err := extractText(ctx, checkedReaderAt{input: input, size: size})
 	if err != nil {

@@ -270,6 +270,11 @@ Loop:
 		switch c {
 		default:
 			tmp = b.appendBytes(tmp, c)
+		case '\r':
+			if b.readByte() != '\n' {
+				b.unreadByte()
+			}
+			tmp = b.appendBytes(tmp, '\n')
 		case '(':
 			depth++
 			if depth > maxDepth {
@@ -284,8 +289,8 @@ Loop:
 		case '\\':
 			switch c = b.readByte(); c {
 			default:
-				fail(errMalformed)
-				tmp = b.appendBytes(tmp, '\\', c)
+				// PDF ignores the backslash for an unrecognized escape.
+				tmp = b.appendBytes(tmp, c)
 			case 'n':
 				tmp = b.appendBytes(tmp, '\n')
 			case 'r':
@@ -315,10 +320,8 @@ Loop:
 					}
 					x = x*8 + int(c-'0')
 				}
-				if x > 255 {
-					fail(errMalformed)
-				}
-				tmp = b.appendBytes(tmp, byte(x))
+				// Three octal digits encode the low eight bits (PDF 7.3.4.2).
+				tmp = b.appendBytes(tmp, byte(x&255))
 			}
 		}
 	}
@@ -446,6 +449,7 @@ type stream struct {
 	hdr    dict
 	ptr    objptr
 	offset int64
+	parsed bool // set only by the actual PDF syntax reader
 }
 
 type objptr struct {
@@ -599,7 +603,7 @@ func (b *buffer) readDict() object {
 		fail(errMalformed)
 	}
 
-	return stream{x, b.objptr, b.readOffset()}
+	return stream{hdr: x, ptr: b.objptr, offset: b.readOffset(), parsed: true}
 }
 
 func isSpace(b byte) bool {

@@ -46,6 +46,7 @@ type budget struct {
 	ctx                                              context.Context
 	deadline                                         time.Time
 	work, nodes, retained, decoded, revisions, depth int64
+	cmapMappings, cmapSpaces                         int64
 	streams                                          map[*streamReader]struct{}
 	objects                                          map[objptr]bool
 	offsets                                          map[int64]bool
@@ -93,6 +94,18 @@ func (b *budget) node(n int64) {
 		fail(errLimit)
 	}
 	b.nodes += n
+}
+
+// CMap mappings and code-space records have separate cumulative ceilings.
+// Space declarations must not consume the exact8192 mapping allowance. Room
+// checks precede allocation/expansion; actual inserted records charge once.
+func (b *budget) cmapMappingRoom(n uint64) { b.cmapRoom(n, b.cmapMappings) }
+func (b *budget) cmapSpaceRoom(n uint64)   { b.cmapRoom(n, b.cmapSpaces) }
+func (b *budget) cmapRoom(n uint64, used int64) {
+	b.charge(1)
+	if used < 0 || used > maxCMapEntries || n > uint64(maxCMapEntries-used) {
+		fail(errLimit)
+	}
 }
 func (b *budget) enter() {
 	b.charge(1)

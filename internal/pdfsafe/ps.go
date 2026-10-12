@@ -49,6 +49,15 @@ func (s *stack) pop() value {
 // interpret implements only dictionary/operand mechanics needed by embedded
 // PDF content and CMaps. It never recovers malformed objects or safe faults.
 func interpret(strm value, do func(stk *stack, op string)) {
+	interpretMode(strm, do, false)
+}
+
+// PDF content has operators, not the PostScript dictionary machinery used by
+// CMaps. Send every content operator to the strict extraction dispatcher.
+func interpretContent(strm value, do func(stk *stack, op string)) {
+	interpretMode(strm, do, true)
+}
+func interpretMode(strm value, do func(stk *stack, op string), content bool) {
 	if strm.r == nil {
 		fail(errMalformed)
 	}
@@ -105,6 +114,10 @@ Reading:
 			break
 		}
 		if kw, ok := tok.(keyword); ok {
+			if content && kw != "null" && kw != "[" && kw != "]" && kw != "<<" && kw != ">>" {
+				do(&stk, string(kw))
+				continue
+			}
 			switch kw {
 			case "null", "[", "]", "<<", ">>":
 			case "dict":
@@ -186,6 +199,9 @@ Reading:
 		stk.push(value{r, objptr{}, obj})
 	}
 	if len(dicts) != 0 {
+		fail(errMalformed)
+	}
+	if content && stk.len() != 0 {
 		fail(errMalformed)
 	}
 }

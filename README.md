@@ -1,6 +1,6 @@
 # MiskoAI
 
-Engineering progress: **70%** (35/50 local delivery packages). Private PDF core passed corrected full1497/vet0 and fresh review with two explicit Task2 follow-ups; page/text extraction is not accepted. Core/Web7ce6a4e passed exact nativeCI38137673635/all12steps. PDF publication/native verification, live WeChat, actual512MB workloads and final acceptance remain separate.
+Engineering progress: **72%** (35/50 local delivery packages). The private PDF core passed root1497/fullvet and exact [native CI38140923924](https://github.com/hidxt/miskoai/actions/runs/38140923924), all12 steps successful. PDF page/text extraction and document-chat integration are in development; live WeChat, actual arm64 execution,512MB measurements and final acceptance remain open. See DELIVERY.md for current evidence and limitations.
 
 A lightweight AI WeChat companion built in Go, using SQLite, DeepSeek official cloud APIs and Ollama hosted Web Search. Targets native Linux amd64/arm64 on 2 vCPU / 512MB machines. Development has started; this repository is **not yet a production release**. See DELIVERY.md for actual implemented/tested status.
 
