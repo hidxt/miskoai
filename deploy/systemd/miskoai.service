@@ -1,0 +1,23 @@
+# User service. Read docs/operations/native-linux.md before installation/start.
+# Keep miskoai.env private (0600) in its private directory (0700).
+[Unit]
+Description=MiskoAI native single-process service
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=%h
+ExecStart=%h/.local/bin/miskoai serve
+Environment=MISKOAI_LISTEN=127.0.0.1:8080
+EnvironmentFile=%h/.config/miskoai/miskoai.env
+UMask=0077
+NoNewPrivileges=true
+KillSignal=SIGTERM
+KillMode=control-group
+TimeoutStopSec=120s
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=default.target

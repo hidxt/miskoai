@@ -1,6 +1,6 @@
 # MiskoAI
 
-Engineering progress: **72%** (36/50 local delivery packages). Guarded PDF text extraction passed root1596/fullvet and exact [native CI38211423839](https://github.com/hidxt/miskoai/actions/runs/38211423839), all12 steps successful. The real document processor/Agent combination passed235 scoped local tests and independent review; Core document-chat composition is in development. Live WeChat, actual arm64 execution,512MB measurements and final acceptance remain open. See DELIVERY.md for current evidence and limitations.
+Engineering progress: **74%** (37/50 local delivery packages). Guarded PDF text extraction passed root1596/fullvet and exact [native CI38211423839](https://github.com/hidxt/miskoai/actions/runs/38211423839), all12 steps successful. The real document processor/Agent combination passed235 scoped local tests and independent review; Core document-chat composition is in development. Live WeChat, actual arm64 execution,512MB measurements and final acceptance remain open. See DELIVERY.md for current evidence and limitations.
 
 A lightweight AI WeChat companion built in Go, using SQLite, DeepSeek official cloud APIs and Ollama hosted Web Search. Targets native Linux amd64/arm64 on 2 vCPU / 512MB machines. Development has started; this repository is **not yet a production release**. See DELIVERY.md for actual implemented/tested status.
 
@@ -75,3 +75,5 @@ Latest attachment envelope local gate2026-10-11: engineering **64%**=32of50. Roo
 
 
 2026-10-12 文档应用链路通过本地集成验收：完整 Windows 测试1725项通过、vet通过、独立审查0项新发现。TXT/Markdown/DOCX/PDF经过持久化领取、受限提取和带可见范围的引用进入一次模型调用；图像与文档复用同一个媒体并发槽。进度72%（36/50）；新应用提交的原生CI待验证，真实微信、512MB和最终验收仍待完成。
+
+原生 Linux 用户级 systemd、安装/升级/恢复/卸载步骤见 [运维手册](docs/operations/native-linux.md)。运维包已完成本地检查和独立审查；进度74%（37/50）。实际 Linux/systemd/512MB/最终发布验收仍待完成。最新应用CI38248405265在旧图片重开测试失败，原因仍在定位；本地通过与原生失败分别记录。

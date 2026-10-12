@@ -4,16 +4,19 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/hidxt/miskoai/internal/config"
+	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/provider"
 	"github.com/hidxt/miskoai/internal/storage"
 )
@@ -322,7 +325,7 @@ func TestCoreImageDatabaseReopenDoesNotReplay(t *testing.T) {
 			}
 			next, e := New(cfg, Dependencies{Model: modelFunc(reply), Vision: vision, Images: images, ChannelFactory: func(config.Authorization) (Channel, error) { return ch, nil }})
 			if e != nil {
-				t.Fatal(e)
+				t.Fatalf("reopen after joined Close: %v; synthetic diagnostics: %s", e, closedFixtureDiagnostics(cfg.DataDir))
 			}
 			t.Cleanup(func() { _ = next.Close() })
 			imageInbox(t, next, "restart-image", "image", "")
@@ -343,6 +346,67 @@ func TestCoreImageDatabaseReopenDoesNotReplay(t *testing.T) {
 				t.Fatal("database reopen repeated attachment side effects", effects.Load())
 			}
 		})
+	}
+}
+
+// Inspect only the fixed synthetic fixture after a failed constructor. This
+// supplies admission boundaries for a native-only intermittent failure without
+// changing the test schedule, retrying New, reading payloads or repairing files.
+func closedFixtureDiagnostics(dir string) string {
+	result := ""
+	for _, name := range []string{".miskoai.lock", "miskoai.db", "miskoai.db-wal", "miskoai.db-shm", "miskoai.db-journal"} {
+		path := filepath.Join(dir, name)
+		info, err := os.Lstat(path)
+		if errors.Is(err, os.ErrNotExist) {
+			result += name + "=missing;"
+			continue
+		}
+		if err != nil {
+			result += name + "=stat_error;"
+			continue
+		}
+		result += fmt.Sprintf("%s=regular:%t,size:%d,mode:%o,private:%t;", name, info.Mode().IsRegular(), info.Size(), info.Mode().Perm(), privatefs.CheckFile(path, 1<<62) == nil)
+	}
+	result += fmt.Sprintf("admit:%t;", admitDB(filepath.Join(dir, "miskoai.db"), false) == nil)
+	// ValidateBackup is immutable/read-only and refuses WAL/SHM sidecars; it
+	// does not infer rollback-journal admission from their separate presence.
+	// This does not
+	// create a new store, migrate, checkpoint or read any user's private data.
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	result += fmt.Sprintf("standalone_snapshot_valid:%t", storage.ValidateBackup(ctx, filepath.Join(dir, "miskoai.db")) == nil)
+	return result
+}
+
+func TestClosedFixtureDiagnosticsPreservesRetainedState(t *testing.T) {
+	c := imageController(t, modelFunc(reply), imageProcessorFunc(func(context.Context, storage.Attachment, func(provider.ContentPart) error) error { return nil }), &fakeChannel{poll: idle})
+	dir := c.cfg.DataDir
+	if err := c.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics := closedFixtureDiagnostics(dir); !strings.Contains(diagnostics, "admit:true;standalone_snapshot_valid:true") {
+		t.Fatal("clean closed synthetic snapshot not admitted", diagnostics)
+	}
+	for _, name := range []string{".miskoai.lock", "miskoai.db-journal", "miskoai.db-wal"} {
+		writeFixture(t, dir, name, "synthetic retained recovery canary")
+	}
+	before := make(map[string]os.FileInfo)
+	for _, name := range []string{"miskoai.db", ".miskoai.lock", "miskoai.db-journal", "miskoai.db-wal"} {
+		info, err := os.Lstat(filepath.Join(dir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		before[name] = info
+	}
+	diagnostics := closedFixtureDiagnostics(dir)
+	if !strings.Contains(diagnostics, "standalone_snapshot_valid:false") || strings.Contains(diagnostics, "synthetic retained recovery canary") || strings.Contains(diagnostics, dir) {
+		t.Fatal("diagnostic read, repaired or exposed retained state", diagnostics)
+	}
+	for name, original := range before {
+		current, err := os.Lstat(filepath.Join(dir, name))
+		if err != nil || !os.SameFile(original, current) || original.Size() != current.Size() || original.Mode() != current.Mode() || !original.ModTime().Equal(current.ModTime()) {
+			t.Fatal("diagnostic mutated synthetic retained object", name, err)
+		}
 	}
 }
 
