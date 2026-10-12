@@ -70,7 +70,7 @@ func TestAttachmentSchemaLegacyCompatibility(t *testing.T) {
 				t.Fatal(err)
 			}
 			var v int
-			if err = s.db.QueryRow(`PRAGMA user_version`).Scan(&v); err != nil || v != 4 {
+			if err = s.db.QueryRow(`PRAGMA user_version`).Scan(&v); err != nil || v != schemaVersion {
 				t.Fatalf("compatible migration %d %v", v, err)
 			}
 			if err = validateManifest(context.Background(), s.db); err != nil {
@@ -80,7 +80,7 @@ func TestAttachmentSchemaLegacyCompatibility(t *testing.T) {
 	}
 }
 func TestAttachmentSchemaRefusalImmutable(t *testing.T) {
-	for _, bad := range []string{`CREATE TABLE foreign_object(x)`, `PRAGMA user_version=5`, `INSERT INTO inbox(account,user,message_id,text,context_token,received_at) VALUES('a','u','id','','',1); INSERT INTO inbox_attachments VALUES(1,X'7B7D')`} {
+	for _, bad := range []string{`CREATE TABLE foreign_object(x)`, `PRAGMA user_version=6`, `INSERT INTO inbox(account,user,message_id,text,context_token,received_at) VALUES('a','u','id','','',1); INSERT INTO inbox_attachments VALUES(1,X'7B7D')`} {
 		t.Run(bad, func(t *testing.T) {
 			s, path := testStore(t)
 			if _, err := s.db.Exec(bad); err != nil {

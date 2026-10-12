@@ -142,7 +142,7 @@ func receiveQueueBudget(ctx context.Context, q rowQuery) (int, int, error) {
 		return 0, 0, storageError(ctx, e)
 	}
 	query := `SELECT count(*),coalesce(sum(length(CAST(text AS BLOB))+length(CAST(context_token AS BLOB))),0) FROM inbox`
-	if v == 4 {
+	if v == 4 || v == 5 {
 		query = `SELECT (SELECT count(*) FROM inbox),(SELECT coalesce(sum(length(CAST(text AS BLOB))+length(CAST(context_token AS BLOB))),0) FROM inbox)+(SELECT coalesce(sum(length(body)),0) FROM inbox_attachments)`
 	}
 	if e := q.QueryRowContext(ctx, query).Scan(&count, &size); e != nil {
@@ -158,7 +158,7 @@ func validateAttachments(ctx context.Context, q rowQuery) error {
 	if e := q.QueryRowContext(ctx, "PRAGMA user_version").Scan(&v); e != nil {
 		return storageError(ctx, e)
 	}
-	if v != 4 {
+	if v != 4 && v != 5 {
 		return nil
 	}
 	if e := validateRowShape(ctx, q, "inbox_attachments", []boundedColumn{{"body", maxAttachmentBytes, "blob"}}, `typeof(sequence)<>'integer' OR sequence<=0 OR NOT EXISTS(SELECT 1 FROM inbox WHERE inbox.sequence=inbox_attachments.sequence)`); e != nil {

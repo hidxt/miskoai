@@ -125,6 +125,9 @@ func Open(path string) (*Store, error) {
 				if e == nil && !hasSidecar {
 					e = validateSchema3IfPresent(probeCtx, probe)
 				}
+				if e == nil && !hasSidecar {
+					e = validateSchema5IfPresent(probeCtx, probe)
+				}
 			}
 			if e == nil && version == 1 {
 				for _, suffix := range []string{"-wal", "-shm"} {
@@ -176,6 +179,9 @@ func Open(path string) (*Store, error) {
 			}
 			if e == nil {
 				e = validateSchema3IfPresent(probeCtx, admission)
+			}
+			if e == nil {
+				e = validateSchema5IfPresent(probeCtx, admission)
 			}
 			if admission != nil {
 				if rollbackErr := admission.Rollback(); e == nil && rollbackErr != nil {

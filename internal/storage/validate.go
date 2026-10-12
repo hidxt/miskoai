@@ -74,9 +74,19 @@ func schema3Manifest() map[string]schemaObject {
 	return m
 }
 
-func currentManifest() map[string]schemaObject {
+func schema4Manifest() map[string]schemaObject {
 	m := schema3Manifest()
 	m["inbox_attachments"] = schemaObject{"table", "inbox_attachments", strings.TrimSuffix(strings.TrimSpace(strings.Split(schema4, ";")[0]), ";")}
+	return m
+}
+
+func currentManifest() map[string]schemaObject {
+	m := schema4Manifest()
+	rest := schema5[strings.Index(schema5, "CREATE TABLE library_assets ("):]
+	m["library_assets"] = schemaObject{"table", "library_assets", strings.TrimSuffix(rest[:strings.Index(rest, ");")+2], ";")}
+	m["sqlite_autoindex_library_assets_1"] = schemaObject{"index", "library_assets", ""}
+	rest = schema5[strings.Index(schema5, "CREATE INDEX library_scope"):]
+	m["library_scope"] = schemaObject{"index", "library_assets", rest[:strings.Index(rest, ";")]}
 	return m
 }
 
@@ -131,7 +141,7 @@ func ValidateBackup(ctx context.Context, path string) error {
 	// Preserve exact schema1/2/3 snapshot admission. Open separately performs
 	// legacy data admission before migration; schema4 additionally admits its
 	// companion data here before any descriptor body is materialized.
-	if version == 4 {
+	if version == 4 || version == 5 {
 		if err = validateLegacyCapacity(ctx, db); err != nil {
 			return err
 		}
@@ -140,6 +150,9 @@ func ValidateBackup(ctx context.Context, path string) error {
 		}
 	}
 	if err = validateSchema3IfPresent(ctx, db); err != nil {
+		return err
+	}
+	if err = validateSchema5IfPresent(ctx, db); err != nil {
 		return err
 	}
 	rows, err := db.QueryContext(ctx, "PRAGMA integrity_check")
@@ -180,6 +193,9 @@ func validateManifest(ctx context.Context, db rowQuery) error {
 		return ErrInvalid
 	}
 	expected := currentManifest()
+	if version == 4 {
+		expected = schema4Manifest()
+	}
 	if version == 3 {
 		expected = schema3Manifest()
 	}

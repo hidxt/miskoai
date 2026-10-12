@@ -10,7 +10,7 @@ func validateSchema3IfPresent(ctx context.Context, q rowQuery) error {
 	if v == 2 {
 		return validateSequenceMetadata(ctx, q, v)
 	}
-	if v != 3 && v != 4 {
+	if v != 3 && v != 4 && v != 5 {
 		return nil
 	}
 	if e := validateDerivedCapacity(ctx, q); e != nil {
@@ -50,7 +50,11 @@ func scopeQuota(ctx context.Context, q rowQuery, query string) error {
 }
 
 func validateDerivedCapacity(ctx context.Context, q rowQuery) error {
-	if e := validateSequenceMetadata(ctx, q, 3); e != nil {
+	var version int
+	if e := q.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); e != nil {
+		return storageError(ctx, e)
+	}
+	if e := validateSequenceMetadata(ctx, q, version); e != nil {
 		return e
 	}
 	if e := capacity(ctx, q, "SELECT count(*),coalesce(sum(length(CAST(text AS BLOB))),0) FROM derived", 16, 128<<10); e != nil {
@@ -115,9 +119,13 @@ func validateDerivedCapacity(ctx context.Context, q rowQuery) error {
 func validateSequenceMetadata(ctx context.Context, q rowQuery, version int) error {
 	countQuery := "SELECT count(*)>2 FROM sqlite_sequence"
 	allowed := `name NOT IN ('poll_frames','inbox') OR typeof(seq)<>'integer' OR seq<0`
-	if version == 3 || version == 4 {
+	if version == 3 || version == 4 || version == 5 {
 		countQuery = "SELECT count(*)>3 FROM sqlite_sequence"
 		allowed = `name NOT IN ('poll_frames','inbox','candidates') OR typeof(seq)<>'integer' OR seq<0`
+		if version == 5 {
+			countQuery = "SELECT count(*)>4 FROM sqlite_sequence"
+			allowed = `name NOT IN ('poll_frames','inbox','candidates','library_assets') OR typeof(seq)<>'integer' OR seq<0`
+		}
 	} else if version != 2 {
 		return ErrInvalid
 	}
@@ -136,8 +144,13 @@ func validateSequenceMetadata(ctx context.Context, q rowQuery, version int) erro
 	if e := validateSequence(ctx, q, "inbox", "sequence"); e != nil {
 		return e
 	}
-	if version == 3 || version == 4 {
-		return validateSequence(ctx, q, "candidates", "id")
+	if version == 3 || version == 4 || version == 5 {
+		if e := validateSequence(ctx, q, "candidates", "id"); e != nil {
+			return e
+		}
+		if version == 5 {
+			return validateSequence(ctx, q, "library_assets", "id")
+		}
 	}
 	return nil
 }

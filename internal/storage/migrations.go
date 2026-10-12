@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const schemaVersion = 4
+const schemaVersion = 5
 
 const schema = `
 CREATE TABLE facts (
@@ -88,6 +88,24 @@ CREATE TABLE inbox_attachments (
 PRAGMA user_version=4;
 `
 
+const schema5 = `
+CREATE TABLE library_assets (
+ id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT NOT NULL, user TEXT NOT NULL,
+ sha256 TEXT NOT NULL, format TEXT NOT NULL CHECK(format IN ('png','jpeg','gif')),
+ bytes INTEGER NOT NULL CHECK(bytes>=1 AND bytes<=4194304),
+ width INTEGER NOT NULL CHECK(width>=1 AND width<=8192),
+ height INTEGER NOT NULL CHECK(height>=1 AND height<=8192 AND width*height<=16000000),
+ frames INTEGER NOT NULL CHECK(frames>=1 AND frames<=32 AND (format='gif' OR frames=1)),
+ tags TEXT NOT NULL, emotion TEXT NOT NULL, description TEXT NOT NULL,
+ state TEXT NOT NULL CHECK(state IN ('ready','deleting')),
+ enabled INTEGER NOT NULL CHECK(enabled IN (0,1) AND (state='ready' OR enabled=0)),
+ uses INTEGER NOT NULL CHECK(uses>=0), last_used INTEGER NOT NULL CHECK(last_used>=0 AND last_used<=253402300799999),
+ UNIQUE(account,user,sha256)
+);
+CREATE INDEX library_scope ON library_assets(account,user,id);
+PRAGMA user_version=5;
+`
+
 func (s *Store) migrate(ctx context.Context) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -133,6 +151,12 @@ func (s *Store) migrate(ctx context.Context) error {
 	}
 	if version == 3 {
 		if _, err = tx.ExecContext(ctx, schema4); err != nil {
+			return storageError(ctx, err)
+		}
+		version = 4
+	}
+	if version == 4 {
+		if _, err = tx.ExecContext(ctx, schema5); err != nil {
 			return storageError(ctx, err)
 		}
 	}
