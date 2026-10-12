@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/hidxt/miskoai/internal/document"
 	"github.com/hidxt/miskoai/internal/media"
 	"github.com/hidxt/miskoai/internal/netx"
 	"github.com/hidxt/miskoai/internal/provider"
@@ -34,6 +35,7 @@ type imageDownloader func(context.Context, string, string, string, [16]byte) (Ar
 // generations. The owner supplies an already admitted private directory and
 // existing CDN; this constructor creates no network or model pool.
 type ImageProcessor struct {
+	parser   *document.Parser
 	dataDir  string
 	download imageDownloader
 	slot     chan struct{}

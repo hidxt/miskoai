@@ -7,6 +7,7 @@ import (
 	"github.com/hidxt/miskoai/internal/attachment"
 	"github.com/hidxt/miskoai/internal/channel/weixin"
 	"github.com/hidxt/miskoai/internal/config"
+	"github.com/hidxt/miskoai/internal/document"
 	"github.com/hidxt/miskoai/internal/maintenance"
 	"github.com/hidxt/miskoai/internal/media"
 	"github.com/hidxt/miskoai/internal/privatefs"
@@ -33,6 +34,8 @@ type Dependencies struct {
 	Images         agent.ImageProcessor
 	Search         agent.Searcher
 	ChannelFactory func(config.Authorization) (Channel, error)
+	// Documents is borrowed and optional; nil preserves legacy injected agents.
+	Documents agent.DocumentProcessor
 }
 
 var (
@@ -54,6 +57,7 @@ type Controller struct {
 	model                                                  agent.Model
 	vision                                                 agent.Model
 	images                                                 agent.ImageProcessor
+	documents                                              agent.DocumentProcessor
 	cdn                                                    *media.CDN
 	search                                                 agent.Searcher
 	channel                                                Channel
@@ -146,6 +150,7 @@ func New(cfg config.Config, d Dependencies) (c *Controller, err error) {
 	c.providerReady = d.Model != nil || cfg.DeepSeekKey != ""
 	c.model = d.Model
 	c.vision, c.images = d.Vision, d.Images
+	c.documents = d.Documents
 	if c.model == nil {
 		var text *provider.DeepSeek
 		text, e = provider.NewDeepSeek(s.DeepSeekURL, cfg.DeepSeekKey, s.Model)
@@ -164,9 +169,16 @@ func New(cfg config.Config, d Dependencies) (c *Controller, err error) {
 				return nil, ErrUnavailable
 			}
 			ownedCDN = c.cdn
-			c.images, e = attachment.NewImageProcessor(dir, c.cdn)
+			// One persistent parser and outer media slot survive generation and
+			// database replacement. Explicit document injection stays borrowed.
+			processor, processorErr := attachment.NewProcessor(dir, c.cdn, document.New())
+			e = processorErr
 			if e != nil {
 				return nil, ErrConfiguration
+			}
+			c.images = processor
+			if c.documents == nil {
+				c.documents = processor
 			}
 		}
 	}

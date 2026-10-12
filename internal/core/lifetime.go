@@ -103,7 +103,13 @@ func (c *Controller) startGeneration() error {
 	text := &countedModel{c: c, delegate: c.model, operation: "chat"}
 	opts := agent.Options{Account: c.scope.Account, User: c.scope.User, MaxOutput: c.effective.MaxOutput, ContextBytes: c.effective.ContextBytes, ContextTokens: c.effective.ContextTokens}
 	var a *agent.Agent
-	if c.vision != nil && c.images != nil {
+	if c.documents != nil {
+		var vision agent.Model
+		if c.vision != nil {
+			vision = &countedModel{c: c, delegate: c.vision, operation: "vision"}
+		}
+		a, e = agent.NewWithAttachments(c.store, text, c.countedSearch(), ch, opts, vision, c.images, c.documents)
+	} else if c.vision != nil && c.images != nil {
 		a, e = agent.NewWithImages(c.store, text, c.countedSearch(), ch, opts, &countedModel{c: c, delegate: c.vision, operation: "vision"}, c.images)
 	} else {
 		a, e = agent.New(c.store, text, c.countedSearch(), ch, opts)
@@ -242,7 +248,7 @@ func (c *Controller) Close() error {
 	c.store = nil
 	c.mu.Unlock()
 	var e error
-	// Workers have returned through image consumer and artifact cleanup above.
+	// Workers have returned through image/document consumers and artifact cleanup.
 	// Injected dependencies are borrowed; only the production CDN is owned.
 	if c.cdn != nil && c.cdn.Close() != nil {
 		e = ErrUnavailable

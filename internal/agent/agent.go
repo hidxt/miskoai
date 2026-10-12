@@ -43,6 +43,7 @@ type Agent struct {
 	model     Model
 	vision    Model
 	images    ImageProcessor
+	documents DocumentProcessor
 	search    Searcher
 	sender    Sender
 	opts      Options
@@ -134,6 +135,8 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	if in.Attachment != nil {
 		if len(in.Text) > 8192 {
 			text, code = limitReply, "limit"
+		} else if in.Attachment.Kind == "file" {
+			text, usage, code = a.answerDocument(ctx, in.Text, *in.Attachment)
 		} else {
 			text, usage, code = a.answerImage(ctx, in.Text, *in.Attachment)
 		}

@@ -1,6 +1,6 @@
 # MiskoAI
 
-Engineering progress: **72%** (35/50 local delivery packages). The private PDF core passed root1497/fullvet and exact [native CI38140923924](https://github.com/hidxt/miskoai/actions/runs/38140923924), all12 steps successful. PDF page/text extraction and document-chat integration are in development; live WeChat, actual arm64 execution,512MB measurements and final acceptance remain open. See DELIVERY.md for current evidence and limitations.
+Engineering progress: **72%** (36/50 local delivery packages). Guarded PDF text extraction passed root1596/fullvet and exact [native CI38211423839](https://github.com/hidxt/miskoai/actions/runs/38211423839), all12 steps successful. The real document processor/Agent combination passed235 scoped local tests and independent review; Core document-chat composition is in development. Live WeChat, actual arm64 execution,512MB measurements and final acceptance remain open. See DELIVERY.md for current evidence and limitations.
 
 A lightweight AI WeChat companion built in Go, using SQLite, DeepSeek official cloud APIs and Ollama hosted Web Search. Targets native Linux amd64/arm64 on 2 vCPU / 512MB machines. Development has started; this repository is **not yet a production release**. See DELIVERY.md for actual implemented/tested status.
 
@@ -72,3 +72,6 @@ Latest attachment envelope local gate2026-10-11: engineering **64%**=32of50. Roo
 
 
 2026-10-11 image lifetime native checkpoint: engineering **66%**, unchanged33of50. Commit d2e3b9b1915ead1b8e2888cce44d5188680c471e normally pushed on codex/foundation; [native CI38115083791](https://github.com/hidxt/miskoai/actions/runs/38115083791), job114398267789, completed SUCCESS. Root verified exact head SHA and all12 configured setup, unit/integration, vet, native Linux race, govulncheck, full-history secret policy, Linux amd64/arm64 build and cleanup steps SUCCESS. Publication19 explicit accepted paths/public285 all index/HEAD blobs exact; all Go/module/workflow bytes match root1276-pass/full-vet0 snapshot. Staged19/current working289 policy0; full-history policy661 unique historical contents0, Gitleaks final public export~2581811bytes0 and all31commits~2887809bytes0. Agent/Core attachment integration remains incomplete; no35 credit, actual private migration/startup, paid/CDN/WeChat call, arm64 execution,512MB RSS or final acceptance inferred.
+
+
+2026-10-12 文档应用链路通过本地集成验收：完整 Windows 测试1725项通过、vet通过、独立审查0项新发现。TXT/Markdown/DOCX/PDF经过持久化领取、受限提取和带可见范围的引用进入一次模型调用；图像与文档复用同一个媒体并发槽。进度72%（36/50）；新应用提交的原生CI待验证，真实微信、512MB和最终验收仍待完成。

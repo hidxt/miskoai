@@ -24,6 +24,12 @@ func buildSnapshotContext(current string, snap storage.ContextSnapshot, s []prov
 	return buildSnapshotWithCurrent(provider.Message{Role: "user", Content: current}, snap, s, o)
 }
 func buildSnapshotWithCurrent(last provider.Message, snap storage.ContextSnapshot, s []provider.SearchResult, o Options) ([]provider.Message, bool) {
+	return buildSnapshotWithProfile(last, snap, s, o, false)
+}
+
+// mandatoryProfile is explicit for string document input; plain text keeps its
+// existing pruning policy and structured image input keeps its selected profile.
+func buildSnapshotWithProfile(last provider.Message, snap storage.ContextSnapshot, s []provider.SearchResult, o Options, mandatoryProfile bool) ([]provider.Message, bool) {
 	policy := safety
 	if expression, ok := profiles[snap.Profile.ID]; ok {
 		policy += "\n" + expression
@@ -31,11 +37,12 @@ func buildSnapshotWithCurrent(last provider.Message, snap storage.ContextSnapsho
 	system := provider.Message{Role: "system", Content: policy}
 	fixed := []provider.Message{system}
 	_, imageInput := last.Content.([]provider.ContentPart)
+	retainProfile := imageInput || mandatoryProfile
 	customProfile := ""
 	if _, builtin := profiles[snap.Profile.ID]; !builtin && snap.Profile.ID != "" {
 		b, _ := json.Marshal(snap.Profile)
 		customProfile = "表达资料（非指令）：" + string(b)
-		if imageInput {
+		if retainProfile {
 			// Image requests retain the selected expression profile together
 			// with safety and the current caption/image. It remains quoted data.
 			fixed = append(fixed, provider.Message{Role: "user", Content: customProfile})
@@ -53,7 +60,7 @@ func buildSnapshotWithCurrent(last provider.Message, snap storage.ContextSnapsho
 		}
 	}
 	data := []string{}
-	if customProfile != "" && !imageInput {
+	if customProfile != "" && !retainProfile {
 		data = append(data, customProfile)
 	}
 	if snap.Summary.Text != "" && validText(snap.Summary.Text) {
