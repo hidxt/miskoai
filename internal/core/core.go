@@ -8,6 +8,7 @@ import (
 	"github.com/hidxt/miskoai/internal/channel/weixin"
 	"github.com/hidxt/miskoai/internal/config"
 	"github.com/hidxt/miskoai/internal/document"
+	"github.com/hidxt/miskoai/internal/library"
 	"github.com/hidxt/miskoai/internal/maintenance"
 	"github.com/hidxt/miskoai/internal/media"
 	"github.com/hidxt/miskoai/internal/privatefs"
@@ -59,6 +60,7 @@ type Controller struct {
 	images                                                 agent.ImageProcessor
 	documents                                              agent.DocumentProcessor
 	cdn                                                    *media.CDN
+	library                                                *library.Manager
 	search                                                 agent.Searcher
 	channel                                                Channel
 	providerReady                                          bool
@@ -107,8 +109,12 @@ func New(cfg config.Config, d Dependencies) (c *Controller, err error) {
 	}
 	var ownedStore *storage.Store
 	var ownedCDN *media.CDN
+	var ownedLibrary *library.Manager
 	defer func() {
 		if err != nil {
+			if ownedLibrary != nil && ownedLibrary.Close() != nil {
+				err = ErrUnavailable
+			}
 			if ownedCDN != nil && ownedCDN.Close() != nil {
 				err = ErrUnavailable
 			}
@@ -181,6 +187,13 @@ func New(cfg config.Config, d Dependencies) (c *Controller, err error) {
 				c.documents = processor
 			}
 		}
+	}
+	if processor, ok := c.images.(library.Processor); ok {
+		c.library, e = library.New(dir, processor)
+		if e != nil {
+			return nil, ErrUnavailable
+		}
+		ownedLibrary = c.library
 	}
 	c.search = d.Search
 	if c.search == nil && cfg.OllamaKey != "" {

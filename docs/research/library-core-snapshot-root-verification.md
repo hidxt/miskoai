@@ -1,0 +1,25 @@
+# Core library and immutable snapshot reader root verification
+
+2026-10-13. Engineering **74%** (37/50), no package39/40 or final credit. This is the local integration gate for Task4b/5. All operations used newly generated synthetic databases, images, authorization and credentials. Actual private schema2/data, deferred WeChat and spent cloud allowance remain untouched.
+
+Primary read all eleven owned production/test/report files, existing-file diffs and surrounding Core generation/Store/restore, Manager/media, SQLite admission and Candidate ownership contracts. Both fresh reviewers used only gpt-6.1-sol / medium and approved specification/quality with0Critical/Important/Minor. Fresh snapshot verification independently87namedPASS/0fail0skip/test0/vet0; fresh Core11PASS/0fail0skip/test0/vet0. Primary independently verified1626actual/copied source/owned/evidence SHA256 and byte identities before integration. Original semantic RED, failed disabled-use fixture, stricter-journal attempt, compile/setup failures and missing intermediate close-RED full freeze remain explicitly preserved.
+
+## Implementation and limits
+
+Core owns one persistent Manager borrowing the existing actual cap1 image/document processor. Offline configured administration requires no provider readiness or network call. Each callback receives a fresh current Store lease and rechecks captured scope; no lease surrounds Manager entry. Actual held readers/consumers/cleanup join before owned CDN/Store/lock close. SQLite-only Restore retains original content and pause, refuses missing preview and stale ID/digest usage, and keeps the Manager across generations. Metadata listing is not availability evidence. Constructor Manager.Close unwind order remains source-only; actual construction failure proves Store/lock release. Old native08814e0 intermittent constructor failure remains undiagnosed.
+
+Immutable snapshot metadata reuses complete mode=ro/immutable/query-only/version/manifest/data/integrity admission and actual connection closure. Exact schemas1..4 return empty without migration; schema5 bounded128 rows/64MiB preflight precedes materialization. Candidate verifies its original identity before and after. Preserve D074: existing ValidateBackup refuses WAL/SHM; new metadata and existing Candidate additionally refuse rollback journals. Actual pinned-driver Close-failure injection and deterministic external Candidate replacement during the read remain unverified. Full image checks, bundle installation/retained recovery and availability are later gates.
+
+## Primary integrated evidence
+
+Complete frozen source `.tools/reviews/library-core-snapshot-root-reviewed-src`:392public files, based on exact3a332b9 publication plus eleven exact owned files. LICENSE, modules, workflow and notices unchanged. Actual normal-owner native WindowsGo1.27.2 command:
+
+`go.exe test -json -count=1 -timeout=5m -p=1 ./...`
+
+**2284 named PASS, zero FAIL, four existing platform SKIP,19packagePASS,two no-test packages. Full vet exit0; actual test/vet/process exits0 and empty diagnostics.** Source392 and owned11 identities verified again before exact main adoption. No test assertion, ACL, timeout, concurrency or production resource policy was weakened. Author27 Core focused passes remain separate command-union evidence; full root2284 is one complete run.
+
+Full static103productionfiles: Windows21260lines79warnings(15HIGH13MED51LOW); Linuxamd64STATIC21078lines82warnings(17HIGH15MED50LOW). Zero Go errors/zero nosec; actual exits1 for retained findings. **Zero new fingerprints, one removed LOW G104** per target: integrity rows now use checked closure rather than ignored Close. All earlier warning dispositions, including both bounded G115 casts, remain retained. These are not clean static scans or Linux runtime tests.
+
+Gitleaks on the complete frozen public source scanned approximately3696683bytes: zero findings/actualexit0. No private `.tools` data or actual credentials were scanned/read. Full history/staged/working policy and publication/native gates must be repeated for a new commit. Last accepted public3a332b9 [nativeCI38348840915](https://github.com/hidxt/miskoai/actions/runs/38348840915), job115136366864, all12SUCCESS excludes these changes. Hosted amd64/arm64 builds do not establish actual arm64 execution/systemd/server512MB/power-crash/live/final acceptance.
+
+Recovery evidence stays under the library-core-snapshot-root prefix: preparation, source-manifest, tests.jsonl, exits, tests-summary, static-comparison, target gosec JSON/logs and public Gitleaks JSON. Reviewer reports and complete original/corrected sources remain under their separate owned prefixes. HTTP task uses a separate frozen copy and cannot alter this accepted source. Root owns publication, full bundle/recovery/UI/reply integration and final acceptance.

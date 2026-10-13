@@ -235,6 +235,11 @@ func (c *Controller) Close() error {
 	c.notifyLocked()
 	c.mu.Unlock()
 	c.stopGeneration()
+	// Join actual manager reads, consumers and cleanup before owned resources.
+	var managerErr error
+	if c.library != nil && c.library.Close() != nil {
+		managerErr = ErrUnavailable
+	}
 	for {
 		c.mu.Lock()
 		if c.leases == 0 && !c.exclusive {
@@ -247,7 +252,7 @@ func (c *Controller) Close() error {
 	s, l := c.store, c.lock
 	c.store = nil
 	c.mu.Unlock()
-	var e error
+	e := managerErr
 	// Workers have returned through image/document consumers and artifact cleanup.
 	// Injected dependencies are borrowed; only the production CDN is owned.
 	if c.cdn != nil && c.cdn.Close() != nil {

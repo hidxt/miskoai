@@ -98,6 +98,18 @@ func normalizeDDL(v string) string { return strings.Join(strings.Fields(v), " ")
 // An exact version/DDL manifest prevents arbitrary SQLite databases or altered
 // triggers from entering the restore flow. This must run before storage.Open.
 func ValidateBackup(ctx context.Context, path string) error {
+	return validatedBackup(ctx, path, nil)
+}
+
+// validatedBackup lends only the admitted immutable connection. Its Close is
+// part of the result, so a consumer cannot return a successful partial read.
+func validatedBackup(ctx context.Context, path string, consume func(*sql.DB, int) error) (err error) {
+	if ctx == nil {
+		return ErrInvalid
+	}
+	if err = ctx.Err(); err != nil {
+		return err
+	}
 	if path == "" || strings.ContainsRune(path, 0) {
 		return ErrInvalid
 	}
@@ -125,7 +137,14 @@ func ValidateBackup(ctx context.Context, path string) error {
 	if err != nil {
 		return storageError(ctx, err)
 	}
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			err = errors.Join(err, storageError(ctx, closeErr))
+		}
+		if contextErr := ctx.Err(); contextErr != nil {
+			err = contextErr
+		}
+	}()
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 	if _, err = db.ExecContext(ctx, "PRAGMA query_only=ON; PRAGMA cache_size=-8192"); err != nil {
@@ -172,13 +191,25 @@ func ValidateBackup(ctx context.Context, path string) error {
 		}
 		checks++
 	}
-	err = rows.Err()
-	rows.Close()
+	err = closeValidatedRows(ctx, rows)
 	if err != nil {
 		return storageError(ctx, err)
 	}
 	if checks != 1 {
 		return ErrStorage
+	}
+	if consume != nil {
+		if err = consume(db, version); err != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			for _, safe := range []error{ErrInvalid, ErrCapacity, ErrStorage} {
+				if errors.Is(err, safe) {
+					return safe
+				}
+			}
+			return ErrStorage
+		}
 	}
 	return nil
 }

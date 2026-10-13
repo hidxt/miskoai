@@ -109,3 +109,6 @@ Full static92productionfiles: Windows19497lines78warnings(13HIGH13MED52LOW); Lin
 
 
 2026-10-13 integrated content/envelope: retain Windows80/Linux83 warning labels,0Goerrors/0nosec/actualwarningexit1. Exactlytwo new HIGH G115 have independently verified bounds: scope components<=256UTF8bytes before length-prefix casts; encoded header length1..65536 before uint32 framing. No overflow reachable on current production paths; no suppression and all previous dispositions retained. Review: library-content-integration-static-bound-review-oct13.md in ignored evidence; final security remains separate.
+
+
+2026-10-13 Core/snapshot root: complete103productionfiles, Windows79warnings(15HIGH13MED51LOW), Linuxamd64STATIC82warnings(17HIGH15MED50LOW),0Goerrors/0nosec/actualwarningexit1. No new fingerprints; one removed LOW G104 per target in storage/validate.go: actual integrity rows now close through closeValidatedRows before return. All earlier warnings/dispositions retained including both G115 bounds; no suppression or clean-scan/runtime/final claim. Frozen source and exact comparison under library-core-snapshot-root; full2284/vet0 and fresh task reviews separate.
