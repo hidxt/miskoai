@@ -112,3 +112,6 @@ Full static92productionfiles: Windows19497lines78warnings(13HIGH13MED52LOW); Lin
 
 
 2026-10-13 Core/snapshot root: complete103productionfiles, Windows79warnings(15HIGH13MED51LOW), Linuxamd64STATIC82warnings(17HIGH15MED50LOW),0Goerrors/0nosec/actualwarningexit1. No new fingerprints; one removed LOW G104 per target in storage/validate.go: actual integrity rows now close through closeValidatedRows before return. All earlier warnings/dispositions retained including both G115 bounds; no suppression or clean-scan/runtime/final claim. Frozen source and exact comparison under library-core-snapshot-root; full2284/vet0 and fresh task reviews separate.
+
+
+2026-10-13 management/retained root: complete106productionfiles Windows22058lines79warnings(15HIGH13MED51LOW), Linuxamd64STATIC21876lines82warnings(17HIGH15MED50LOW), actualwarningexit1/0Goerrors/0nosec. Exact normalized fingerprints0new/0removed versus accepted Core/snapshot. All prior warning dispositions remain; no suppression or clean-static claim. Frozen404 full2401/vet0, fresh independent task review and browser checks are separate correctness evidence. Task9a WIP excluded; native/resource/final security gates remain open.

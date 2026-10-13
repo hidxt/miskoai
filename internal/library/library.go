@@ -36,14 +36,16 @@ type Lease func(context.Context) (*storage.Store, func(), error)
 // Callers must not enter it while holding a Store lease. Readers and consumers
 // must cooperate with cancellation and return before Close can join them.
 type Manager struct {
-	dir             string
-	processor       Processor
-	token           chan struct{}
-	mu              sync.Mutex
-	closed          bool
-	stop, closeDone chan struct{}
-	active          context.CancelFunc
-	identities      map[string]os.FileInfo // admission protects this bounded cache
+	dir              string
+	dataDir          string
+	retainedIdentity os.FileInfo
+	processor        Processor
+	token            chan struct{}
+	mu               sync.Mutex
+	closed           bool
+	stop, closeDone  chan struct{}
+	active           context.CancelFunc
+	identities       map[string]os.FileInfo // admission protects this bounded cache
 }
 
 func New(dataDir string, processor Processor) (*Manager, error) {
@@ -58,7 +60,7 @@ func New(dataDir string, processor Processor) (*Manager, error) {
 	if privatefs.EnsureDir(dir) != nil {
 		return nil, ErrRecovery
 	}
-	return &Manager{dir: dir, processor: processor, token: make(chan struct{}, 1), stop: make(chan struct{}), closeDone: make(chan struct{}), identities: make(map[string]os.FileInfo)}, nil
+	return &Manager{dir: dir, dataDir: parent, processor: processor, token: make(chan struct{}, 1), stop: make(chan struct{}), closeDone: make(chan struct{}), identities: make(map[string]os.FileInfo)}, nil
 }
 func validScope(sc storage.Scope) bool {
 	return text(sc.Account, 256, false) && strings.TrimSpace(sc.Account) != "" && text(sc.User, 256, false) && strings.TrimSpace(sc.User) != ""

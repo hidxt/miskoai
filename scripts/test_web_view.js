@@ -14,7 +14,7 @@ const oldProfile = { id: "sameprofile", name: "old profile", description: "old d
 const freshFact = { ...oldFact, content: "restored fact with reused ID" };
 const freshProfile = { ...oldProfile, name: "restored profile with reused ID" };
 class Element {
-  constructor(tag, attrs = {}) { this.tagName = tag; this.attributes = { ...attrs }; this.children = []; this.parent = null; this.events = new Map(); this.dataset = {}; this._text = ""; this.value = attrs.value || ""; this.defaultValue = this.value; this.id = attrs.id || ""; this.name = attrs.name || ""; this.className = attrs.class || ""; this.disabled = "disabled" in attrs; this.hidden = "hidden" in attrs; this.readOnly = "readonly" in attrs; this.files = []; this.classList = { toggle: () => {} }; for (const [key, value] of Object.entries(attrs)) if (key.startsWith("data-")) this.dataset[key.slice(5)] = value; }
+  constructor(tag, attrs = {}) { this.tagName = tag; this.attributes = { ...attrs }; this.children = []; this.parent = null; this.events = new Map(); this.dataset = {}; this._text = ""; this.value = attrs.value || ""; this.defaultValue = this.value; this.checked = this.defaultChecked = "checked" in attrs; this.id = attrs.id || ""; this.name = attrs.name || ""; this.className = attrs.class || ""; this.disabled = "disabled" in attrs; this.hidden = "hidden" in attrs; this.readOnly = "readonly" in attrs; this.files = []; this.classList = { toggle: () => {} }; for (const [key, value] of Object.entries(attrs)) if (key.startsWith("data-")) this.dataset[key.slice(5)] = value; }
   get textContent() { return this._text + this.children.map(c => c.textContent).join(""); }
   set textContent(value) { this._text = String(value); this.children = []; }
   append(...nodes) { for (const n of nodes) { n.parent = this; this.children.push(n); } }
@@ -31,7 +31,7 @@ class Element {
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(c => c !== this); }
   get descendants() { return this.children.flatMap(c => [c, ...c.descendants]); }
   get elements() { const list = this.descendants.filter(n => ["input", "textarea", "select", "button"].includes(n.tagName)); const collection = { length: list.length, [Symbol.iterator]: () => list[Symbol.iterator](), namedItem: key => list.find(n => n.name === key || n.id === key) || null }; for (const n of list) if (n.name && !(n.name in collection)) collection[n.name] = n; return collection; }
-  reset() { for (const n of this.elements) { n.value = n.defaultValue; if (n.tagName === "input" && n.attributes.type === "file") n.files = []; } }
+  reset() { for (const n of this.elements) { n.value = n.defaultValue; n.checked = n.defaultChecked; if (n.tagName === "input" && n.attributes.type === "file") n.files = []; } }
 }
 function documentFixture() {
   const doc = new Element("document"); const stack = [doc]; const voidTags = new Set(["meta", "link", "input", "br"]);
@@ -140,7 +140,8 @@ function assertInvalidated(snapshot) {
   for (const key of ["factQuery", "historyQuery", "facts", "profiles", "candidates", "summary", "history", "factsPage", "historyPage"]) assert.equal(snapshot[key], "", key + " stale database cache");
   assert.equal(snapshot.systemVisible, true); assert.equal(snapshot.consoleVisible, true);
 }
-(async () => {
+module.exports = { Element, documentFixture, waitFor, tick, script };
+if (require.main === module) (async () => {
   let passed = 0, failed = 0;
   for (const mode of ["success", "failure", "abort", "cancel"]) {
     try {

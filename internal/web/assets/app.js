@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   const $ = (id) => document.getElementById(id);
-  const state = { csrf: "", authenticated: false, epoch: 0, busy: false, section: "dashboard", factID: null, profileID: null, facts: { offset: 0, next: 0, more: false, q: "" }, history: { offset: 0, next: 0, more: false, q: "" } };
+  const state = { csrf: "", authenticated: false, epoch: 0, busy: false, section: "dashboard", factID: null, profileID: null, libraryID: null, libraryDigest: null, previewID: null, previewGeneration: 0, library: { after: "0", next: "0", previous: [], more: false }, facts: { offset: 0, next: 0, more: false, q: "" }, history: { offset: 0, next: 0, more: false, q: "" } };
   let activeRequest = null;
   let confirmation = null;
   const privateContainers = ["status-cards", "channel-status", "usage-status", "events", "settings-fields", "restart-state", "profile-list", "active-profile", "fact-list", "candidate-list", "derived-summary", "history-list", "diagnostics", "restore-result", "facts-page", "history-page"];
@@ -17,6 +17,10 @@
   function message(value, error = false) { const target = state.authenticated ? $("notice") : $("login-message"); target.textContent = value; target.classList.toggle("error", error); }
   function safeFailure(status) { return ({ 400: "输入或维护条件无效，请核对后重试。", 401: "会话已失效，请重新登录。", 403: "会话校验失败，请刷新会话后核对操作结果。", 404: "记录不存在或接口不可用，请刷新列表。", 408: "操作超时，请核对结果后再手动重试。", 409: "服务繁忙或记录已变化，请刷新后核对。", 429: "登录尝试过多，请稍后再试。", 503: "服务未配置或暂不可用。" })[status] || "服务未能完成操作，请核对状态后再试。"; }
   function resetPrivate() {
+    clearLibrary(); clearLibraryPreview(); $("library-upload-form").reset();
+    $("library-list").replaceChildren(); text("library-page", "");
+    state.library = { after: "0", next: "0", previous: [], more: false };
+    pagerDisabled($("library-prev"), true); pagerDisabled($("library-next"), true);
     for (const id of privateContainers) $(id).replaceChildren();
     for (const id of ["settings-form", "profile-form", "fact-form", "fact-search", "history-search", "restore-form"]) $(id).reset();
     state.factID = null; state.profileID = null;
@@ -45,7 +49,7 @@
   async function run(task, success = "") {
     if (state.busy) return;
     setBusy(true); message("正在处理…"); const epoch = state.epoch;
-    try { const result = await task(); if (result === false) message("已取消，未提交操作。"); else if (success) message(success); else message(""); }
+    try { const result = await task(); if (result === false) message("已取消，未提交操作。"); else if (success) message(success); else if (typeof result === "string") message(result); else message(""); }
     catch (error) { if (epoch === state.epoch || !state.authenticated) message(error instanceof Error ? error.message : "操作未完成。", true); }
     finally { setBusy(false); $("password").value = ""; }
   }
@@ -168,6 +172,72 @@
   function clearProfile() { $("profile-form").reset(); $("profile-form").elements.namedItem("id").readOnly = false; state.profileID = null; }
   function editProfile(profile) { for (const key of ["id", "name", "description", "style", "address", "length", "sticker", "humor"]) $("profile-form").elements.namedItem(key).value = profile[key]; $("profile-form").elements.namedItem("id").readOnly = true; state.profileID = profile.id; $("profile-editor").scrollIntoView({ block: "start", behavior: "smooth" }); }
   function stringID(value) { if (typeof value !== "string" || !/^[1-9][0-9]{0,18}$/.test(value) || value.length === 19 && value > "9223372036854775807") throw new Error("记录标识无效，请刷新列表。"); return value; }
+  function libraryDecimal(value) { return value === "0" ? value : stringID(value); }
+  function decimalAfter(value, prior) { return value.length > prior.length || value.length === prior.length && value > prior; }
+  function clearLibrary() { state.libraryID = null; state.libraryDigest = null; $("library-form").reset(); $("library-editor").hidden = true; text("library-editor-title", "编辑图片元数据"); }
+  function clearLibraryPreview() {
+    state.previewGeneration++; state.previewID = null;
+    for (const img of $("library-preview").children) { img.onload = null; img.onerror = null; img.removeAttribute("src"); }
+    $("library-preview").replaceChildren(); text("library-preview-status", "");
+  }
+  function previewLibrary(item) {
+    const id = stringID(item.id); clearLibraryPreview(); state.previewID = id;
+    const generation = state.previewGeneration, epoch = state.epoch, img = node("img");
+    img.alt = "所选本机图片预览";
+    const current = () => state.authenticated && epoch === state.epoch && generation === state.previewGeneration && state.previewID === id;
+    img.onload = () => { if (current()) text("library-preview-status", "本次预览已通过服务端校验"); };
+    img.onerror = () => { if (current()) { text("library-preview-status", "无法预览：内容缺失、损坏或服务不可用。请刷新并核对恢复状态。"); img.removeAttribute("src"); } };
+    text("library-preview-status", "正在请求校验预览；元数据列表未校验图片内容。");
+    img.src = `/api/library/preview?id=${encodeURIComponent(id)}`; $("library-preview").append(img);
+  }
+  function editLibrary(item) {
+    state.libraryID = stringID(item.id); state.libraryDigest = item.sha256;
+    const fields = $("library-form").elements;
+    fields.namedItem("tags").value = item.tags.join("\n"); fields.namedItem("emotion").value = item.emotion; fields.namedItem("description").value = item.description; fields.namedItem("enabled").checked = item.enabled;
+    text("library-editor-title", `编辑图片 · ${item.id} · SHA256 ${item.sha256}`); $("library-editor").hidden = false; $("library-editor").scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+  // Admit existing backend metadata without normalizing it: legacy/restored
+  // nonempty whitespace tags are valid and must remain manageable.
+  function libraryExistingMetadata(id, tags, emotion, description, enabled) {
+    stringID(id); if (!Array.isArray(tags) || tags.length > 16 || new Set(tags).size !== tags.length) throw new Error("标签最多 16 个且不能重复。");
+    for (const tag of tags) { boundedText(tag, 32, "每个标签"); if (tag.length === 0 || /[\u0000-\u001f\u007f-\u009f]/u.test(tag)) throw new Error("标签不能为空或包含控制字符。"); }
+    boundedText(emotion, 64, "情绪"); if (/[\u0000-\u001f\u007f-\u009f]/u.test(emotion)) throw new Error("情绪不能包含控制字符。");
+    boundedText(description, 1024, "描述"); if (description.includes("\0")) throw new Error("描述不能包含 NUL。");
+    if (typeof enabled !== "boolean") throw new Error("启用状态无效。");
+    return { id, tags, emotion, description, enabled };
+  }
+  function libraryMetadata(id, tags, emotion, description, enabled) {
+    const metadata = libraryExistingMetadata(id, tags, emotion, description, enabled);
+    if (tags.some(tag => !tag.trim())) throw new Error("新编辑的标签不能为空白，请更正后保存。");
+    return metadata;
+  }
+  async function loadLibrary() {
+    const page = state.library, data = await request(`/api/library?${new URLSearchParams({ after: page.after, limit: "32" })}`);
+    if (!Array.isArray(data.items) || data.items.length > 32) throw new Error("图片列表响应无效，请手动刷新。");
+    const next = libraryDecimal(data.next_after); let prior = page.after;
+    for (const item of data.items) {
+      const id = stringID(item.id); if (!decimalAfter(id, prior)) throw new Error("图片列表顺序无效，请手动刷新。"); prior = id;
+      libraryDecimal(item.uses); libraryDecimal(item.last_used_millis);
+      if (item.availability !== "unchecked" || typeof item.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(item.sha256)) throw new Error("图片元数据响应无效，请手动刷新。");
+      libraryExistingMetadata(id, item.tags, item.emotion, item.description, item.enabled);
+    }
+    if (next !== prior) throw new Error("图片分页响应无效，请手动刷新。");
+    const target = $("library-list"); target.replaceChildren();
+    if (!data.items.length) empty(target, "当前范围没有图片。可上传 PNG、JPEG 或 GIF；后端未配置时请检查服务诊断。");
+    for (const item of data.items) {
+      const r = node("article", null, "record"); r.append(node("h3", `图片 ID ${item.id}`), node("p", `SHA256 ${item.sha256}`, "meta"), node("p", `${item.format} · ${item.bytes} Bytes · ${item.width} × ${item.height} · ${item.frames} 帧 · 状态 ${item.state} · ${item.enabled ? "启用" : "禁用"}`, "meta"), node("p", `记录使用 ${item.uses} 次 · 最近使用毫秒 ${item.last_used_millis} · 内容未校验`, "meta"), node("p", `标签：${item.tags.join(" / ")} · 情绪：${item.emotion}`, "preserve"), node("p", item.description, "preserve"));
+      const controls = node("div", null, "actions");
+      controls.append(action("编辑", async () => editLibrary(item)), action("预览", async () => previewLibrary(item)), action(item.enabled ? "禁用" : "启用", async () => { await request("/api/library", { method: "PATCH", body: libraryExistingMetadata(item.id, item.tags, item.emotion, item.description, !item.enabled) }); if (state.libraryID === item.id) clearLibrary(); await loadLibrary(); }), action("删除", async () => {
+        if (!await confirmOperation("删除本机图片", `确定删除图片 ID ${item.id}？删除当前范围的图片记录；用于恢复的旧内容可能保留。`)) return false;
+        await request(`/api/library?id=${encodeURIComponent(item.id)}`, { method: "DELETE" });
+        if (state.libraryID === item.id) clearLibrary(); if (state.previewID === item.id) clearLibraryPreview(); await loadLibrary();
+      }, { danger: true })); r.append(controls); target.append(r);
+    }
+    page.next = next; page.more = data.items.length === 32 && page.previous.length < 3;
+    pagerDisabled($("library-prev"), page.previous.length === 0); pagerDisabled($("library-next"), !page.more);
+    text("library-page", `第 ${page.previous.length + 1} 页 · 每页最多 32 条${data.items.length === 32 && !page.more ? " · 已到 128 条分页上限" : ""}`);
+  }
+  async function refreshLibrary() { state.library = { after: "0", next: "0", previous: [], more: false }; await loadLibrary(); }
   function pageQuery(page, limit) { return `?${new URLSearchParams({ q: page.q, offset: String(page.offset), limit: String(limit) })}`; }
   function pagerDisabled(button, disabled) { if (state.busy && button.dataset.wasDisabled !== undefined) button.dataset.wasDisabled = disabled ? "yes" : "no"; button.disabled = state.busy || disabled; }
   function updatePager(kind, data, limit) { const page = state[kind]; page.next = data.next_offset; page.more = data.has_more && data.next_offset <= 10000; pagerDisabled($(kind + "-prev"), page.offset === 0); pagerDisabled($(kind + "-next"), !page.more); text(kind === "facts" ? "facts-page" : "history-page", `第 ${Math.floor(page.offset / limit) + 1} 页${data.has_more && !page.more ? " · 已到分页上限，请缩小搜索范围" : ""}`); }
@@ -194,7 +264,7 @@
   }
   async function loadMemory() { await loadFacts(); await loadMemoryReview(); await loadHistory(); }
   async function loadSystem() { const d = await request("/api/diagnostics"); $("diagnostics").replaceChildren(); pairs($("diagnostics"), [["产品", d.product], ["Go 版本", d.go_version], ["系统 / 架构", `${d.os} / ${d.architecture}`], ["外部探测", d.external_probe === false ? "未执行" : "未知状态"], ["通道", `${channelLabel(d.status.channel_state)} · ${d.status.channel_state}`], ["进程 RSS", "不可用；不作资源验收结论"]]); }
-  async function loadSection() { if (state.section === "dashboard") await loadDashboard(); else if (state.section === "ai") await loadAI(); else if (state.section === "memory") await loadMemory(); else await loadSystem(); }
+  async function loadSection() { if (state.section === "dashboard") await loadDashboard(); else if (state.section === "ai") await loadAI(); else if (state.section === "memory") await loadMemory(); else if (state.section === "library") await loadLibrary(); else await loadSystem(); }
   async function download(path, filename, limit, type) { const blob = await request(path, { method: "POST", body: {}, download: { limit, type } }); const url = URL.createObjectURL(blob); const link = node("a"); link.href = url; link.download = filename; document.body.append(link); try { link.click(); } finally { link.remove(); URL.revokeObjectURL(url); } }
   $("login-form").addEventListener("submit", (e) => { e.preventDefault(); const password = $("password").value; $("password").value = ""; run(async () => { const b = await request("/api/bootstrap"); const data = await request("/api/login", { method: "POST", body: { password, nonce: validToken(b.nonce) } }); await enter(data.csrf); }); });
   $("logout").addEventListener("click", () => { const token = state.csrf; forgetSession("已退出本页面。正在结束服务端会话…"); run(async () => { if (!token) throw new Error("本页面数据已清除；服务端会话将在到期后失效。可重新登录后再退出。"); state.csrf = token; try { await request("/api/logout", { method: "POST", body: {} }); } finally { state.csrf = ""; } }, "已退出登录，页面数据已清除。"); });
@@ -202,7 +272,23 @@
   $("session-refresh").addEventListener("click", () => run(async () => { try { const data = await request("/api/session"); state.csrf = validToken(data.csrf); $("session-warning").hidden = true; await loadSection(); } catch (error) { if (!state.csrf) forgetSession("会话不可用，请重新登录。"); throw error; } }, "会话已刷新；请核对状态后手动提交操作。"));
   for (const b of document.querySelectorAll("[data-section]")) b.addEventListener("click", () => run(async () => { selectSection(b.dataset.section); await loadSection(); $("main").focus(); }));
   document.querySelector(".brand").addEventListener("click", (e) => { e.preventDefault(); run(async () => { selectSection("dashboard"); await loadDashboard(); }); });
-  for (const [id, task] of [["refresh-dashboard", loadDashboard], ["refresh-ai", loadAI], ["refresh-memory", loadMemory], ["refresh-system", loadSystem]]) $(id).addEventListener("click", () => run(task));
+  for (const [id, task] of [["refresh-dashboard", loadDashboard], ["refresh-ai", loadAI], ["refresh-memory", loadMemory], ["refresh-system", loadSystem], ["refresh-library", refreshLibrary]]) $(id).addEventListener("click", () => run(task));
+  $("library-upload-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => {
+    const file = $("library-file").files[0]; if (!file || file.size < 1 || file.size > 4 * 1048576) throw new Error("请选择非空且不超过 4 MiB 的 PNG、JPEG 或 GIF；服务端将校验实际内容。");
+    const result = await request("/api/library", { method: "POST", raw: file });
+    if (typeof result.created !== "boolean" || !result.item) throw new Error("上传响应无效，请手动刷新核对结果。"); stringID(result.item.id);
+    $("library-upload-form").reset(); await refreshLibrary();
+    return result.created ? "图片已上传，新增记录禁用且元数据为空。请单独编辑并保存元数据。" : "相同图片已存在，原元数据和启用状态保留；未自动修改。请核对列表。";
+  }); });
+  $("library-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => {
+    if (state.libraryID === null) throw new Error("请先从当前列表选择图片编辑。");
+    const fields = $("library-form").elements, value = fields.namedItem("tags").value;
+    const body = libraryMetadata(state.libraryID, value === "" ? [] : value.split("\n"), fields.namedItem("emotion").value, fields.namedItem("description").value, fields.namedItem("enabled").checked);
+    await request("/api/library", { method: "PATCH", body }); clearLibrary(); await loadLibrary();
+  }, "图片元数据已保存，请核对列表。" ); });
+  $("cancel-library").addEventListener("click", clearLibrary);
+  $("library-prev").addEventListener("click", () => run(async () => { if (!state.library.previous.length) return; state.library.after = state.library.previous.pop(); await loadLibrary(); }));
+  $("library-next").addEventListener("click", () => run(async () => { if (!state.library.more) return; state.library.previous.push(state.library.after); state.library.after = state.library.next; await loadLibrary(); }));
   $("settings-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => { const data = formData("settings-form"); const body = {}; for (const [key, , type, min, max] of fields) body[key] = type === "number" ? integer(data.get(key), min, max) : data.get(key); canonicalListen(body.listen); await request("/api/settings", { method: "POST", body }); await loadAI(); }, "期望配置已保存。请查看当前生效值和重启提示。"); });
   $("profile-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => { const data = formData("profile-form"); const body = {}; for (const key of ["id", "name", "description", "style", "address", "length", "sticker"]) body[key] = data.get(key); if (Object.hasOwn(builtinNames, body.id)) throw new Error("内置档案不可覆盖，请使用新的标识。"); for (const [key, limit, label] of [["name", 128, "名称"], ["description", 1024, "说明"], ["style", 512, "风格"], ["address", 128, "称呼"]]) boundedText(body[key], limit, label); body.humor = integer(data.get("humor"), 0, 3); await request("/api/profiles", { method: "POST", body }); clearProfile(); await loadProfiles(); }, "档案已保存；选择后用于下一条消息。"); });
   $("new-profile").addEventListener("click", () => { clearProfile(); $("profile-form").elements.namedItem("id").focus(); }); $("cancel-profile").addEventListener("click", clearProfile);
@@ -214,12 +300,12 @@
     $(kind + "-next").addEventListener("click", () => run(async () => { if (state[kind].more) { state[kind].offset = state[kind].next; await load(); } }));
   }
   $("export-memory").addEventListener("click", () => run(() => download("/api/export", "miskoai-memory.json", 64 * 1048576, "application/json"), "完整记忆文件已准备下载，请妥善保管。"));
-  $("backup").addEventListener("click", () => run(() => download("/api/backup", "miskoai-backup.db", 256 * 1048576, "application/octet-stream"), "完整备份已准备下载，请妥善保管。"));
+  $("backup").addEventListener("click", () => run(() => download("/api/backup", "miskoai-backup.db", 256 * 1048576, "application/octet-stream"), "数据库快照已准备下载；包含图片元数据，不包含二进制图片，请妥善保管。"));
   $("clear-memory").addEventListener("click", () => run(async () => { if (!await confirmOperation("清空当前范围的记忆与历史", "这会删除当前固定范围的事实、候选、派生摘要与对话历史。请先导出或备份。确认执行？")) return false; await request("/api/memory/clear", { method: "POST", body: { acknowledge: "clear_memory" } }); clearFact(); await loadMemory(); }, "范围维护操作已结束，请核对列表。"));
   $("restore-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => {
     const file = $("restore-file").files[0];
     if (!file || file.size === 0 || file.size > 256 * 1048576) throw new Error("请选择非空且不超过 256 MiB 的备份文件。");
-    if (!await confirmOperation("恢复所选备份", "将替换当前数据。请先下载当前备份。恢复后通道保持暂停，需人工核对历史后单独恢复通道。确认执行？")) return false;
+    if (!await confirmOperation("恢复所选数据库", "将替换当前数据库，包含图片元数据但不恢复二进制图片。请先下载当前数据库快照。图片可能需要完整内容恢复；旧内容保留。恢复后通道保持暂停，需人工核对历史后单独恢复通道。确认执行？")) return false;
     // Once dispatched, even an aborted response can leave a new database
     // generation installed. Discard all old edit targets before upload; keep
     // the chosen File locally, the session, busy controls and selected section.

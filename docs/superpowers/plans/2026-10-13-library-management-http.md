@@ -47,3 +47,6 @@
 - [ ] Run disjoint finite30s new library tests and appropriate existing route/auth regressions plus scoped vet with exact offline native Go. Freeze four owned files, complete source/evidence SHA256/lengths, actual commands/results/limits, then quiesce. Root fresh review/full/static/native/publication required; author never adopts main or edits Git.
 
 Self-review: this task covers the five failure classes with actual HTTP/Core boundaries; existing authenticated same-origin preview fits img-src self and requires no CSP relaxation. Separate raw upload/PATCH gives a useful backend while preserving decoder/header/metadata budgets. Bundle/UI/reply and availability across full recovery are explicitly not implemented here.
+
+
+Root contract clarification applied before final freeze: invalid actual content is HTTP400/web_content; recovery409/web_recovery, capacity409/web_busy, closed/unavailable503, cleanup/unknown500 and context408. Joined cleanup dominates invalid. Core classes and existing authentication/lifecycle/resource policies stay fixed; actual author failure corrections and fresh review/root2401 evidence remain in reports.

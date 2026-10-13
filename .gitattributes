@@ -13,3 +13,12 @@ docs/history/2026-10-13-tasks-before-library-content.md -text whitespace=blank-a
 docs/history/2026-10-13-memory-before-library-content.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 
 docs/history/2026-10-13-delivery-before-library-content.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+
+docs/history/2026-10-13-tasks-before-library-management.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+
+docs/history/2026-10-13-memory-before-library-management.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+
+docs/history/2026-10-13-delivery-before-library-management.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -131,6 +131,19 @@ func (m *Manager) validate(ctx context.Context, a storage.LibraryAsset, consume 
 // physical reads only bounded metadata. Unknown entries are counted, retained,
 // and refuse mutation; no directory scan ever adopts or sweeps an orphan.
 func (m *Manager) physical(rows []storage.LibraryAsset, extra int64) error {
+	return m.physicalContext(context.Background(), rows, extra)
+}
+func (m *Manager) physicalContext(ctx context.Context, rows []storage.LibraryAsset, extra int64) error {
+	if e := m.checkRetainedStage(); e != nil {
+		return e
+	}
+	c, e := m.readRetained()
+	if e != nil {
+		return e
+	}
+	return m.physicalWith(ctx, rows, extra, c)
+}
+func (m *Manager) physicalWith(ctx context.Context, rows []storage.LibraryAsset, extra int64, c retainedCatalog) error {
 	if privatefs.CheckDir(m.dir) != nil {
 		return ErrRecovery
 	}
@@ -149,6 +162,16 @@ func (m *Manager) physical(rows []storage.LibraryAsset, extra int64) error {
 	expected := make(map[string]storage.LibraryAsset, len(rows))
 	for _, a := range rows {
 		expected[contentName(a.Scope, a.SHA256)] = a
+	}
+	for _, r := range c.Entries {
+		name := r.key()
+		if a, ok := expected[name]; ok && record(a) != r {
+			return ErrRecovery
+		}
+		expected[name] = r.asset()
+		if e := m.compare(ctx, r.asset()); e != nil {
+			return safe(errors.Join(e, ErrRecovery))
+		}
 	}
 	seen := make(map[string]bool, len(entries))
 	var total int64
@@ -282,7 +305,7 @@ func (m *Manager) Upload(parent context.Context, lease Lease, sc storage.Scope, 
 			if e != nil {
 				return e
 			}
-			if e = m.physical(rows, 0); e != nil {
+			if e = m.physicalContext(ctx, rows, 0); e != nil {
 				return e
 			}
 			a := storage.LibraryAsset{Scope: sc, SHA256: im.SHA256, Format: im.Info.Format, Bytes: im.Bytes, Width: im.Info.Width, Height: im.Info.Height, Frames: im.Info.Frames, State: "ready", Tags: meta.Tags, Emotion: meta.Emotion, Description: meta.Description}
@@ -313,7 +336,23 @@ func (m *Manager) Upload(parent context.Context, lease Lease, sc storage.Scope, 
 			if bytes > (64<<20)-a.Bytes {
 				return ErrCapacity
 			}
-			if e = m.physical(rows, a.Bytes); e != nil {
+			catalog, e := m.readRetained()
+			if e != nil {
+				return e
+			}
+			for _, r := range catalog.Entries {
+				if r.key() == contentName(a.Scope, a.SHA256) {
+					if r != record(a) {
+						return ErrRecovery
+					}
+					if e = m.compare(ctx, a); e != nil {
+						return e
+					}
+					result, added, e = s.AddLibraryAsset(ctx, sc, a)
+					return e
+				}
+			}
+			if e = m.physicalContext(ctx, rows, a.Bytes); e != nil {
 				return e
 			}
 			original, e := m.publish(ctx, a, art)
@@ -420,7 +459,26 @@ func (m *Manager) Delete(parent context.Context, lease Lease, sc storage.Scope, 
 		return e
 	}
 	path := m.path(a)
+	if e = m.checkRetainedStage(); e != nil {
+		return e
+	}
+	c, e := m.readRetained()
+	if e != nil {
+		return e
+	}
+	protected := false
+	for _, r := range c.Entries {
+		if r.key() == contentName(a.Scope, a.SHA256) {
+			if r != record(a) {
+				return ErrRecovery
+			}
+			protected = true
+		}
+	}
 	if _, e = os.Lstat(path); errors.Is(e, os.ErrNotExist) {
+		if protected {
+			return ErrRecovery
+		}
 		if a.State != "deleting" {
 			return ErrRecovery
 		}
@@ -472,8 +530,13 @@ func (m *Manager) Delete(parent context.Context, lease Lease, sc storage.Scope, 
 			return ErrRecovery
 		}
 		original := m.identities[path]
-		if e = m.removeOriginal(path, original); e != nil {
+		if e = m.unchanged(path, original); e != nil {
 			return e
+		}
+		if !protected {
+			if e = m.removeOriginal(path, original); e != nil {
+				return e
+			}
 		}
 		return s.FinishLibraryDelete(ctx, sc, id)
 	})
