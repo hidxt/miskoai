@@ -27,12 +27,13 @@ type xmlGuard struct {
 	token         []byte
 	offset, depth int
 	initial       bool
+	firstToken    bool
 	failed        error
 	carry         [maxXMLToken + 12]byte
 }
 
 func newXMLGuard(ctx context.Context, r io.Reader) io.Reader {
-	g := &xmlGuard{ctx: ctx, source: bufio.NewReaderSize(r, 4096), initial: true}
+	g := &xmlGuard{ctx: ctx, source: bufio.NewReaderSize(r, 4096), initial: true, firstToken: true}
 	g.token = g.carry[:0]
 	return g
 }
@@ -102,6 +103,8 @@ func (g *xmlGuard) next() error {
 		}
 	}
 	g.add(r)
+	first := g.firstToken
+	g.firstToken = false
 	if r != '<' {
 		for {
 			r, e = g.rune()
@@ -156,7 +159,10 @@ func (g *xmlGuard) next() error {
 		}
 	}
 	if r == '?' {
-		return g.delimited("?>", 2)
+		if e := g.delimited("?>", 2); e != nil {
+			return e
+		}
+		return validateXMLDeclaration(g.token, first)
 	}
 	end := r == '/'
 	var quote rune

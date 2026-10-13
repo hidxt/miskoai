@@ -88,6 +88,17 @@ func safeXMLToken(ctx context.Context, d *xml.Decoder) (xml.Token, error) {
 	if _, ok := t.(xml.Directive); ok {
 		return nil, ErrUnsupported
 	}
+	if pi, ok := t.(xml.ProcInst); ok && strings.EqualFold(pi.Target, "xml") {
+		// The lexical guard validates ordinary declarations and first-token
+		// placement. The decoder's actual target also catches punctuation
+		// delimiters such as <?xml/?> without duplicating XML Name grammar.
+		if pi.Target != "xml" {
+			return nil, ErrInvalid
+		}
+		if e := validateXMLDeclarationBody(pi.Inst, false); e != nil {
+			return nil, e
+		}
+	}
 	return t, nil
 }
 func plainAttr(s xml.StartElement, name string) (string, bool) {

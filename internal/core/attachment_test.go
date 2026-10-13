@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/hidxt/miskoai/internal/config"
+	"github.com/hidxt/miskoai/internal/media"
 	"github.com/hidxt/miskoai/internal/privatefs"
 	"github.com/hidxt/miskoai/internal/provider"
 	"github.com/hidxt/miskoai/internal/storage"
@@ -222,12 +223,16 @@ func TestCoreProductionVisionSharesTransportAndMediaLifetime(t *testing.T) {
 	if a == 0 || a != b {
 		t.Fatal("vision created independent admission/transport")
 	}
+	// Empty query fails admission before transport and distinguishes a live
+	// client from the specific closed state without making any CDN request.
+	if artifact, err := c.cdn.Download(context.Background(), cfg.DataDir, "", "", [16]byte{}); artifact != nil || !errors.Is(err, media.ErrInvalid) || errors.Is(err, media.ErrClosed) {
+		t.Fatal("owned CDN must be live before Core.Close", err)
+	}
 	if e = c.Close(); e != nil {
 		t.Fatal(e)
 	}
-	_, e = c.cdn.Download(context.Background(), cfg.DataDir, "", "", [16]byte{})
-	if e == nil {
-		t.Fatal("owned CDN not closed")
+	if artifact, err := c.cdn.Download(context.Background(), cfg.DataDir, "", "", [16]byte{}); artifact != nil || !errors.Is(err, media.ErrClosed) {
+		t.Fatal("owned CDN closed state missing after Core.Close", err)
 	}
 }
 func TestCoreImageDependencyPairRequired(t *testing.T) {

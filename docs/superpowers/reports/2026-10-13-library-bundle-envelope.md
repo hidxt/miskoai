@@ -1,0 +1,35 @@
+# Library bundle envelope Task4a
+
+Implemented solely by gpt-6.1-sol with reasoning_effort medium against the accepted immutable `library-foundation-publication-reviewed-src` basis (355 public files). Engineering remains **74%** (37/50). This is an independent pure Go envelope codec, with no filesystem, database, network, provider or destination-installation capability. All work and evidence remain isolated under `.tools/reviews/library-bundle-envelope-*` pending root adoption/review.
+
+## Contract and implementation
+
+The exact `MISKOAI-LIBRARY-1\n` magic is followed by a little-endian uint32 header length in 1..65536. A token-based JSON grammar requires each field exactly once, rejects unknown fields, duplicate escaped aliases, nulls, trailing JSON, noninteger numeric lexemes and int64 overflow. Database bytes are 1..256MiB. At most128 strictly sorted distinct lowercase64hex keys describe assets of1..4MiB each, summing to at most64MiB. Subtraction-based admission avoids arithmetic overflow and conservatively includes maximum header/framing in the321MiB whole-envelope ceiling. No compression or generic archive parser is involved.
+
+Encode validates and copies the complete header before writing output or opening sources, serializes canonical JSON and streams payloads with one reused4096-byte scratch. Each source is checked for actual declared length, actual SHA256 and one exact EOF probe. Every returned nonnil release executes exactly once, including error-with-release and invalid-source paths, before another record or return. Release errors always preserve the fixed cleanup class. Output remains borrowed; failed partial output is uncommitted.
+
+Decode validates the complete small header before any consumer, lends one context-aware counting/hash-limited reader per record, rejects callback early return and masked read errors, checks actual SHA256 before another callback, and probes exact final EOF. Every failure returns a zero Header. Input remains borrowed. The callback is synchronous and owns private uncommitted stage Sync/Close and cleanup; it sees unverified bytes. Complete codec success is prerequisite envelope evidence only, and cannot authorize destination mutation or establish SQLite/image/row validity.
+
+Errors expose only ErrInvalid, ErrIO, ErrCleanup and actual cancellation/deadline classes. Raw callback/open/read/write/release canaries are discarded. Cancellation and cleanup failures can coexist; concurrent read error and cancellation preserve both safe I/O and cancellation. No detached worker, hard timeout or measured RSS guarantee is introduced.
+
+Ruling: integer JSON lexemes refuse decimal/exponent spellings even if numerically integral, matching the plan's integer JSON requirement. A nil Go Assets slice is encoded canonically as `[]`; JSON null is refused. Zero-progress reads and writers returning short counts without an error refuse as fixed I/O failures rather than entering an unbounded retry loop. These choices preserve the bounded codec interface.
+
+## Actual verification
+
+Native verified Windows Go1.27.2 was used with local toolchain, proxy/sumdb off, workspace-local caches/temp and cleared MISKOAI environment variables. The own runner records the executable, exact argv/cwd, raw Go JSON events, stderr, actual exit and named-test inventory for every run. Tests use only bounded synthetic bytes; the256MiB database and64MiB/128-record quota edges are header-only callback-admission checks through both public APIs.
+
+- Initial compiling semantic RED: `go test -json -count=1 -timeout=30s -run '^(TestHeader|TestCodec|TestLifecycle)' ./internal/librarybundle`; **0 named passes,62 named failures,0 skips, exit1**, against the frozen scaffold. Expected failures establish missing strict admission, round trip, short/digest/trailing refusal and joined release.
+- Initial GREEN on the same semantic tests: **62 named passes,0 failures,0 skips, exit0**.
+- Self-review found loss of the cleanup class when release returned a known class, and loss of I/O when a read concurrently canceled context. Focused frozen class RED: **0 passes,5 failures,0 skips, exit1**. Corrected class GREEN: **5 passes,0 failures,0 skips, exit0**. Original failed source/logs remain preserved.
+- Final `go test -list '^Test' ./internal/librarybundle` inventory: **24 top-level tests**. Three disjoint finite30s shards cover this inventory exactly: `-run '^TestHeader'` **58 named passes**, `-run '^TestCodec'` **23**, and `-run '^TestLifecycle'` **17**. All have **0 failures,0 skips and actual exit0**; union **98 unique named passes**, not a whole-module run.
+- Scoped `go vet ./internal/librarybundle`: actual **exit0**, empty stdout/stderr. No unchanged whole-root package rerun or static/native-CI/live/resource credit is inferred.
+
+Cases include required/duplicate/unknown/null/type/header-length framing, escaped duplicate aliases, numeric overflow and exact/over quotas, nil dependencies, canonical header and callback mutation resistance, one-byte fragmented reads, short/error writers, source short/corrupt/extra bytes, callback premature return/masked errors, record isolation, bounded streaming reads, payload writer failure, borrowed streams, cancellation before/during actual reads and during release, deadline preservation, error-with-release, cleanup stopping the next source, raw canary redaction and held release completion.
+
+Two tooling attempts did not launch successful Go verification and receive no test credit: the first PATH `go version` attempted a toolchain download and failed on the system cache lock permission; the subsequent verified local executable reports native Go1.27.2. Later, chaining relative runner invocations after the inventory runner changed cwd caused a PowerShell command-resolution failure before an expanded test launch. Subsequent runs use the absolute runner path. Tool-response transcripts retain these failures; they are not substituted for native event/exit files.
+
+## Files, evidence and limitations
+
+Exactly six new deliverable files: `internal/librarybundle/header.go`, `codec.go`, `header_test.go`, `codec_test.go`, `lifecycle_test.go`, and this report. Existing355 baseline files, Task3 interfaces, root ledgers, module/dependencies, LICENSE and Git remain read-only. Own complete RED/class-RED/final source freezes and source/evidence manifests record SHA256/lengths; evidence-copy identities are independently checked against actual outputs. Main adoption requires root clearance and primary read/review/integrated verification.
+
+No unresolved implementation issue was identified in self-review. Independent review and root verification remain pending. Bundle import/export integration, retained-object recovery, SQLite/image/snapshot-row validation, content manager/Core/Web, package39 credit, new native CI, real WeChat/provider/CDN/server effects, arm64 execution,512MB measurement and final acceptance are outside this primitive. Actual private data remains untouched; no new live request or deployment occurred.
