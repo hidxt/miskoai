@@ -151,7 +151,7 @@ func (c *Client) call(ctx context.Context, base *url.URL, method, path string, b
 	return nil
 }
 
-func (c *Client) exchange(ctx context.Context, base *url.URL, method, path string, body any, authenticated, send bool, timeout time.Duration) ([]byte, error) {
+func (c *Client) exchange(ctx context.Context, base *url.URL, method, path string, body any, authenticated, send bool, timeout time.Duration) (result []byte, err error) {
 	if ctx == nil {
 		return nil, ErrInvalidInput
 	}
@@ -215,7 +215,24 @@ func (c *Client) exchange(ctx context.Context, base *url.URL, method, path strin
 		}
 		return nil, ErrTransport
 	}
-	defer res.Body.Close()
+	defer func() {
+		// Actual response Close completes synchronously before slot release.
+		// Preserve prior classified failures; cleanup can only refuse success.
+		closeErr := res.Body.Close()
+		if err != nil {
+			return
+		}
+		if ctx.Err() != nil || closeErr != nil {
+			result = nil
+			if send {
+				err = ErrOutcomeUnknown
+			} else if ctx.Err() != nil {
+				err = ctx.Err()
+			} else {
+				err = ErrTransport
+			}
+		}
+	}()
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		switch res.StatusCode {
 		case 401, 403:

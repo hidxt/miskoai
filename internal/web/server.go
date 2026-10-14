@@ -161,7 +161,7 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		timeout := 10 * time.Second
-		if r.URL.Path == "/api/backup" || r.URL.Path == "/api/restore" {
+		if r.URL.Path == "/api/backup" || r.URL.Path == "/api/restore" || r.URL.Path == "/api/library/backup" || r.URL.Path == "/api/library/restore" {
 			timeout = 30 * time.Second
 		}
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)

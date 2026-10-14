@@ -31,7 +31,7 @@ func RunContext(ctx context.Context, args []string, out io.Writer) error {
 		return err
 	}
 	if len(args) == 0 || len(args) == 1 && args[0] == "help" {
-		_, err := fmt.Fprintln(out, "MiskoAI development CLI: init | serve | status | doctor | config validate | backup PATH | restore PATH | poc deepseek|stream|search|vision PATH|weixin | weixin login | version | licenses")
+		_, err := fmt.Fprintln(out, "MiskoAI development CLI: init | serve | status | doctor | config validate | backup PATH | restore PATH | backup --library PATH | restore --library PATH | poc deepseek|stream|search|vision PATH|weixin | weixin login | version | licenses\nExplicit --library commands require valid administration configuration and a stopped service; owner-private complete bundles are limited to 321MiB. Full restore stops generation before validation and may leave it stopped on failure; channels require manual reconciliation.")
 		return err
 	}
 	c, err := config.Load()
@@ -59,6 +59,14 @@ func RunContext(ctx context.Context, args []string, out io.Writer) error {
 	}
 	if len(args) == 2 && args[0] == "restore" {
 		return restore(ctx, c, args[1], out)
+	}
+	if len(args) == 3 && args[1] == "--library" {
+		if args[0] == "backup" {
+			return backupLibrary(ctx, c, args[2], out, libraryCLIOptions())
+		}
+		if args[0] == "restore" {
+			return restoreLibrary(ctx, c, args[2], out, libraryCLIOptions())
+		}
 	}
 	if len(args) >= 2 && args[0] == "poc" {
 		return probe(c, args[1:], out)

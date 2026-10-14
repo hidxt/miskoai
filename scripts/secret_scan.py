@@ -12,13 +12,14 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RULES = {
+    "library-backup-artifact": re.compile(rb"\AMISKOAI-LIBRARY-1\n"),
     "private-key": re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"),
     "provider-key": re.compile(rb"\bsk-[A-Za-z0-9_-]{20,}\b"),
     "github-token": re.compile(rb"\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\b"),
     "aws-access": re.compile(rb"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b"),
     "credential-value": re.compile(rb'(?i)(?:api[_-]?key|bot[_-]?token|admin[_-]?password|session[_-]?token)\s*[=:]\s*[\"\x27]?([A-Za-z0-9_./+\-=]{16,})'),
 }
-FORBIDDEN = re.compile(r"(?i)(?:^|/)(?:\.env(?:\..+)?|[^/]+\.(?:db|sqlite3?|pem|key|p12)|[^/]*(?:credentials|session)[^/]*\.json)$")
+FORBIDDEN = re.compile(r"(?i)(?:^|/)(?:\.env(?:\..+)?|[^/]+\.(?:bundle|db|sqlite3?|pem|key|p12)|[^/]*(?:credentials|session)[^/]*\.json)$")
 
 
 def git(*args):

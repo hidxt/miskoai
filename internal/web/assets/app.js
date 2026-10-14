@@ -4,7 +4,7 @@
   const state = { csrf: "", authenticated: false, epoch: 0, busy: false, section: "dashboard", factID: null, profileID: null, libraryID: null, libraryDigest: null, previewID: null, previewGeneration: 0, library: { after: "0", next: "0", previous: [], more: false }, facts: { offset: 0, next: 0, more: false, q: "" }, history: { offset: 0, next: 0, more: false, q: "" } };
   let activeRequest = null;
   let confirmation = null;
-  const privateContainers = ["status-cards", "channel-status", "usage-status", "events", "settings-fields", "restart-state", "profile-list", "active-profile", "fact-list", "candidate-list", "derived-summary", "history-list", "diagnostics", "restore-result", "facts-page", "history-page"];
+  const privateContainers = ["status-cards", "channel-status", "usage-status", "events", "settings-fields", "restart-state", "profile-list", "active-profile", "fact-list", "candidate-list", "derived-summary", "history-list", "diagnostics", "restore-result", "library-bundle-restore-result", "facts-page", "history-page"];
   const fields = [
     ["listen", "监听地址", "text"], ["deepseek_url", "DeepSeek 官方地址", "url"], ["model", "文本模型", "text"], ["vision_model", "视觉模型", "text"], ["weixin_url", "微信服务地址", "url"],
     ["max_output_tokens", "最大输出 Tokens", "number", 1, 4096], ["context_bytes", "上下文 Bytes", "number", 16384, 49152], ["context_tokens", "上下文 Tokens", "number", 4096, 65536]
@@ -22,7 +22,7 @@
     state.library = { after: "0", next: "0", previous: [], more: false };
     pagerDisabled($("library-prev"), true); pagerDisabled($("library-next"), true);
     for (const id of privateContainers) $(id).replaceChildren();
-    for (const id of ["settings-form", "profile-form", "fact-form", "fact-search", "history-search", "restore-form"]) $(id).reset();
+    for (const id of ["settings-form", "profile-form", "fact-form", "fact-search", "history-search", "restore-form", "library-bundle-restore-form"]) $(id).reset();
     state.factID = null; state.profileID = null;
     for (const key of ["facts", "history"]) state[key] = { offset: 0, next: 0, more: false, q: "" };
     text("fact-editor-title", "新增事实"); $("profile-form").elements.namedItem("id").readOnly = false;
@@ -97,9 +97,12 @@
       }
       const chunks = await boundedBody(response, options.download ? options.download.limit : 2 * 1024 * 1024, controller.signal);
       if (epoch !== state.epoch) throw new Error("会话已变化，请重新登录。");
+      if (controller.signal.aborted) throw new Error("已取消等待。请核对操作结果后再手动提交。");
       if (options.download) return new Blob(chunks, { type: options.download.type });
-      const result = JSON.parse(await new Blob(chunks).text());
-      return result;
+      const bodyText = await new Blob(chunks).text();
+      if (epoch !== state.epoch) throw new Error("会话已变化，请重新登录。");
+      if (controller.signal.aborted) throw new Error("已取消等待。请核对操作结果后再手动提交。");
+      return JSON.parse(bodyText);
     } catch (error) {
       if (controller.signal.aborted) throw new Error("已取消或超时。请刷新状态、核对操作结果后再手动提交。");
       if (error instanceof TypeError || error instanceof SyntaxError) throw new Error("连接中断或响应无效。请核对操作结果后再手动提交。");
@@ -301,6 +304,7 @@
   }
   $("export-memory").addEventListener("click", () => run(() => download("/api/export", "miskoai-memory.json", 64 * 1048576, "application/json"), "完整记忆文件已准备下载，请妥善保管。"));
   $("backup").addEventListener("click", () => run(() => download("/api/backup", "miskoai-backup.db", 256 * 1048576, "application/octet-stream"), "数据库快照已准备下载；包含图片元数据，不包含二进制图片，请妥善保管。"));
+  $("library-bundle-backup").addEventListener("click", () => run(() => download("/api/library/backup", "miskoai-library.bundle", 321 * 1048576, "application/octet-stream"), "完整备份已准备下载；包含所有范围的数据库与当前图片内容，请妥善保管。"));
   $("clear-memory").addEventListener("click", () => run(async () => { if (!await confirmOperation("清空当前范围的记忆与历史", "这会删除当前固定范围的事实、候选、派生摘要与对话历史。请先导出或备份。确认执行？")) return false; await request("/api/memory/clear", { method: "POST", body: { acknowledge: "clear_memory" } }); clearFact(); await loadMemory(); }, "范围维护操作已结束，请核对列表。"));
   $("restore-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => {
     const file = $("restore-file").files[0];
@@ -315,6 +319,20 @@
     text("restore-result", `此前快照保留：${result.prior_retained === true ? "是" : "否"} · 通道暂停：${result.channel_paused === true ? "是" : "否"}。请人工核对历史后再单独恢复通道。`);
     await loadDashboard(); await loadAI(); await loadMemory(); await loadSystem();
   }, "恢复请求已完成，请查看结果；未自动恢复通道。" ); });
+  $("library-bundle-restore-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => {
+    const file = $("library-bundle-restore-file").files[0];
+    if (!file || !Number.isSafeInteger(file.size) || file.size < 1 || file.size > 321 * 1048576) throw new Error("请选择非空且不超过 321 MiB 的完整备份文件。");
+    if (!await confirmOperation("恢复所选完整备份", "将替换所有范围的数据库与图片目录，可能回退接收、去重和发送历史。请先下载当前完整备份。确认后先停止聊天生成，即使文件校验失败也可能保持停止。服务端先校验再安装；旧内容可能保留用于恢复，不能保证数据库与图片同时完成。成功后通道保持暂停，必须人工核对历史后单独恢复通道。确认执行？")) return false;
+    // A failed or canceled response cannot establish which generation is active.
+    // Retain only the selected File locally and invalidate all private targets
+    // before dispatch, sharing the database-only restore/session reset contract.
+    resetPrivate();
+    for (const kind of ["facts", "history"]) { pagerDisabled($(kind + "-prev"), true); pagerDisabled($(kind + "-next"), true); }
+    const result = await request("/api/library/restore", { method: "POST", raw: file });
+    if (!result || typeof result.prior_retained !== "boolean" || typeof result.channel_paused !== "boolean") throw new Error("完整恢复响应无效，结果不明确。聊天生成可能已停止；请刷新诊断并人工核对，勿自动重复恢复。");
+    text("library-bundle-restore-result", `此前快照保留：${result.prior_retained ? "是" : "否"} · 通道暂停：${result.channel_paused ? "是" : "否"}。旧图片内容可能保留用于恢复；请核对诊断与接收、去重和发送历史，再单独恢复通道。`);
+    await loadDashboard(); await loadAI(); await loadMemory(); await loadSystem();
+  }, "完整恢复请求已完成，请查看结果；未自动恢复通道。" ); });
   $("resume-channel").addEventListener("click", () => run(async () => { if (!await confirmOperation("人工核对后恢复通道", "确认你已核对恢复后的接收、去重和发送历史，处理可能重复的记录，并允许恢复外部回复？")) return false; await request("/api/channel/resume", { method: "POST", body: { acknowledge: "reconciled_restored_history" } }); await loadSystem(); }, "通道操作已结束，请核对诊断状态。"));
   run(async () => { try { const data = await request("/api/session"); await enter(data.csrf); } catch (error) { forgetSession(error instanceof Error && error.message === safeFailure(401) ? "请输入管理密码。" : "会话未恢复，请登录管理面板。"); } });
 })();

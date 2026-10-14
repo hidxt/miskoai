@@ -70,7 +70,7 @@ func Application(c *core.Controller) http.Handler {
 	return newApplication(coreBackend{c})
 }
 func newApplication(b managementBackend) http.Handler {
-	methods := map[string]string{"/api/library": "GET POST PATCH DELETE", "/api/library/preview": "GET", "/api/status": "GET", "/api/settings": "GET POST", "/api/profiles": "GET POST DELETE", "/api/profiles/select": "POST", "/api/facts": "GET POST PATCH DELETE", "/api/history": "GET", "/api/memory": "GET", "/api/memory/confirm": "POST", "/api/memory/reject": "POST", "/api/memory/clear": "POST", "/api/export": "POST", "/api/backup": "POST", "/api/restore": "POST", "/api/channel/resume": "POST", "/api/diagnostics": "GET"}
+	methods := map[string]string{"/api/library/backup": "POST", "/api/library/restore": "POST", "/api/library": "GET POST PATCH DELETE", "/api/library/preview": "GET", "/api/status": "GET", "/api/settings": "GET POST", "/api/profiles": "GET POST DELETE", "/api/profiles/select": "POST", "/api/facts": "GET POST PATCH DELETE", "/api/history": "GET", "/api/memory": "GET", "/api/memory/confirm": "POST", "/api/memory/reject": "POST", "/api/memory/clear": "POST", "/api/export": "POST", "/api/backup": "POST", "/api/restore": "POST", "/api/channel/resume": "POST", "/api/diagnostics": "GET"}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if b == nil {
 			safeError(w, 503, "web_unavailable")
@@ -126,6 +126,8 @@ func newApplication(b managementBackend) http.Handler {
 			return
 		}
 		switch r.URL.Path {
+		case "/api/library/backup", "/api/library/restore":
+			libraryBundleRoute(w, r, b)
 		case "/api/library", "/api/library/preview":
 			libraryRoute(w, r, b, query)
 		case "/api/settings", "/api/profiles", "/api/profiles/select":

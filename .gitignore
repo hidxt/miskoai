@@ -26,6 +26,8 @@ coverage.out
 *.zip
 *.tar.gz
 *.bak
+*.bundle
 *.tmp
+__pycache__/
 *credentials*.json
 *session*.json
