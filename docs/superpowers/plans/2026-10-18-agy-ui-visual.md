@@ -1,0 +1,13 @@
+# Isolated agy UI visual refinement plan
+
+Owner explicitly approves external agy using Gemini 4 Argon Medium only for isolated HTML/CSS UI tasks; Codex children remain gpt-6.1-sol/medium. Project engineering78%, backend/real media/final gates unchanged.
+
+Purpose: refine MiskoAI's existing Chinese lightweight local management console for calm daily use, clearer page/card hierarchy and safer visual distinction of maintenance warnings. Preserve current content, IDs, authentication, form behavior, APIs and JavaScript. Native embedded assets only, no extra runtime/dependency/provider/remote fonts or image fetches.
+
+Export ONLY public index.html/style.css/app.js plus an explicit brief and local AGENTS into `.tools/reviews/agy-ui-oct18/src`. Give that disposable copy its own empty local Git boundary (no remote/history/private files), so agy has no reason to index the enclosing project. Agy owns style.css and a new UI_REPORT.md only; HTML/JS read-only. Primary owns all main files, backend and integration. Record original source bytes/SHA before invocation; preserve original output and failures.
+
+Design: warm off-white/ink with restrained blue accent, readable Chinese system fonts, consistent spacing and rounded card rhythm, stronger primary/secondary/danger/disabled and keyboard focus distinctions. Keep sidebar and compact mobile navigation usable at375px, content readable at1280px, long hashes/IDs wrap, sensible forms, metric cards, modal/maintenance warnings and image grid. Preserve `[hidden]` behavior and reduced-motion handling. No decorative animation, chart invention or unsupported product claims.
+
+Invoke known installed `C:/Users/auzasr/AppData/Local/agy/bin/agy.exe` version1.4.2 with exact `--model gemini-4-argon-medium --effort medium`, isolated cwd, sandbox and accept-edits mode, one finite print task. No skip-permissions flag, installation/login/purchase/remote-control/subagents/shell/browser/Git/dependency actions; write UI files only. Credentials from MiskoAI/provider environment are removed by name, no credential files provided. Preserve existing agy authentication/configuration. If blocked, record the actual limitation and continue independent backend work.
+
+Primary then checks only2owned output files, all3 original input identities, complete CSS diff/review and no remote assets/hidden overrides; existing Node/Web checks plus actual synthetic authenticated desktop/mobile visual regression before adoption. Any review fix stays isolated. No progress package credit merely for a visual draft; actual final UI gate45 remains separate. Final browser evidence uses synthetic data only and actual process joins, never normal private service.

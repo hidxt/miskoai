@@ -145,6 +145,22 @@ func sameAsset(a, b storage.LibraryAsset) bool {
 	return a.ID == b.ID && a.Scope == b.Scope && a.SHA256 == b.SHA256 && a.Format == b.Format && a.Bytes == b.Bytes && a.Width == b.Width && a.Height == b.Height && a.Frames == b.Frames
 }
 func (m *Manager) WithAsset(parent context.Context, lease Lease, sc storage.Scope, id int64, requireEnabled bool, consume func(storage.LibraryAsset, attachment.LocalImage, attachment.Artifact) error) error {
+	if consume == nil {
+		return ErrInvalid
+	}
+	return m.withAsset(parent, lease, sc, id, requireEnabled, func(_ *storage.Store, a storage.LibraryAsset, im attachment.LocalImage, art attachment.Artifact) error {
+		return consume(a, im, art)
+	})
+}
+
+// WithAssetStore lends the current already-held Store and original validated
+// artifact to a trusted synchronous consumer. Neither may escape the callback.
+// The consumer must not reenter Manager or acquire another Store/media lease.
+func (m *Manager) WithAssetStore(parent context.Context, lease Lease, sc storage.Scope, id int64, requireEnabled bool, consume func(*storage.Store, storage.LibraryAsset, attachment.LocalImage, attachment.Artifact) error) error {
+	return m.withAsset(parent, lease, sc, id, requireEnabled, consume)
+}
+
+func (m *Manager) withAsset(parent context.Context, lease Lease, sc storage.Scope, id int64, requireEnabled bool, consume func(*storage.Store, storage.LibraryAsset, attachment.LocalImage, attachment.Artifact) error) error {
 	if !validScope(sc) || id <= 0 || lease == nil || consume == nil {
 		return ErrInvalid
 	}
@@ -175,7 +191,7 @@ func (m *Manager) WithAsset(parent context.Context, lease Lease, sc storage.Scop
 			if e = ctx.Err(); e != nil {
 				return e
 			}
-			return consume(fresh, im, art)
+			return consume(s, fresh, im, art)
 		})
 	})
 }

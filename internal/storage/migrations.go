@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const schemaVersion = 5
+const schemaVersion = 6
 
 const schema = `
 CREATE TABLE facts (
@@ -159,6 +159,12 @@ func (s *Store) migrate(ctx context.Context) error {
 		if _, err = tx.ExecContext(ctx, schema5); err != nil {
 			return storageError(ctx, err)
 		}
+		version = 5
+	}
+	if version == 5 {
+		if _, err = tx.ExecContext(ctx, schema6); err != nil {
+			return storageError(ctx, err)
+		}
 	}
 	return storageError(ctx, tx.Commit())
 }
@@ -179,8 +185,10 @@ func validateLegacyCapacity(ctx context.Context, q rowQuery) error {
 	if overScope != 0 {
 		return ErrCapacity
 	}
-	if err := q.QueryRowContext(ctx, `SELECT count(*),coalesce(sum(length(CAST(content AS BLOB))+length(CAST(reply AS BLOB))+CASE WHEN state IN ('processing','sending','ambiguous') THEN 16384 ELSE 0 END),0) FROM messages`).Scan(&count, &bytes); err != nil {
-		return storageError(ctx, err)
+	var err error
+	count, bytes, err = messageBudget(ctx, q)
+	if err != nil {
+		return err
 	}
 	if count > 10000 || bytes > 64<<20 {
 		return ErrCapacity

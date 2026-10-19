@@ -7,10 +7,13 @@ func validateSchema5IfPresent(ctx context.Context, q rowQuery) error {
 	if e := q.QueryRowContext(ctx, "PRAGMA user_version").Scan(&v); e != nil {
 		return storageError(ctx, e)
 	}
-	if v != 5 {
+	if v != 5 && v != 6 {
 		return nil
 	}
-	return validateLibraryCapacity(ctx, q)
+	if e := validateLibraryCapacity(ctx, q); e != nil {
+		return e
+	}
+	return validateSchema6IfPresent(ctx, q)
 }
 
 // SQL admits scalar types/ranges and text byte lengths before any library text

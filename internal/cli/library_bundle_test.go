@@ -543,7 +543,7 @@ func TestLibraryBundleCLIFormatConfusionAndLegacy(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = db.Exec("DROP TABLE library_assets; PRAGMA user_version=4"); e != nil {
+	if _, e = db.Exec("DROP TABLE image_replies; DROP TABLE library_assets; PRAGMA user_version=4"); e != nil {
 		db.Close()
 		t.Fatal(e)
 	}

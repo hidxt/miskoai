@@ -1,0 +1,11 @@
+# Image integration static disposition
+
+2026-10-19. Engineering78%. Primary reviewed the exact125-production-file frozen501-source scans as part of one consolidated integration batch. This is source-bound static evidence, not final whole-product security acceptance.
+
+Windows scan:25644lines,83 warnings (15HIGH/15MEDIUM/53LOW). Linux amd64 static scan:25462lines,86 warnings (17HIGH/17MEDIUM/52LOW). Both actual scanner exits1 reflect findings; both report0Go errors and0nosec. Versus the prior115-file checkpoint, each target adds the same4 warnings, removes0, and adds no HIGH finding. All prior findings and their dispositions remain; no clean-scan or suppression claim is made.
+
+The two added MEDIUM findings, G401/G501 in replyimage/prepare.go, identify the import/use of MD5. This is the pinned Weixin protocol's rawfilemd5 metadata, not identity/authentication or trusted content validation. The same bounded stream independently checks actual SHA256 and byte count against the validated library artifact before upload location is requested; encryption/file keys come from crypto/rand. The accepted preparation source/fresh review and65 primary tests cover these boundaries. Replacing this protocol field would change compatibility without strengthening the actual authenticity boundary. Retain both scanner warnings explicitly.
+
+The two added LOW G104 findings in storage/admission6.go are secondary rows.Close calls on already-failing Scan/invalid-receipt paths. Each branch immediately returns its original storage error/ErrInvalid, refusing admission. Ignoring secondary Close cannot turn either failure into successful admission or permit a later mutation; the ordinary completed read path checks rows.Close and rows.Err. Primary read these exact branches and the caller's error propagation. Existing independently reviewed storage fixture/admission tests and coherent3249-test gate remain source-bound. Retain these findings rather than adding suppression or a behavior-neutral patch/retest cycle.
+
+Original and current full JSON/log/actual exit artifacts, normalized added/removed fingerprints and source manifests remain under ignored library-combined-root-oct14 and image-serial-root-oct19 prefixes. Source/LICENSE/dependency identity and secret-history/publication checks remain distinct; final package43 review is not closed by this disposition.

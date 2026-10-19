@@ -22,3 +22,8 @@ docs/history/2026-10-13-memory-before-library-management.md -text whitespace=bla
 
 
 docs/history/2026-10-13-delivery-before-library-management.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+docs/superpowers/history/2026-10-19-TASKS.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/superpowers/history/2026-10-19-MEMORY.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/superpowers/history/2026-10-19-DELIVERY.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/superpowers/history/2026-10-19-README.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

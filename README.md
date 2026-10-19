@@ -1,17 +1,56 @@
 # MiskoAI
 
-Engineering progress: **74%** (37/50 local delivery packages). Guarded PDF text extraction passed root1596/fullvet and exact [native CI38211423839](https://github.com/hidxt/miskoai/actions/runs/38211423839), all12 steps successful. The real document processor/Agent combination passed235 scoped local tests and independent review; Core document-chat composition is in development. Live WeChat, actual arm64 execution,512MB measurements and final acceptance remain open. See DELIVERY.md for current evidence and limitations.
+超轻量 AI 微信聊天伙伴：Go 模块化单体、SQLite、DeepSeek 官方云模型与 Ollama 云端搜索，管理页面随单个可执行文件内嵌。目标平台为原生 Linux amd64 / arm64、2 vCPU / 512MB。
 
-A lightweight AI WeChat companion built in Go, using SQLite, DeepSeek official cloud APIs and Ollama hosted Web Search. Targets native Linux amd64/arm64 on 2 vCPU / 512MB machines. Development has started; this repository is **not yet a production release**. See DELIVERY.md for actual implemented/tested status.
+项目进度 **78%（39/50）**，仍在开发，尚未发布生产版本。剩余 **11 项**见 [任务清单](TASKS.md)；本地实现、原生 CI、真实微信与服务器资源验收分别记录在 [交付状态](DELIVERY.md)。512MB 是待实测目标。
 
-## Intended deployment
-One `miskoai` binary, embedded Web resources, configuration/data directory and optional systemd service. No container, WSL, local model service, permanent Node/Python/Java process or external database service. Server needs a supported Linux kernel and trusted TLS CA certificates. The management listener defaults to 127.0.0.1; use an SSH tunnel for remote access.
+## 当前能力与验证
 
-## Configuration and credentials
-`.env.example` lists safe synthetic examples. `init` exclusively creates private non-secret settings.json, which is loaded as runtime configuration. Explicitly present environment variables override saved values; invalid or empty overrides fail instead of silently falling back. Desired/effective settings are separate non-secret snapshots. Existing dedicated directories/files must already be owner-private; initialization never repairs unrelated permissions. The parent directory must already exist. Go does not implicitly load `.env` files. Never supply secrets as CLI arguments or commit database/WAL/SHM, actual chats/media, sessions, logs or backups. One authorized cloud test batch has passed with privately supplied temporary keys. deepseek-flash is the owner's explicit model choice for text and vision; endpoints/models remain configurable. API keys may come from environment or the explicitly selected `MISKOAI_CREDENTIALS_FILE` (exact uppercase DeepSeek/Ollama key schema, verified owner-only, <=8KiB); no secrets file is discovered automatically. Admin password remains environment-only. Human QR authorization and controlled text delivery have been verified; strict server acknowledgement, media, reconnect and expiry acceptance remain separate gates.
+- 有界文本、流式响应、视觉输入与按需搜索；默认模型按项目所有者选择使用 `deepseek-flash`。
+- 持久化接收、去重与一次发送；范围隔离的事实、历史、候选、摘要和表达档案。
+- 有界 TXT、Markdown、DOCX、PDF 提取；私人媒体校验、本机图片库、数据库快照与完整图片备份恢复。
+- 登录保护的本机管理页面、CLI、原生 Linux 运维和用户级 systemd 模板。
+- 真实微信固定文字测试已通过严格服务端确认，并由所有者确认收到。自动静态 PNG/JPEG 回复已实现并通过本地整合检查；实际图片发送、重连和授权过期恢复仍待验证，GIF 动画与原生微信贴图能力未获验证。
 
-## Build and verification
-Development toolchain baseline: Go1.27.2 after the official security patch. Module github.com/hidxt/miskoai. CGO_ENABLED=0 Windows amd64/Linux amd64/Linux arm64 builds compile. Reviewed checkpointf6fcb3cba1e4524648602bbcaa68495f3449dd25 passed native Linux unit/integration, vet, race, vulnerability/history checks and both Linux architecture builds in [CI run37976808001](https://github.com/hidxt/miskoai/actions/runs/37976808001). That revision includes strict runtime configuration, scoped management-storage APIs, ownership-checked maintenance the joined Core controller and bounded private media codec; subsequent Web working source is excluded. This hosted runner evidence does not establish arm64 runtime or512MB/VPS performance. From a native Unix development shell:
+最新已接受的公开源码为 [d811e643](https://github.com/hidxt/miskoai/commit/d811e643e801f7fcd6d42bdf3cf0ad7d75d23bb5)，对应 [原生 CI38540398046](https://github.com/hidxt/miskoai/actions/runs/38540398046) 的全部12个配置步骤成功，包括单元/整合、vet、Linux race、漏洞/历史策略检查和两种 Linux 架构构建。较新的工作区图片组件与 UI 改动尚未包含在该 CI；交叉构建和托管 CI 不代表实际 arm64 或512MB服务器运行结果。
+
+## 部署与本机管理
+
+运行时仅需一个 `miskoai` 进程、其私有配置/数据目录、原生 Linux 与可信 TLS CA。无需容器、WSL、本地模型、Redis、外部数据库或常驻 Node/Python/Java。管理监听默认 `127.0.0.1`；systemd 模板固定为 `127.0.0.1:8080`，远程管理使用两端同端口的 `127.0.0.1` SSH 隧道，以满足 Host/Origin 校验。安装、升级、恢复、卸载及 systemd 操作详见 [原生 Linux 运维手册](docs/operations/native-linux.md)。
+
+开发 CLI 支持：
+
+```text
+miskoai help
+miskoai version
+miskoai licenses
+miskoai init
+miskoai config validate
+miskoai doctor
+miskoai serve
+miskoai status
+miskoai backup PATH
+miskoai restore PATH
+miskoai backup --library PATH
+miskoai restore --library PATH
+miskoai weixin login
+```
+
+无参数调用也显示帮助。另有显式开发探测入口 `miskoai poc deepseek|stream|search|vision PATH|weixin`，仅在相应真实测试获准时使用。`doctor` 使用本机合成 SQLite 数据，只报告凭证是否存在，不调用云端或微信。`serve` 先绑定管理页面，再启动已配置的通道工作；退出时等待实际工作结束后关闭存储。`status` 仅连接配置的本机监听，不打开数据库；Go 堆内存与逻辑尝试数有明确标注，当前不提供进程 RSS 验收结果。
+
+`backup/restore --library` 是最多321MiB的完整数据库与图片包，要求有效管理配置且服务已停止；完整恢复在校验前停止当前代际，失败时可能保持停止。普通数据库快照只含图片元数据，`restore PATH` 输入上限为256MiB。两类备份均不自动包含 `settings.json`、`weixin-auth.json`、环境/凭证文件或 systemd unit。恢复可能回退接收/发送记录，完成后通道保持暂停，必须通过已认证管理页面人工核对后恢复。失败或结果不明确时应先核对状态，不要重复提交。现有私人数据库的迁移、恢复和启动需先核对备份及授权。
+
+## 配置与凭证
+
+`init` 独占创建私有、非秘密的 `settings.json`，要求已有父目录；不会覆盖现有文件或修复无关目录权限。显式存在的环境变量覆盖保存值，空值或无效覆盖会拒绝启动。Go 不会自动加载 `.env`，安全示例见 [.env.example](.env.example)。
+
+API Key 可由环境变量（优先）或显式指定的 `MISKOAI_CREDENTIALS_FILE` 提供；凭证文件须符合精确键名、最多8KiB和所有者私有权限要求，不会自动发现。管理密码仅由 `MISKOAI_ADMIN_PASSWORD` 环境变量提供，要求16–256字节的有效 UTF-8、非空白且无控制字符。不要将密钥、令牌、真实聊天/媒体、数据库及其日志文件、会话或备份放入 Git，也不要在 CLI 参数中传递秘密。
+
+项目先前获准的一组有限真实云端测试已执行完毕；新的付费或微信测试需按具体范围授权。`scripts/Set-TestCredentials.ps1` 采用隐藏输入和私有文件；`scripts/Invoke-LiveProbes.ps1` 是显式测试工具，不能把历史授权视为新的调用额度。二维码和授权输出仅在私人交互终端使用。
+
+## 构建与开发检查
+
+模块为 `github.com/hidxt/miskoai`，开发工具链基线 Go1.27.2。从原生 Unix 开发 shell 执行：
 
 ```sh
 go test ./... -count=1
@@ -20,62 +59,8 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o dist/miskoai-linux-a
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o dist/miskoai-linux-arm64 ./cmd/miskoai
 ```
 
-For this Windows workspace, `./scripts/Test.ps1` sets workspace-local Go cache/temp paths and runs the synthetic suite/vet; ensure its selected Go toolchain satisfies go.mod. These are development tools; no Python or PowerShell daemon is required on the target server. CI uses a native Linux runner, without containers; only completed runs tied to exact revisions count as evidence.
+Windows 工作区的 `./scripts/Test.ps1` 设置项目内 Go 缓存/临时目录并运行合成测试和 vet；所选工具链须满足 `go.mod`。这些是开发工具，目标服务器不需要 Python/PowerShell 守护进程。最终安全、功能/恢复、许可证、发布产物和真实512MB验收尚未完成，证据分类见 [TESTING.md](TESTING.md)。
 
-The development binary supports `version`, `licenses`, `init`, `serve`, `status`, `doctor`, `config validate`, `backup PATH`, `restore PATH`, `weixin login` and explicit `poc` commands. `doctor` uses only a synthetic local SQLite database, reports boolean credential presence, and never calls cloud or WeChat APIs. `serve` requires a private configuration and an environment-only `MISKOAI_ADMIN_PASSWORD` of at least16 characters, binds management before starting configured channel workers, and joins shutdown before closing storage. `status` authenticates to the configured literal loopback listener, reports safe state/Go heap/logical attempts, and never opens the database. RSS is currently unavailable. Keep credentials out of command arguments. Compiled synthetic Windows Ctrl-C/start/status checks passed; actual private deployment and live-channel acceptance remain separate. Existing real data must not be upgraded or started without reviewing its migration/backup authorization.
+## 项目记录与许可证
 
-## Authorized local integration tests
-Cloud tests can incur small charges; explicit authorization is required. The project owner has authorized one bounded synthetic batch for this session. Do not rerun batches without checking that request allowance. Current Windows helper accepts private local credentials only, never arguments:
-
-```powershell
-Set-Location C:\Users\auzasr\Documents\Projects\miskoai
-./scripts/Set-TestCredentials.ps1
-# After the development Windows binary is built:
-./scripts/Invoke-LiveProbes.ps1
-```
-
-The first script prompts with hidden input and creates ignored secrets/api-keys.json with protected current-owner-only ACL before writing. The second performs one fixed text, stream, search and generated PNG probe, caps output64tokens, restores prior process environment, and prints only status/counts. It checks the credential ACL before reading. Explicit429/503 may retry at most2; stream/ambiguous failures are not retried, so this batch makes at most10 cloud HTTP attempts, within the authorized12.
-
-For human WeChat authorization, run `./scripts/Invoke-LiveProbes.ps1 -Weixin` in a private interactive terminal. Do not record/share QR output. Scan the official authorization with your own account; any one-time code uses hidden input. Authorization is stored only after validating the official endpoint and securing file permissions. Then send exactly `MiskoAI synthetic integration test` from the scanning user and press Enter for one bounded receive/reply probe; other messages are ignored before persistence. This does not prove media/reconnect/cursor acceptance. Real tokens, links and messages must remain outside Git/logs.
-
-## Operations and lifecycle
-No installation script or release exists yet. `backup PATH` uses a consistent SQLite snapshot into a new private file. Backup and restore acquire the same exclusive lifecycle lock before opening the database. `restore PATH` requires a stopped service, a dedicated data directory and no unexplained WAL/SHM/rollback journals; it validates supported schema/integrity before candidate admission, preserves the source and prior database, and retains a private pause marker pending explicit reconciliation. Linux directory syncing precedes replacement; failures may require recovery using the retained prior snapshot. Windows checks establish normal restart behavior, not Linux-equivalent power-loss durability. Explicit administrative resume exists in reviewed Core; Web/CLI exposure remains pending. Existing files are never overwritten by `init` or backup. Never publicly upload snapshots. Planned upgrade: consistent backup → stop → replace verified binary → start/migrate → health check. Uninstall must preserve data unless explicitly requested. Durable serial text handling, schema3 memory/profile storage and a bounded summary worker are reviewed internal modules; Core lifetime is internally reviewed; operational serve, Web management, media/documents/stickers and systemd release integration remain pending.
-
-## Project records
-REQUIREMENTS.md is product scope; ARCHITECTURE.md describes boundaries/budgets; SECURITY.md defines trust/prohibited behavior; TESTING.md distinguishes mocks/live/WeChat/VPS; TASKS.md and MEMORY.md capture progress. DELIVERY.md is the acceptance record. Apache-2.0; dependency license inventory is in docs/research/dependency-licenses.md, with full notices embedded in `miskoai licenses`.
-
-Earlier development checkpoint (historical): bounded text orchestration, durable serial receive handling, derived summaries/candidates and persistent profile storage have synthetic/reviewed evidence recorded in DELIVERY.md. Text commands include `/remember`, `/memory`, `/forget`, `/memory clear`, `/export-memory` and explicit `/search`/`搜索：`; they remain internal behavior pending lifecycle/CLI exposure. Candidate review and persistent-profile agent integration passed independent Medium review and root local verification; checkpointc17c6ea native CI passed. Strict runtime configuration/raw-path correction and scoped management-storage APIs passed independent Medium reviews, root local verification and native Linux CI at e421940. Shared maintenance passed local review/integration after the backup ownership correction; its native CI is pending. Core/serve and authenticated management remain pending. Three builtin styles preserve honest AI identity. There is no runnable general chat service yet. The owner resumed bounded real WeChat validation; a fresh synthetic marker is pending for the reviewed strict-ACK rule, and prior ambiguous sends are never resent. Real512MB measurement awaits an authorized server.
-
-Earlier engineering checkpoint: **52%** per docs/superpowers/project-progress.md (historical). Core/media codec local/reviewed/nativeCI gates passed. Loopback authentication and the shared public-IP-pinned transport constructor are locally reviewed with root synthetic tests/vet; their new native CI is pending. Management APIs/view and operational serve remain in development. This percentage is a coarse local delivery tracker, not real-channel/resource/final acceptance.
-
-Current engineering progress: **62%** (31of50 local/phase packages). Native serve/status local gate includes full1016namedpass/0fail/4existingplatformskips/vet0, fresh Medium spec/quality review with1deferredMinor, three native cross-builds and actual compiled synthetic interrupt shutdown/releasedlistener-lock evidence. Latest published readiness90491a18a553549215414a9ee4ea7c126c3b8ba4 [nativeCI38052284640](https://github.com/hidxt/miskoai/actions/runs/38052284640) passed all configured tests/vet/nativeLinuxrace/vulnerability/history/two-architecturebuild steps; it excludes the current CLI patch, whose publication/nativeCI remains pending. Attachment storage is in progress; real WeChat is explicitly deferred, cloud allowance spent,512MB/server/arm64 runtime/final security/license/UI/release gates open. See DELIVERY.md and docs/research/serve-status-root-verification.md.
-
-Native serve/status development publication9a0bbaa80b19326a60df88b3a8f372ee7e6c58a2 completed; [nativeCI38067031368](https://github.com/hidxt/miskoai/actions/runs/38067031368) is in progress. Earlier pending-publication paragraph is historical. Attachment storage remains excluded working source.
-
-Latest verified native checkpoint: engineering **62%**. CLI commit9a0bbaa80b19326a60df88b3a8f372ee7e6c58a2 / [nativeCI38067031368](https://github.com/hidxt/miskoai/actions/runs/38067031368) / job114256653293 completed SUCCESS. Root inspected exact overall SHA/run and EVERY configured setup, unit/integration, vet, nativeLinuxrace, govulncheck, history-secret-policy, Linuxamd64/arm64 build and cleanup step: all SUCCESS. Includes accepted serve/status; excludes attachment storage working source. This is hosted native CI, not actual arm64 execution,512MB RSS, live WeChat/media or final acceptance.
-
-2026-10-11 attachment storage Task1 local gate: root frozen-source Windows Go1.27.2 full1059namedpass/0fail/4existingplatformskips/fullvet0; fresh permittedMedium spec/qualityApproved0findings. Complete production static61Windows/64Linux retained warnings,0Goerrors/0nosec; two newLOW secondary cleanup warnings recorded, not clean scans. Only complete resume1 logs are acceptance evidence. Default receiver still text-only; Task2/attachment nativeCI/live/actualprivate migration/512MB/final gates remainopen. See docs/research/attachment-storage-root-verification.md.
-
-Latest attachment envelope local gate2026-10-11: engineering **64%**=32of50. Root corrected frozenWindows1127namedpass/0fail/4existingplatformskip/fullvet0 and independent permittedMedium normalizationFIX1/nativefixture scopedApprovals. Complete production static61Windows/64Linux retainedwarnings/0Goerrors/no suppression,0new/0removed; corrected publicGitleaks0. Defaultreceiver remains text-only. Exactstorage0e7dd94 native38070812447 failed fixtureOpen assertions, subsequentstepsskipped; correctedpublication/nativeCIpending, priorCLI9a0bbaa/native38067031368 ALLSUCCESS separate. Actualprivate schema2 untouched/realWeChat deferred/cloudallowance spent/512MB/arm64runtime/final acceptance open. Shared visionprimitives in development, not fullpipeline. Root evidence docs/research/attachment-normalize-root-verification.md.
-
-
-2026-10-11 verified native checkpoint: engineering **64%**. Attachment development081725ac1af5cf126b5457ba8845d9f7ce82feb3 normally pushed0e7dd94..081725a; exact [nativeCI38073232152](https://github.com/hidxt/miskoai/actions/runs/38073232152)/job114274781547 completedSUCCESS. Root verified exact overallSHA/run and EVERY setup,unit/integration,vet,nativeLinuxrace,govulncheck,full-historypolicy,amd64/arm64build and cleanup stepSUCCESS. Includes reviewed normalization/nativefixture correction; excludes vision/current document working files. Failed0e7dd94/native38070812447 remains historical with subsequentstepsSKIPPED. Publication17explicitpaths/public261allHEADblobsexact/emptyindex; staged17working264history837policy0 precommit, postcommithistory854working266policy0, Gitleaks27commits~2482389bytes0 and finalpublic261~2299548bytes0. No force/mainmerge/release or actualprivate migration/startup. HostedCI is distinct from actualWeChat/media/arm64runtime/512MBRSS/finalacceptance.
-
-
-2026-10-11 exact vision native checkpoint: engineering **66%**, unchanged33of50. Vision6e189572ca62e81cb2775ab1718f5fd29078be59/[nativeCI38074211708](https://github.com/hidxt/miskoai/actions/runs/38074211708)/job114277667072 completedSUCCESS. Root independently verified exact overallSHA/run and EVERY configured setup,unit/integration,vet,nativeLinuxrace,govulncheck,full-historypolicy,Linuxamd64/arm64build and cleanup stepSUCCESS. Includes reviewed providerprimitives, excludes currentTXT/MD/ZIP source. TXT/MD root1175pass/vet0 acceptedlocally; its publication/native gate isNEXT. ZIPgroundwork active ONLYgpt-6.1-sol/medium, no37credit. Fullimagepipeline35 remainsopen. EarliernativeIN_PROGRESS text is historical. No actualprivate startup/migration/newpaid/CDN/WeChatcall/arm64execution/512MBRSS/finalacceptance claimed.
-
-
-2026-10-11 TXT/Markdown native checkpoint: engineering **66%**, unchanged 33 of 50. Reviewed development commit 5e20de6c77f70bc326b7403614a742e16cc4960c was normally pushed on codex/foundation; [native CI 38074949613](https://github.com/hidxt/miskoai/actions/runs/38074949613), job114279873654, completed SUCCESS. Root verified exact overall SHA and every configured setup, unit/integration, vet, native Linux race, govulncheck, history secret policy, Linux amd64/arm64 build and cleanup step SUCCESS. Publication used 16 explicit accepted paths and a complete 272-public-file export; all HEAD blobs match that export, all tested Go/module/workflow bytes match the1175-pass/full-vet0 snapshot. Precommit staged16 and working272 policy scans found0; postcommit history policy898 contents and current working276 contents found0. Gitleaks final public export and all29 commits found0. Current ZIP WIP and later plan filename reconciliation are excluded from this commit. Task2 ZIP continues only gpt-6.1-sol/medium after one usage-error resume; public DOCX/PDF remain unsupported, packages35/37/38 open. No actual private migration/startup, new paid/CDN/WeChat call, arm64 execution,512MB RSS or final acceptance. User requested faster progress: batch independent review/root checks and avoid unchanged reruns, preserve required gates.
-
-
-2026-10-11 ZIP native checkpoint: engineering **66%**, unchanged33of50. Reviewed developmentcommit fa16035bc4394b0b94f9615b64b5242455852cc3 normallypushed5e20de6..fa16035 on codex/foundation; [nativeCI38114465807](https://github.com/hidxt/miskoai/actions/runs/38114465807)/job114396493481 completedSUCCESS. Root verified exact overallSHA/run and EVERY configured setup,unit/integration,vet,nativeLinuxrace,govulncheck,full-historysecretpolicy,Linuxamd64/arm64build and cleanup stepSUCCESS. Publication19explicitpaths/public278 allHEADblobsexactexport/emptyindex/allGo-mod-workflowmatch1224testedfrozen; staged19working281policy0, fullhistorypolicy642uniqueblobs0 via identical unmodifiedpolicy rules and batchGit; Gitleaksfinalpublic~2501000bytes0 and all30commits~2688634bytes0. Historicalpolicycount642 is history-only, distinct from prior combinedworking/history counts. Imageowned3 and evolvingDOCX source excluded. ImageTask1root1276pass/vet0/reviewapproved acceptedlocally, its publication/nativeNEXT; DOCXTask3 soleMediumwriter. No37or35credit/live/privateDBmigration/paid/CDN/WeChat/arm64execution/512MB/final acceptance inferred.
-
-
-2026-10-11 image lifetime native checkpoint: engineering **66%**, unchanged33of50. Commit d2e3b9b1915ead1b8e2888cce44d5188680c471e normally pushed on codex/foundation; [native CI38115083791](https://github.com/hidxt/miskoai/actions/runs/38115083791), job114398267789, completed SUCCESS. Root verified exact head SHA and all12 configured setup, unit/integration, vet, native Linux race, govulncheck, full-history secret policy, Linux amd64/arm64 build and cleanup steps SUCCESS. Publication19 explicit accepted paths/public285 all index/HEAD blobs exact; all Go/module/workflow bytes match root1276-pass/full-vet0 snapshot. Staged19/current working289 policy0; full-history policy661 unique historical contents0, Gitleaks final public export~2581811bytes0 and all31commits~2887809bytes0. Agent/Core attachment integration remains incomplete; no35 credit, actual private migration/startup, paid/CDN/WeChat call, arm64 execution,512MB RSS or final acceptance inferred.
-
-
-2026-10-12 文档应用链路通过本地集成验收：完整 Windows 测试1725项通过、vet通过、独立审查0项新发现。TXT/Markdown/DOCX/PDF经过持久化领取、受限提取和带可见范围的引用进入一次模型调用；图像与文档复用同一个媒体并发槽。进度72%（36/50）；新应用提交的原生CI待验证，真实微信、512MB和最终验收仍待完成。
-
-原生 Linux 用户级 systemd、安装/升级/恢复/卸载步骤见 [运维手册](docs/operations/native-linux.md)。运维包已完成本地检查和独立审查；进度74%（37/50）。实际 Linux/systemd/512MB/最终发布验收仍待完成。最新应用CI38248405265在旧图片重开测试失败，原因仍在定位；本地通过与原生失败分别记录。
-
-2026-10-12 表情库基础已通过本地审查和完整1849项测试/vet：兼容schema5元数据与共享媒体槽的本地图片处理。表情库内容、完整备份和Web仍在开发，当前74%（37/50）；未对真实私人schema2数据库执行升级。文档/运维490369a原生CI38252503822全部通过，库基础的新原生CI待验证。
+[需求](REQUIREMENTS.md) · [架构](ARCHITECTURE.md) · [安全策略](SECURITY.md) · [当前交付](DELIVERY.md) · [任务](TASKS.md) · [开发状态](MEMORY.md)。Apache-2.0，见 [LICENSE](LICENSE)；第三方清单见 [依赖许可证](docs/research/dependency-licenses.md)，完整嵌入声明可用 `miskoai licenses` 查看。原 README 的全部历史内容按原字节保存在 [历史记录](docs/superpowers/history/2026-10-19-README.md)。

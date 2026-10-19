@@ -94,7 +94,7 @@ func (c *Controller) startGeneration() error {
 	}
 	ctx, cancel := context.WithCancel(c.parent)
 	g := &generation{cancel: cancel, done: make(chan struct{})}
-	ch := &observedChannel{c: c, delegate: c.channel, g: g}
+	ch := newObservedChannel(c, g, c.channel)
 	w, e := summary.New(c.store, &countedModel{c: c, delegate: c.model, operation: "summary"}, summary.Options{Account: c.scope.Account, User: c.scope.User})
 	if e != nil {
 		cancel()
@@ -114,6 +114,11 @@ func (c *Controller) startGeneration() error {
 	} else {
 		a, e = agent.New(c.store, text, c.countedSearch(), ch, opts)
 	}
+	if e != nil {
+		cancel()
+		return ErrUnavailable
+	}
+	a, e = c.generationReplyAgent(ctx, g, ch, a)
 	if e != nil {
 		cancel()
 		return ErrUnavailable

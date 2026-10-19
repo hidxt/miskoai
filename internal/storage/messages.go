@@ -39,8 +39,9 @@ func (s *Store) ClaimMessage(ctx context.Context, scope Scope, id, text string) 
 	if exists == 1 {
 		return false, nil
 	}
-	if err = tx.QueryRowContext(ctx, `SELECT count(*),coalesce(sum(length(CAST(content AS BLOB))+length(CAST(reply AS BLOB))+CASE WHEN state IN ('processing','sending','ambiguous') THEN 16384 ELSE 0 END),0) FROM messages`).Scan(&count, &bytes); err != nil {
-		return false, storageError(ctx, err)
+	count, bytes, err = messageBudget(ctx, tx)
+	if err != nil {
+		return false, err
 	}
 	if count >= 10000 || bytes+int64(len(text))+16384 > 64<<20 {
 		return false, ErrCapacity
@@ -75,7 +76,7 @@ func (s *Store) SetMessageState(ctx context.Context, scope Scope, id, state stri
 	default:
 		return ErrInvalid
 	}
-	result, err := s.db.ExecContext(ctx, `UPDATE messages SET state=?,updated_at=? WHERE account=? AND user=? AND id=? AND state=?`, state, time.Now().UTC().UnixMilli(), scope.Account, scope.User, id, prior)
+	result, err := s.db.ExecContext(ctx, `UPDATE messages SET state=?,updated_at=? WHERE account=? AND user=? AND id=? AND state=? AND NOT EXISTS(SELECT 1 FROM image_replies r WHERE r.account=messages.account AND r.user=messages.user AND r.id=messages.id)`, state, time.Now().UTC().UnixMilli(), scope.Account, scope.User, id, prior)
 	return changed(ctx, result, err)
 }
 
@@ -88,7 +89,7 @@ func (s *Store) CompleteMessage(ctx context.Context, scope Scope, id, reply stri
 	if !validMessageID(id) || strings.TrimSpace(reply) == "" || len(reply) > 16384 || !utf8.ValidString(reply) || strings.ContainsRune(reply, 0) {
 		return ErrInvalid
 	}
-	result, err := s.db.ExecContext(ctx, `UPDATE messages SET reply=?,state='sent',updated_at=? WHERE account=? AND user=? AND id=? AND state='sending'`, reply, time.Now().UTC().UnixMilli(), scope.Account, scope.User, id)
+	result, err := s.db.ExecContext(ctx, `UPDATE messages SET reply=?,state='sent',updated_at=? WHERE account=? AND user=? AND id=? AND state='sending' AND NOT EXISTS(SELECT 1 FROM image_replies r WHERE r.account=messages.account AND r.user=messages.user AND r.id=messages.id)`, reply, time.Now().UTC().UnixMilli(), scope.Account, scope.User, id)
 	return changed(ctx, result, err)
 }
 

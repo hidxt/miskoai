@@ -1,4 +1,4 @@
-package attachment
+package attachment_test
 
 import (
 	"context"
@@ -11,12 +11,30 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/hidxt/miskoai/internal/agent"
+	"github.com/hidxt/miskoai/internal/attachment"
 	"github.com/hidxt/miskoai/internal/provider"
 	"github.com/hidxt/miskoai/internal/storage"
 )
+
+// The joint tests live outside attachment so Agent can depend on attachment
+// without introducing an attachment -> Agent -> attachment test import cycle.
+type wrappedArtifact struct {
+	attachment.Artifact
+	closes  atomic.Int32
+	closeFn func() error
+}
+
+func (a *wrappedArtifact) Close() error {
+	a.closes.Add(1)
+	if a.closeFn != nil {
+		return a.closeFn()
+	}
+	return a.Artifact.Close()
+}
 
 type jointDocumentModel func(context.Context, []provider.Message, int) (provider.Reply, error)
 
@@ -59,7 +77,7 @@ func TestClaimedDocumentJointRealParsers(t *testing.T) {
 	}{
 		{"private-canary.txt", []byte("TXT 中文"), "TXT 中文"},
 		{"private-canary.md", []byte("# MD 中文"), "# MD 中文"},
-		{"private-canary.docx", generatedDOCX(t), "Hello 中文\n"},
+		{"private-canary.docx", attachment.GeneratedDOCXForTest(t), "Hello 中文\n"},
 		{"private-canary.pdf", jointPDF(), "PDF source"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -68,15 +86,15 @@ func TestClaimedDocumentJointRealParsers(t *testing.T) {
 				t.Fatal(e)
 			}
 			t.Cleanup(func() { _ = s.Close() })
-			a, dir := completed(t, tc.raw)
+			a, dir := attachment.CompletedForTest(t, tc.raw)
 			w := &wrappedArtifact{Artifact: a}
-			d := fileDescriptor(tc.name)
+			d := attachment.FileDescriptorForTest(tc.name)
 			d.Length = strconv.Itoa(len(tc.raw))
 			sum := md5.Sum(tc.raw)
 			d.MD5 = hex.EncodeToString(sum[:])
 			scope := storage.Scope{Account: "account", User: "alice"}
 			downloads, models, sends := 0, 0, 0
-			p := documentProcessor(t, func(ctx context.Context, _, _, _ string, _ [16]byte) (Artifact, error) {
+			p := attachment.DocumentProcessorForTest(t, func(ctx context.Context, _, _, _ string, _ [16]byte) (attachment.Artifact, error) {
 				downloads++
 				claimed, e := s.ClaimMessage(ctx, scope, "document", "")
 				if e != nil || claimed {
@@ -155,11 +173,11 @@ func TestClaimedDocumentJointCloseFailureUsage(t *testing.T) {
 		t.Fatal(e)
 	}
 	t.Cleanup(func() { _ = s.Close() })
-	a, _ := completed(t, jointPDF())
+	a, _ := attachment.CompletedForTest(t, jointPDF())
 	w := &wrappedArtifact{Artifact: a}
 	w.closeFn = func() error { _ = a.Close(); return errors.New("private-canary cleanup") }
 	models, sends := 0, 0
-	p := documentProcessor(t, func(context.Context, string, string, string, [16]byte) (Artifact, error) { return w, nil })
+	p := attachment.DocumentProcessorForTest(t, func(context.Context, string, string, string, [16]byte) (attachment.Artifact, error) { return w, nil })
 	m := jointDocumentModel(func(context.Context, []provider.Message, int) (provider.Reply, error) {
 		models++
 		return provider.Reply{Text: "successful private-canary answer", FinishReason: "stop", Usage: provider.Usage{TotalTokens: 23}}, nil
@@ -175,7 +193,7 @@ func TestClaimedDocumentJointCloseFailureUsage(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	d := fileDescriptor("private-canary.pdf")
+	d := attachment.FileDescriptorForTest("private-canary.pdf")
 	r, e := chat.Handle(context.Background(), agent.Incoming{Account: "account", User: "alice", ID: "cleanup", Text: "caption", ContextToken: "synthetic-token", Attachment: &d})
 	if e != nil || r.State != "sent" || r.Code != "document" || r.Usage.TotalTokens != 23 || models != 1 || sends != 1 {
 		t.Fatalf("joint cleanup result %+v %v", r, e)

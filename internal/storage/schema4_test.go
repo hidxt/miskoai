@@ -80,7 +80,7 @@ func TestAttachmentSchemaLegacyCompatibility(t *testing.T) {
 	}
 }
 func TestAttachmentSchemaRefusalImmutable(t *testing.T) {
-	for _, bad := range []string{`CREATE TABLE foreign_object(x)`, `PRAGMA user_version=6`, `INSERT INTO inbox(account,user,message_id,text,context_token,received_at) VALUES('a','u','id','','',1); INSERT INTO inbox_attachments VALUES(1,X'7B7D')`} {
+	for _, bad := range []string{`CREATE TABLE foreign_object(x)`, `PRAGMA user_version=7`, `INSERT INTO inbox(account,user,message_id,text,context_token,received_at) VALUES('a','u','id','','',1); INSERT INTO inbox_attachments VALUES(1,X'7B7D')`} {
 		t.Run(bad, func(t *testing.T) {
 			s, path := testStore(t)
 			if _, err := s.db.Exec(bad); err != nil {

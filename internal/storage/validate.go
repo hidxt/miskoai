@@ -80,13 +80,22 @@ func schema4Manifest() map[string]schemaObject {
 	return m
 }
 
-func currentManifest() map[string]schemaObject {
+func schema5Manifest() map[string]schemaObject {
 	m := schema4Manifest()
 	rest := schema5[strings.Index(schema5, "CREATE TABLE library_assets ("):]
 	m["library_assets"] = schemaObject{"table", "library_assets", strings.TrimSuffix(rest[:strings.Index(rest, ");")+2], ";")}
 	m["sqlite_autoindex_library_assets_1"] = schemaObject{"index", "library_assets", ""}
 	rest = schema5[strings.Index(schema5, "CREATE INDEX library_scope"):]
 	m["library_scope"] = schemaObject{"index", "library_assets", rest[:strings.Index(rest, ";")]}
+	return m
+}
+
+func currentManifest() map[string]schemaObject {
+	m := schema5Manifest()
+	m["image_replies"] = schemaObject{"table", "image_replies", strings.TrimSuffix(strings.TrimSpace(strings.Split(schema6, ";")[0]), ";")}
+	for i := 1; i <= 3; i++ {
+		m["sqlite_autoindex_image_replies_"+string(rune('0'+i))] = schemaObject{"index", "image_replies", ""}
+	}
 	return m
 }
 
@@ -160,7 +169,7 @@ func validatedBackup(ctx context.Context, path string, consume func(*sql.DB, int
 	// Preserve exact schema1/2/3 snapshot admission. Open separately performs
 	// legacy data admission before migration; schema4 additionally admits its
 	// companion data here before any descriptor body is materialized.
-	if version == 4 || version == 5 {
+	if version == 4 || version == 5 || version == 6 {
 		if err = validateLegacyCapacity(ctx, db); err != nil {
 			return err
 		}
@@ -224,6 +233,9 @@ func validateManifest(ctx context.Context, db rowQuery) error {
 		return ErrInvalid
 	}
 	expected := currentManifest()
+	if version == 5 {
+		expected = schema5Manifest()
+	}
 	if version == 4 {
 		expected = schema4Manifest()
 	}

@@ -126,6 +126,7 @@ func Open(path string) (*Store, error) {
 					e = validateSchema3IfPresent(probeCtx, probe)
 				}
 				if e == nil && !hasSidecar {
+					// Schema5 dispatch also validates bounded schema6 receipts.
 					e = validateSchema5IfPresent(probeCtx, probe)
 				}
 			}

@@ -34,21 +34,24 @@ type Options struct {
 	MaxOutput, ContextBytes, ContextTokens int
 }
 type Result struct {
-	State string
-	Usage provider.Usage
-	Code  string
+	State      string
+	ImageState string
+	Usage      provider.Usage
+	Code       string
 }
 type Agent struct {
-	store     *storage.Store
-	model     Model
-	vision    Model
-	images    ImageProcessor
-	documents DocumentProcessor
-	search    Searcher
-	sender    Sender
-	opts      Options
-	scope     storage.Scope
-	admission chan struct{}
+	store             *storage.Store
+	model             Model
+	vision            Model
+	images            ImageProcessor
+	documents         DocumentProcessor
+	search            Searcher
+	sender            Sender
+	opts              Options
+	scope             storage.Scope
+	replyImageBorrow  ReplyImageBorrow
+	replyImagePrepare ReplyImagePrepare
+	admission         chan struct{}
 }
 
 const maxReply = 16384
@@ -132,6 +135,8 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	}
 	var text, code string
 	var usage provider.Usage
+	var captured storage.Profile
+	ordinary := false
 	if in.Attachment != nil {
 		if len(in.Text) > 8192 {
 			text, code = limitReply, "limit"
@@ -147,7 +152,9 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 			if len(in.Text) > 8192 {
 				text, code = limitReply, "limit"
 			} else {
-				text, usage, code = a.answer(ctx, in.Text)
+				text, usage, code = a.answerWithProfile(ctx, in.Text, &captured)
+				_, searching := searchCommand(in.Text)
+				ordinary = code == "" && !searching
 			}
 		}
 	}
@@ -158,6 +165,17 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	text, valid := validatedReply(text, maxReply)
 	if !valid {
 		text, code = modelReply, "output"
+	}
+	if ordinary && valid && a.replyImageBorrow != nil && a.replyImagePrepare != nil && imageSelectionProfile(captured) && captured.Sticker != "off" {
+		candidates, last, snapshotErr := a.store.ImageSelectionSnapshot(ctx, a.scope)
+		if snapshotErr != nil {
+			a.setState(ctx, in.ID, "failed")
+			return Result{State: "failed", Usage: usage, Code: storageCode(snapshotErr)}, errors.New(storageCode(snapshotErr))
+		}
+		chosen, selected := selectReplyImage(imageSelectionInput{Scope: a.scope, InboundID: in.ID, UserText: in.Text, Reply: text, Profile: captured, Candidates: candidates, NowMillis: time.Now().UTC().UnixMilli(), LastConfirmedMillis: last, OrdinarySuccess: true})
+		if selected {
+			return a.sendImageReply(ctx, in, text, usage, chosen)
+		}
 	}
 	if err = a.store.SetMessageState(ctx, a.scope, in.ID, "sending"); err != nil {
 		a.setState(ctx, in.ID, "failed")
@@ -255,6 +273,10 @@ func validatedReply(s string, max int) (string, bool) {
 }
 
 func (a *Agent) answer(ctx context.Context, current string) (string, provider.Usage, string) {
+	return a.answerWithProfile(ctx, current, nil)
+}
+
+func (a *Agent) answerWithProfile(ctx context.Context, current string, captured *storage.Profile) (string, provider.Usage, string) {
 	var empty provider.Usage
 	snapshot, err := a.store.ChatContextWithProfile(ctx, a.scope, factQuery(current), 16, 8, a.opts.Profile)
 	if err != nil {
@@ -262,6 +284,9 @@ func (a *Agent) answer(ctx context.Context, current string) (string, provider.Us
 			return modelReply, empty, "input"
 		}
 		return modelReply, empty, storageCode(err)
+	}
+	if captured != nil {
+		*captured = snapshot.Profile
 	}
 	var sources []provider.SearchResult
 	if query, explicit := searchCommand(current); explicit {

@@ -17,7 +17,7 @@ func TestLibrarySchemaFreshReopenBackup(t *testing.T) {
 	s, path := testStore(t)
 	ctx := context.Background()
 	var version int
-	if e := s.db.QueryRow("PRAGMA user_version").Scan(&version); e != nil || version != 5 {
+	if e := s.db.QueryRow("PRAGMA user_version").Scan(&version); e != nil || version != schemaVersion {
 		t.Fatalf("schema5: %d %v", version, e)
 	}
 	sc := Scope{"a", "u"}
@@ -82,7 +82,7 @@ func TestLibrarySchemaLegacyExactAdmission(t *testing.T) {
 			}
 			defer s.Close()
 			var got int
-			if e = s.db.QueryRow("PRAGMA user_version").Scan(&got); e != nil || got != 5 {
+			if e = s.db.QueryRow("PRAGMA user_version").Scan(&got); e != nil || got != schemaVersion {
 				t.Fatalf("migration %d %v", got, e)
 			}
 			if e = validateManifest(context.Background(), s.db); e != nil {
@@ -250,7 +250,7 @@ func TestLibrarySchemaEffectiveWALRefusal(t *testing.T) {
 	}
 }
 func TestLibrarySchemaUnknownFutureAndRollback(t *testing.T) {
-	for _, bad := range []string{"CREATE TABLE foreign_object(x)", "PRAGMA user_version=6", "CREATE TRIGGER library_foreign AFTER INSERT ON library_assets BEGIN SELECT 1; END"} {
+	for _, bad := range []string{"CREATE TABLE foreign_object(x)", "PRAGMA user_version=7", "CREATE TRIGGER library_foreign AFTER INSERT ON library_assets BEGIN SELECT 1; END"} {
 		t.Run(strings.Split(bad, " ")[0], func(t *testing.T) {
 			s, path := testStore(t)
 			if _, e := s.db.Exec(bad); e != nil {

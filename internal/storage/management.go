@@ -199,7 +199,10 @@ func validateMemoryJSONCapacity(ctx context.Context, q rowQuery) error {
 	if e := scopeQuota(ctx, q, `SELECT EXISTS(SELECT 1 FROM facts GROUP BY account,user HAVING count(*)>10000 OR sum(length(CAST(content AS BLOB)))>4194304)`); e != nil {
 		return e
 	}
-	if e := capacity(ctx, q, `SELECT count(*),coalesce(sum(length(CAST(content AS BLOB))+length(CAST(reply AS BLOB))+CASE WHEN state IN ('processing','sending','ambiguous') THEN 16384 ELSE 0 END),0) FROM messages`, 10000, 64<<20); e != nil {
+	if _, _, e := messageBudget(ctx, q); e != nil {
+		return e
+	}
+	if e := validateSchema6IfPresent(ctx, q); e != nil {
 		return e
 	}
 	return validateDerivedCapacity(ctx, q)

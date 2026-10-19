@@ -138,7 +138,7 @@ func TestLibraryBackupRefusesHostileSnapshots(t *testing.T) {
 		`UPDATE library_assets SET uses=1.5`,
 		`UPDATE library_assets SET bytes=4194305`,
 		`UPDATE library_assets SET state='deleting',enabled=1`,
-		`PRAGMA user_version=6`, `CREATE TABLE raw_path_canary(x)`,
+		`PRAGMA user_version=7`, `CREATE TABLE raw_path_canary(x)`,
 		`CREATE TRIGGER raw_sql_canary AFTER INSERT ON library_assets BEGIN SELECT 1; END`,
 		`WITH RECURSIVE n(x) AS (VALUES(2) UNION ALL SELECT x+1 FROM n WHERE x<129) INSERT INTO library_assets(account,user,sha256,format,bytes,width,height,frames,tags,emotion,description,state,enabled,uses,last_used) SELECT 'a',cast(x AS TEXT),printf('%064x',x),'png',100,2,3,1,'[]','','','ready',0,0,0 FROM n`,
 		`WITH RECURSIVE n(x) AS (VALUES(2) UNION ALL SELECT x+1 FROM n WHERE x<18) INSERT INTO library_assets(account,user,sha256,format,bytes,width,height,frames,tags,emotion,description,state,enabled,uses,last_used) SELECT 'a',cast(x AS TEXT),printf('%064x',x),'png',4194304,2,3,1,'[]','','','ready',0,0,0 FROM n`,
@@ -209,7 +209,7 @@ func TestLibraryBackupAdmissionAndConnectionLifetime(t *testing.T) {
 	check := snapshotUnchanged(t, path)
 	e := validatedBackup(ctx, path, func(db *sql.DB, v int) error {
 		borrowed = db
-		if v != 5 {
+		if v != schemaVersion {
 			t.Fatal("version", v)
 		}
 		if _, e := db.ExecContext(ctx, "DELETE FROM library_assets"); e == nil {
@@ -232,7 +232,7 @@ func TestLibraryBackupAdmissionAndConnectionLifetime(t *testing.T) {
 	if e = validatedBackup(nil, path, func(*sql.DB, int) error { t.Fatal("nil context callback"); return nil }); !errors.Is(e, ErrInvalid) {
 		t.Fatal(e)
 	}
-	for _, query := range []string{`UPDATE library_assets SET tags=CAST(zeroblob(1048576) AS TEXT)`, `PRAGMA user_version=6`, `CREATE TABLE raw_ddl_canary(x)`, `PRAGMA writable_schema=ON; UPDATE sqlite_schema SET sql=replace(sql,'description TEXT','description BLOB') WHERE name='library_assets'`} {
+	for _, query := range []string{`UPDATE library_assets SET tags=CAST(zeroblob(1048576) AS TEXT)`, `PRAGMA user_version=7`, `CREATE TABLE raw_ddl_canary(x)`, `PRAGMA writable_schema=ON; UPDATE sqlite_schema SET sql=replace(sql,'description TEXT','description BLOB') WHERE name='library_assets'`} {
 		t.Run(query[:min(24, len(query))], func(t *testing.T) {
 			s, path := testStore(t)
 			libraryAdd(t, s, Scope{"a", "u"}, 1)

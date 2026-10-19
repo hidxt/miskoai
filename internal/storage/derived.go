@@ -347,7 +347,7 @@ func (s *Store) clearMemory(ctx context.Context, sc Scope, all bool) error {
 	}
 	queries := []string{"DELETE FROM candidates WHERE account=? AND user=?"}
 	if all {
-		queries = append(queries, "DELETE FROM facts WHERE account=? AND user=?", "UPDATE messages SET content='',reply='' WHERE account=? AND user=?")
+		queries = append(queries, "DELETE FROM image_replies WHERE account=? AND user=?", "DELETE FROM facts WHERE account=? AND user=?", "UPDATE messages SET content='',reply='' WHERE account=? AND user=?")
 	}
 	for _, q := range queries {
 		if _, e = tx.ExecContext(ctx, q, sc.Account, sc.User); e != nil {
