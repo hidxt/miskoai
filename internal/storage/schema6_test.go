@@ -29,7 +29,10 @@ func TestSchema6FreshReceiptAndReservation(t *testing.T) {
 func TestSchema6ExactLegacyMigration(t *testing.T) {
 	for v := 1; v <= 5; v++ {
 		t.Run(fmt.Sprint(v), func(t *testing.T) {
-			path := filepath.Join(t.TempDir(), "old.db")
+			path := filepath.Join(t.TempDir(), "private", "old.db")
+			if e := os.Mkdir(filepath.Dir(path), 0700); e != nil {
+				t.Fatal(e)
+			}
 			db, e := sql.Open("sqlite", path)
 			if e != nil {
 				t.Fatal(e)
@@ -86,7 +89,7 @@ func TestSchema6AdmissionRejectsCorruption(t *testing.T) {
 			if _, e := s.db.Exec("PRAGMA ignore_check_constraints=ON; PRAGMA foreign_keys=OFF;" + query); e != nil {
 				t.Fatal(e)
 			}
-			path := filepath.Join(t.TempDir(), "bad.db")
+			path := filepath.Join(t.TempDir(), "private", "bad.db")
 			if e := s.Backup(context.Background(), path); e != nil {
 				t.Fatal(e)
 			}
@@ -212,7 +215,7 @@ func TestSchema6HistoricalDeletedAssetReopen(t *testing.T) {
 	if e := s.FinishLibraryDelete(ctx, sc, a.ID); e != nil {
 		t.Fatal(e)
 	}
-	path := filepath.Join(t.TempDir(), "history.db")
+	path := filepath.Join(t.TempDir(), "private", "history.db")
 	if e := s.Backup(ctx, path); e != nil {
 		t.Fatal(e)
 	}

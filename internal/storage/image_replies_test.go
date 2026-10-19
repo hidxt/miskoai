@@ -228,7 +228,7 @@ func TestImageReplyClearAndBackupNoReplay(t *testing.T) {
 	if _, e := s.ImageReplyReceipt(ctx, sc, id); e != nil {
 		t.Fatal(e)
 	}
-	snapshot := filepath.Join(t.TempDir(), "snapshot.db")
+	snapshot := filepath.Join(t.TempDir(), "private", "snapshot.db")
 	if e := s.Backup(ctx, snapshot); e != nil {
 		t.Fatal(e)
 	}
