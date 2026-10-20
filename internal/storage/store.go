@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -25,7 +26,11 @@ var (
 	ErrStale    = errors.New("stale derived revision")
 )
 
-type Store struct{ db *sql.DB }
+type Store struct {
+	db        *sql.DB
+	closeOnce sync.Once
+	closeErr  error
+}
 type Scope struct{ Account, User string }
 
 func (s Scope) validate() error {
@@ -245,7 +250,41 @@ func storageOrPolicyError(ctx context.Context, err error) error {
 	return storageError(ctx, err)
 }
 
-func (s *Store) Close() error { return s.db.Close() }
+// Close joins database/sql's outstanding cancellation cleanup before closing the
+// owned connection. The owner must stop and join all storage callers first.
+// The connection drain uses the same single-connection limit as Open. Returning
+// the reserved connection to idle lets DB.Close preserve its physical Close
+// error; no owner may admit another operation between those two steps.
+func (s *Store) Close() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return s.closeContext(ctx)
+}
+
+func (s *Store) closeContext(ctx context.Context) error {
+	s.closeOnce.Do(func() {
+		if s.db == nil {
+			s.closeErr = ErrStorage
+			return
+		}
+		conn, err := s.db.Conn(ctx)
+		if err != nil {
+			// Stop further admission even when the drain could not be joined.
+			// A nonnil result explicitly refuses a successful-close claim.
+			dbErr := s.db.Close()
+			if err != nil || dbErr != nil {
+				s.closeErr = ErrStorage
+			}
+			return
+		}
+		connErr := conn.Close()
+		dbErr := s.db.Close()
+		if connErr != nil || dbErr != nil {
+			s.closeErr = ErrStorage
+		}
+	})
+	return s.closeErr
+}
 
 func storageError(ctx context.Context, err error) error {
 	if err == nil {

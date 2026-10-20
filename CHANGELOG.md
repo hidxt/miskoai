@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — 2026-10-20
+
+- Enforced existing lifecycle ownership and restore-pause refusal before the explicit WeChat probe reads authorization or opens storage; checked storage close precedes lock release. Primary affected22 tests/vet passed; consolidated128-file source review addressed its Important finding, with native confirmation pending.
+- Observed existing WeChat authorization accepted in one explicitly approved bounded query; no reply/database/model/server action. Reconnect and actual authorization-expiry recovery remain separate open gates.
+
+- Verified one finite real WeChat static PNG preparation/upload and text-then-image delivery, with independent durable server acknowledgements, checked cleanup and owner-confirmed peer receipt. No retries, paid model calls or private database migration. Native GIF/sticker wire support remains unsupported/unverified; supported static-image fallback follows the original requirement.
+- Completed dependency/source/candidate-binary notices verification:11 declared modules,23 complete texts, exact linked versions/sums and matching embedded notices in Windows amd64 and Linux amd64/arm64 candidates. No application release yet.
+- Executed one explicitly authorized native Debian diagnostic packet: actual CLI idle40s peak12.16MiB and128-message actualCore/SQLite synthetic-adapter workload peak18.97MiB, clean exits and no sampled swap use. Owner-approved temporary1GiB swap stays enabled; no fstab/sysctl/service/firewall change. Short synthetic results are not full real-provider/sustained512MB qualification.
+- Corrected four native schema6 fixture parent paths without weakening production permissions. Published5a94038 passed native unit/integration and vet, but race testing exposed the previously observed Core image-reopen failure; downstream gates were skipped. Primary locally integrated the cancellation-cleanup join correction after3253 named passes/fullvet0; new native confirmation remains pending. Earlier entries below retain their historical phase state.
+
 ## Unreleased — 2026-10-09
 - Initialized requirements, security policy, architecture, phased task ledger and evidence classification before business development.
 - Preserved initial Apache-2.0 license and existing public repository.

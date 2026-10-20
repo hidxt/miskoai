@@ -1,40 +1,45 @@
 # MiskoAI tasks
 
-2026-10-20 current checkpoint (supersedes earlier pending entries below): engineering **78%** =39/50, **11 packages remain**. Reviewed image composition was normally published as `3e06732449f447a7c39dcfab0be42da331c4d173`. Its exact [native run39238746403](https://github.com/hidxt/miskoai/actions/runs/39238746403), job118014131198, FAILED unit/integration at four schema6 fixture directory setups; downstream vet/race/vulnerability/history/build steps were SKIPPED. Earlier accepted d811e64/native38540398046 remains separate. Dedicated private child directories now correct only two test files (7 insertions/4 deletions); production policy, assertions, DDL and dependencies are unchanged. Scoped frozen504-file Windows64PASS/test0/vet0, original native RED and source-contract diagnosis are documented in [fixture correction](docs/research/schema6-native-fixture-correction.md). Corrected publication/native confirmation remains pending; earlier full Windows3249PASS/fullvet0 is distinct historical evidence.
+Current: 2026-10-20, owner explicitly resumed. Engineering **82% = 41/50** packages at their stated local/phase gates; the [50-package checklist](docs/superpowers/project-progress.md) remains authoritative. Implementation, local tests, native CI, live tests and final acceptance are separate evidence classes.
 
-The owner supplied a test server and confirmed its public SSH fingerprint. Pinned-host-key root login performed only the explicitly approved specification/space/port/tool checks: Debian12 x86_64,2 CPUs,416324KiB system-visible RAM (about407MiB),253352KiB available at observation, no swap, cgroupv2, loopback test port available and about15.9GiB disk free. Initial local keyscan/KEX/sandbox failures and the first script's final-line CR error are preserved; the remaining read-only cgroup check completed0 with exact LF input. No files were uploaded, packages installed, service started, load generated or server settings changed. This is preflight evidence, not a512MB workload result. Server identity/address/key path stay private. Concrete bounded local resource tooling is being prepared; remote uploads/load require a separate informed scope approval under TESTING.md. Finite image-check tooling has local evidence only; no new real WeChat/CDN/paid calls or private schema2 migration. Final live/resource/security/notices/UI/artifact/release gates remain open.
+## Active checkpoint and next actions
 
-Current: 2026-10-19. Engineering **78%** =39/50; **11 packages remain**. The authoritative50-package checklist is [project progress](docs/superpowers/project-progress.md); implementation/local gates are distinct from native CI, live/resource tests and final acceptance.
-
-## Active work
-
-1. Agent FIX1 orchestration, Core generation composition and test-only cycle correction are reviewed and exactly adopted in main. Optional PNG/JPEG replies are now composed when the existing channel exposes both image capabilities and a custom profile enables selection. No private service was started.
-2. Original restore slowdown remains unexplained; the5m package alarms are cumulative budgets. Preserve diagnostics and passing serial evidence without changing production30s contexts or assertions. No further isolated review loop is required for the unchanged product source.
-3. Primary501-file serial Windows full gate completed3249 distinct named PASS/0FAIL/4platformSKIP,20 package PASS/test0/fullvet0/empty diagnostics; all501 identities stable/public Gitleaks0. Exact11-path adoption and249 other code/embed identities passed. Static125files Windows83/Linux86 warnings,4 added pertarget/0newHIGH/0Goerrors/0nosec, dispositions recorded. Consolidated next step is one scoped publication/native CI gate. Original parallel2866PASS/3FAIL/4SKIP/test1/vet1 remains failed evidence; no broad staging.
-4. Isolated finite image capability test tool: `/root/weixin_image_capability_tool_oct19`, ONLY gpt-6.1-sol/medium, owns new cmd/weixin-image-check main/tests/report in its ignored copy. Plan2026-10-19-weixin-image-capability-check.md fixes five requests maximum, no retries, separate synthetic Store/attempt latch and no private DB migration. No Go execution while primary full suite runs; no authorization reads/live execution before new concrete owner approval.
-
-Both authors use ONLY gpt-6.1-sol, reasoning_effort medium. Agy gemini-4-argon-medium / medium is approved for isolated UI and simple public tasks; primary reviews integration. Announce model/effort and xx% before every dispatch/resume.
+1. Primary completed the resumed frozen506-source native Windows Go1.27.2 full gate:3253 distinct named PASS/0FAIL/4platformSKIP,20packagePASS/2no-test,test-vet-identity0/0/0 and empty diagnostics. Scoped storage static Windows/Linux41 retained warnings each,0new/0removed/0Goerrors. Primary verified252 other Go/test/module/embed inputs and adopted exactly Store.Close production/test files. See [root verification](docs/research/storage-close-root-verification.md). Earlier interrupted primary logs remain interrupted evidence.
+2. Consolidated source review completed128/128 production files and management JavaScript. Its Important CLI probe ownership/pause finding is corrected, independently reviewed and adopted as exactly2 CLI paths; primary affected comparison22PASS/test0/vet0, including the previously AccessDenied hardlink case. Author full CLI119PASS/2FAIL remains retained. Affected CLI/storage static scans have0new/0removed fingerprints; source-bound full baseline remains83Windows/86Linux-static warnings. See [local verification](docs/research/final-product-local-verification.md). One coherent publication/native gate follows.
+3. Synthetic UI regression completed54 Node passes and selected desktop/mobile/logout/stale-session checks; final browser download/restore/auth-rotation remains open. A minor session-expiry status wording issue is retained. Resource tool original60s comparison completed5PASS/0FAIL including actual synthetic restore; previous failure/cause unknown remains recorded. Provisional A2 source/scripts passed review; final packet and new remote-load consent remain pending.
+4. The explicitly approved current authorization query completed once: authorization_accepted/poll_attempted=true/exit0/empty stderr; no reply or chat DB access. See [live observation](docs/research/weixin-authorization-state-verification.md). Current authorization is valid on that observation; no QR needed. Finite reconnect checker preparation/review is separate and requires concrete consent for new calls. No consumed image/server attempt is rerun.
 
 ## Remaining acceptance packages
 
 | Package | Required result |
 |---|---|
-|24|Actual WeChat reconnect and authorization-expiry recovery|
-|40|Complete image-reply integration and real capability evidence|
+|24|Controlled real reconnect passed; actual invalid-authorization recovery remains|
 |42|Final integrated native Linux/race gate|
-|43|Final whole-product security review/scans|
-|44|Dependency/source/binary notices verified|
+|43|Final whole-product security review/scans, including retained findings|
 |45|Final functional/UI/recovery regression|
 |46|Final amd64/arm64 artifacts and hashes verified|
-|47|Authorized512MB idle/chat workload|
-|48|Authorized512MB sustained/recovery workload|
-|49|Final delivery documentation acceptance|
+|47|Authorized 512MB idle/chat workload acceptance|
+|48|Authorized 512MB sustained/recovery workload acceptance|
+|49|Final delivery/documentation acceptance record|
 |50|Reviewed binary release|
 
-Prepare concrete bounded live/server procedures before asking the owner for the required action/authorization. No server has been supplied. Paid provider batch is spent. Do not start ordinary private service or migrate its legacy database during development.
+## Evidence checkpoints
 
-## Accepted checkpoints
+- **Implementation/local:** optional PNG/JPEG Agent/Core composition is adopted. Frozen 501-source serial Windows run: 3249 distinct PASS, 0 FAIL, 4 existing platform SKIP; test/vet/process0. Static scans retain Windows83/Linux-static86 warnings, 4 added per target, 0 new HIGH/0 Go errors/0 suppressions; final43 remains open. See [image integration](docs/research/image-reply-groundwork-root-verification.md), [Agent](docs/research/agent-image-root-verification.md), [Core](docs/research/core-image-root-verification.md), and [UI](docs/superpowers/reports/2026-10-18-agy-ui-visual.md). The later3253-pass Close gate is recorded above; no new native/final acceptance is inferred.
+- **Native CI:** latest public `5a94038c9b2b1321b2834719cdb364530b2ed974`, [run39287643209](https://github.com/hidxt/miskoai/actions/runs/39287643209), job118179330587: unit/integration and vet SUCCESS; race FAILED at Core image database reopen/ambiguous, without a DATA RACE warning; downstream vulnerability/history/build gates SKIPPED. Last fully accepted native checkpoint is `d811e643e801f7fcd6d42bdf3cf0ad7d75d23bb5`, [run38540398046](https://github.com/hidxt/miskoai/actions/runs/38540398046), job115773423422, all12 configured steps SUCCESS; it excludes newer image/UI changes.
+- **Live:** package23 strict-ACK text marker and package40 static-image fallback are accepted. One authorized real PNG attempt verified text and image each ACK/persist, checked cleanup/exit0, and owner peer confirmation of both. Native GIF/stickers remain unsupported/unverified under master搂15/D090. See [text](docs/research/weixin-live-marker-root-verification.md) and [static image](docs/research/weixin-static-image-live-verification.md).
+- **Server diagnostic:** the authorized finite run completed once: idle peak12452KiB; actual Core/SQLite with synthetic adapters peak19424KiB, 131 mock chat calls/130 synthetic sends/8 summaries. Process and host swap observed0; all our processes exited and port8080 was released. Debian12/x86_64/2 CPUs/416324KiB OS-visible RAM; authorized1GiB temporary swap remains enabled, not in fstab. Private synthetic files retained. [Measurement](docs/research/server-bounded-measurement.md) does not close47/48 or final acceptance.
+- **Notices:** package44 accepted source/dependency/candidate-binary notices and three candidate build/hash checks; [notice evidence](docs/research/final-notice-verification.md) does not close final artifact46.
 
-Published d811e643e801f7fcd6d42bdf3cf0ad7d75d23bb5; native run38540398046/job115773423422 all12 configured stepsSUCCESS. New main image groundwork is not in that checkpoint. Details: [groundwork acceptance](docs/research/image-reply-groundwork-root-verification.md), [UI local evidence](docs/superpowers/reports/2026-10-18-agy-ui-visual.md), [text live evidence](docs/research/weixin-live-marker-root-verification.md).
+## Ownership, limits and history
 
-Prior complete TASKS content is preserved byte-for-byte in [historical ledger](docs/superpowers/history/2026-10-19-TASKS.md). Historical failures remain evidence, not current passing claims.
+Primary owns scope, architecture, integration and acceptance. Every Codex child uses only `gpt-6.1-sol`, reasoning_effort `medium`; announce exact model/effort and xx% before each dispatch/resume. Agy exception is Gemini4ArgonMedium/medium for isolated public UI/simple tasks, primary reviewed. No concurrent file writers. Close integration and documentation consolidation are adopted. Probe correction and consolidated review are integrated; UI fixture processes are joined. Only finite reconnect preparation/review is active, using gpt-6.1-sol/medium. Resource tooling has a passing original60s comparison and provisional review, but no new server-load permission or acceptance credit.
+
+Continue already-authorized routine work without repeat approvals. Provider/SQLite strategy/channel/deployment/safety/512MB scope changes and additional risky/live/server actions retain their owner-approval boundaries. Paid provider allowance is spent. Actual private legacy schema2 is unmigrated; its earlier authorized text claim changed database state, so never claim original bytes unchanged. Do not open/migrate it for synthetic development. Keep credentials, chats, private media and server identifiers out of public files.
+
+Before commit/push inspect ignore coverage, status, staged diff and secret scans; no broad staging/force push. Native builds only; no containers/WSL. Final release/arm64 runtime/systemd/power-crash/resource acceptance remains open.
+
+The complete prior TASKS bytes are preserved in [2026-10-20 archive](docs/superpowers/history/2026-10-20-TASKS.md), retaining its own older archive links. D061/D075 govern consolidation; historical pause/pending/percentage statements describe earlier checkpoints.
+
+
+2026-10-20 live continuation: separately approved controlled HTTP disconnect confirmed, then owner supplied new marker; new-process poll/one reply strictACK+persist/checkedcleanup/process0 and owner peer receipt confirmed. Pure-local syntheticDB reopen/history/dedup also passed/noauth/network. Current authorization valid; owner now requests real invalid-authorization recovery and accepts manual official-client disconnect, not naturalTTL. Recovery tooling is isolated preparation only; do not disconnect until ready. OriginalchatDB unopened/unmigrated, once latches retained/no replay. Package24 remains open,82% unchanged; [live evidence](docs/research/weixin-authorization-state-verification.md).

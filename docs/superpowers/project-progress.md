@@ -2,7 +2,7 @@
 
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
-Current engineering progress: **78%** =39of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
+Current engineering progress: **82%** =41of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
 
 Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root763pass/0fail/4platformskips/fullvet0; independent reviewer usage-limit exit means no final verdict and package27 remains unchecked. Root inline sharedpublictransport constructor scoped38pass/0fail/0skip/vet0; full corrected-export root772pass/0fail/4platformskips/fullvet0 verified, fresh review still pending, package32 remains unchecked. No completion credit for partial tasks or a failed/missing review. Latest published nativeCI is codec/Coref6fcb3c/37976808001. Actual/live/resource/final gates below remain open.
 
@@ -45,17 +45,21 @@ Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root76
 - [x] 37. Restricted DOCX extraction
 - [x] 38. Guarded PDF extraction
 - [x] 39. Private image/GIF library and metadata
-- [ ] 40. Image/sticker reply integration/capability evidence
+- [x] 40. Image/sticker reply integration/capability evidence
 - [x] 41. Binary/systemd operations and upgrade lifecycle
 - [ ] 42. Final integrated native Linux/race gate
 - [ ] 43. Final whole-product security review/scans
-- [ ] 44. Final dependency/source/binary notice review
+- [x] 44. Final dependency/source/binary notice review
 - [ ] 45. Final feature/UI regression and recovery checks
 - [ ] 46. Final amd64/arm64 artifact/hash verification
 - [ ] 47. Authorized512MB idle/chat resource workload
 - [ ] 48. Authorized512MB sustained/recovery workload
 - [ ] 49. Final delivery/documentation acceptance record
 - [ ] 50. Reviewed binary release
+
+## Historical evidence ledger
+
+The dated records below retain earlier successes, failures and pending statements. Current engineering progress is the value at the top; current implementation/local/native/live/final boundaries are in TASKS.md and DELIVERY.md. Older statements that a server was not supplied or a live marker was pending are historical, not the current checkpoint.
 
 Evidence state: maintenance local gate accepted after I1 scoped review and root final frozen-source normal-user Windows655pass/0fail/4platformskips/fullvet0. Restricted-token run637pass/18fail/4skip remains recorded and is not passing evidence. Production Windows49/Linux52 retained gosec findings, zero type errors; Linux2reportedHIGH UID conversions independently triaged nonactionable under target64bit UID ABI, no suppressions. Maintenance760e62c published and exact nativeCI37968978912 passed all configured steps; current Core working files excluded. Core locallyaccepted after fix1/re-review and root702pass/0fail/4platformskips/fullvet0; Core0362dfe published and exact nativeCI37974404440 passed all configured unit/integration/vet/race/vulnerability/history/two-architecture build steps; later media codec working source/root plans excluded. Windows50/Linux53 static warnings retained,0typeerrors/same2Linux HIGH labels with unchanged prior UID disposition. Four real provider probes ran once; allowance is spent. Owner confirmed controlled text delivery, but the new strict-ACK test still awaits a fresh marker. No VPS/arm64 runtime/power-cut/final release acceptance.
 
@@ -318,3 +322,19 @@ Actual private database remains schema2, untouched. Real WeChat explicitly defer
 2026-10-19 consolidated image implementation checkpoint: engineering **78%** remains39/50 because40 requires actual capability evidence. Agent FIX1/Core optional PNG/JPEG composition and test-only attachment cycle correction are reviewed and exactly adopted11paths. Primary immutable501-file serial Windows3249distinctPASS/0FAIL/4platformSKIP/20packagePASS, actualtest/vet/process0, source501identities0/publicGitleaks0. Static125productionfiles Windows83/Linuxamd64STATIC86warnings,4new pertarget explicitly retained,0newHIGH/0Goerrors/0nosec. This is implemented/local evidence, not new native/live/resource/final acceptance. D089 owner requests consolidated reviews; next batch is one publication/native gate and finite live-image tool correction/review, then new owner-authorized real image verification. The original failed parallel run is preserved and no OS/sandbox cause inferred from the serial pass.
 
 2026-10-20 native fixture/server preflight checkpoint. Engineering **78%** unchanged. Published3e06732/native39238746403 unit/integration FAILED; downstream gates SKIPPED. Two-test private-child correction has scoped Windows64PASS/test0/vet0, unchanged production/assertions and pending corrected native confirmation. See docs/research/schema6-native-fixture-correction.md. Owner-approved pinned-host-key read-only server preflight established Debian12/x86_64/2 CPUs/about407MiB visible RAM/no swap/cgroupv2; no upload/service/load or512MB pass. Separate concrete approval remains required for remote writes/load. Actual private schema2/finite spent provider allowance/remaining live and final gates unchanged. Earlier source-bound success/failure evidence is retained.
+
+2026-10-20 notice/swap/native checkpoint. Engineering **80%** =40/50 after package44 acceptance; see docs/research/final-notice-verification.md. Native5a94038/run39287643209 unit/integration+vetSUCCESS, raceFAILED recurrent Core image-reopen ambiguous; downstream gatesSKIPPED/noDATA RACE. Owner-approved1GiB temporary swap enabled/600/initiallyunused, nofstab/sysctl change; not resource qualification. Local resource packet awaiting scoped runner corrections and separate concrete remote-write/load approval. Remaining10:24,40,42,43,45,46,47,48,49,50.
+
+2026-10-20 authorized short server run completed once, all phase exits0: actual CLI idle peak12.16MiB/40s; realCore/SQLite with syntheticadapters128messages peak18.97MiB/131mockchat130synthetic sends8summaries;0sampledprocessSwap/unusedhostSwap, processesjoined/8080released. See docs/research/server-bounded-measurement.md. Engineering **80%** unchanged; short synthetic measurement does not close full47/48, unresolved native42 or final gates. No realkeys/livecall/privateDBmigration.
+
+
+2026-10-20 static-image capability gate: engineering **82%** =41/50 after40 acceptance. Owner-approved once-only realPNG preparation/upload/text/image eachACK+persist/cleanup/exit0, then explicitpeerconfirmedbothreceived. Originalmaster§15permitsstaticimagefallback; nativeGIF/stickers remainunsupported/unverified. Privateactualschema2notopened/migrated, no paidcall/retry/credentialupload. See docs/research/weixin-static-image-live-verification.md. Remaining9:24,42,43,45,46,47,48,49,50.
+
+
+2026-10-20 resumed Close local gate: engineering **82%** unchanged. Primary full frozen506-source WindowsGo1.27.2 completed3253distinct namedPASS/0FAIL/4platformSKIP/20packagePASS/2no-test, actualtest-vet-identity0 and emptydiagnostics. Exact2-file adoption after252 other Go/test/module/embed identities; affectedstorage Windows/Linux41retainedwarnings each/0new/0removed/0Goerrors. See docs/research/storage-close-root-verification.md. Final review found existing CLI probe shared-lock/restore-pause bypass; isolated correction and same-reviewer completion are pending before coherentpublication/nativeCI. No new42/final/live/server acceptance.
+
+
+2026-10-20 consolidated final local checkpoint: engineering **82%** unchanged. Reviewed/adopted exact2CLI ownership/pause correction, primary22affectedPASS/test0/vet0; authorfullCLI119PASS/2FAIL remains retained. Finalmanual128/128productionfiles+managementJS review0unresolvedC/I/M. CLI+storage static0new/0removed, source-bound83Windows/86Linux-static retainedwarnings. Authstateonceexplicitapproved queryauthorization_accepted/exit0/noDB/reply. UI54Node+selectedbrowserchecks complete, finaldownload/restore/authrotation open/minor401wordingretained. Resource original60scomparison5PASS/actualsyntheticrestore, provisionalA2review0CIM but no newremoteapproval. See docs/research/final-product-local-verification.md and weixin-authorization-state-verification.md. Correctedpublication/nativeCI and remaining9packages stillpending.
+
+
+2026-10-20 real controlled disconnect/reconnect passed: observed HTTP cancel -> owner newmarker -> freshprocess poll/one strictACK/persist reply +owner peerreceipt -> purelocalreopen/dedup, allphase0/cleanuptrue. Actualinvalid-authrecovery stillpending; user accepts deliberateofficialclientdisconnect, not naturalTTL. Engineering **82%** unchanged,24notyetaccepted. See docs/research/weixin-authorization-state-verification.md.

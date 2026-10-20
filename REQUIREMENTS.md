@@ -18,3 +18,6 @@ Release requires compiled native binaries, tested main flows, actual provider ca
 
 ## Excluded
 Containers, WSL, microservices, local Ollama/local models, permanent Node/Python/Java frontend/parser processes, vector DB, arbitrary shell, fabricated real API/WeChat/VPS test results. No automatic supplier/route/safety/resource changes.
+
+
+2026-10-20 clarification from original master§15: supported static-image fallback is permitted if native WeChat stickers cannot be sent. ActualPNG wire capability plus owner peer receipt is verified; nativeGIF animation/sticker support remains unsupported/unverified and must not be claimed. See docs/research/weixin-static-image-live-verification.md.

@@ -12,6 +12,7 @@ import (
 
 	"github.com/hidxt/miskoai/internal/channel/weixin"
 	"github.com/hidxt/miskoai/internal/config"
+	"github.com/hidxt/miskoai/internal/maintenance"
 	"github.com/hidxt/miskoai/internal/storage"
 )
 
@@ -20,7 +21,19 @@ type probeChannel interface {
 	SendText(context.Context, string, string, string, string) error
 }
 
-func liveWeixinProbe(ctx context.Context, c config.Config, out io.Writer) error {
+func liveWeixinProbe(ctx context.Context, c config.Config, out io.Writer) (err error) {
+	lock, err := maintenance.Acquire(c.DataDir)
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, lock.Close()) }()
+	paused, err := maintenance.RestorePaused(c.DataDir)
+	if err != nil {
+		return err
+	}
+	if paused {
+		return errors.New("external channels paused after restore; reconcile before WeChat probe")
+	}
 	loaded, err := config.LoadAuthorization(c.DataDir)
 	if err != nil {
 		return err
@@ -34,7 +47,9 @@ func liveWeixinProbe(ctx context.Context, c config.Config, out io.Writer) error 
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+	// Registered after the lock cleanup so storage is joined before ownership is
+	// released, including on polling, sending or persistence failure.
+	defer func() { err = errors.Join(err, s.Close()) }()
 	return weixinProbe(ctx, client, s, a, out)
 }
 
