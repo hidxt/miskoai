@@ -1,6 +1,8 @@
 # MiskoAI delivery status
 
-Current: 2026-10-20, owner explicitly resumed. Engineering **82% = 41/50** packages at their stated local/phase gates; **9 remain:24,42,43,45,46,47,48,49,50**. The [authoritative checklist](docs/superpowers/project-progress.md) retains50 equal tracking weights. This measures engineering progress; final live/resource/release acceptance remains incomplete.
+Current: 2026-10-20, owner explicitly resumed. Engineering **88% = 44/50** packages at their stated local/phase gates; **6 remain:45,46,47,48,49,50**. The [authoritative checklist](docs/superpowers/project-progress.md) retains50 equal tracking weights. This measures engineering progress; final live/resource/release acceptance remains incomplete.
+
+Current accepted native: [d9bc732 / CI39405918311](https://github.com/hidxt/miskoai/actions/runs/39405918311), job118571692654/all12stepsSUCCESS, packages42/43 accepted. Real controlled reconnect and owner-approved invalid-auth/new-bot recovery24 now accepted with strictACK/persist/localreopen-dedup and explicitpeerreceipt; [live recovery](docs/research/weixin-authorization-recovery-live-verification.md). Current new authorization installed, old authorization/scope/data preserved; originalchatDB unopened/unmigrated. Six remain:45,46,47,48,49,50. Older pending/native/82%/86% statements below are dated source-bound history superseded by this checkpoint.
 
 ## Implemented and locally accepted
 
@@ -14,9 +16,9 @@ Package44 [notice review](docs/research/final-notice-verification.md) accepted23
 
 ## Native CI and current correction
 
-Latest public `5a94038c9b2b1321b2834719cdb364530b2ed974`, [native39287643209](https://github.com/hidxt/miskoai/actions/runs/39287643209), job118179330587: unit/integration+vetSUCCESS; raceFAILED at Core image database reopen/ambiguous; no DATA RACE warning. Downstream vulnerability/history/build stepsSKIPPED. The [prior schema6 fixture correction](docs/research/schema6-native-fixture-correction.md) did not establish this failure's cause.
+Prior failing public `5a94038c9b2b1321b2834719cdb364530b2ed974`, [native39287643209](https://github.com/hidxt/miskoai/actions/runs/39287643209), job118179330587: unit/integration+vetSUCCESS; raceFAILED at Core image database reopen/ambiguous; no DATA RACE warning. Downstream vulnerability/history/build stepsSKIPPED. The [prior schema6 fixture correction](docs/research/schema6-native-fixture-correction.md) did not establish this failure's cause.
 
-Last fully accepted public/native checkpoint is `d811e643e801f7fcd6d42bdf3cf0ad7d75d23bb5`, [native38540398046](https://github.com/hidxt/miskoai/actions/runs/38540398046), job115773423422: all12 configured setup/unit/integration/vet/Linuxrace/vulnerability/history/two-architecture-build/cleanup stepsSUCCESS; newer image/UI changes excluded. Cross-build evidence does not establish actual arm64 runtime.
+Prior accepted public/native checkpoint is `d811e643e801f7fcd6d42bdf3cf0ad7d75d23bb5`, [native38540398046](https://github.com/hidxt/miskoai/actions/runs/38540398046), job115773423422: all12 configured setup/unit/integration/vet/Linuxrace/vulnerability/history/two-architecture-build/cleanup stepsSUCCESS; newer image/UI changes excluded. Cross-build evidence does not establish actual arm64 runtime.
 
 D091's separately confirmed database/sql cancellation-cleanup gap is locally corrected and adopted. Primary resumed frozen506-source WindowsGo1.27.2 full gate actually completed3253distinct namedPASS/0FAIL/4platformSKIP,20packagePASS/2no-test/test-vet-identity0,emptydiagnostics;252 other Go/test/module/embed inputs verified unchanged. Affected storage static Windows/Linux retains41 warnings each/0new/0removed/0Goerrors; full83/86 baseline elsewhere retained. See [primary verification](docs/research/storage-close-root-verification.md). Earlier interrupted logs remain interrupted; causal connection to old native failure unproven.
 
@@ -38,9 +40,6 @@ The [authorized short server measurement](docs/research/server-bounded-measureme
 
 | Package | Remaining delivery gate |
 |---|---|
-|24|Controlled real reconnect passed; actual invalid-authorization recovery remains|
-|42|Final integrated native Linux/race success|
-|43|Whole-product security review/scans and retained finding triage|
 |45|Final feature/UI/recovery regression|
 |46|Final amd64/arm64 artifact/hash verification|
 |47|Authorized512MB idle/chat workload acceptance|
@@ -56,3 +55,9 @@ The complete prior DELIVERY bytes are preserved in [2026-10-20 archive](docs/sup
 
 
 2026-10-20 live continuation: separately approved controlled HTTP disconnect confirmed, then owner supplied new marker; new-process poll/one reply strictACK+persist/checkedcleanup/process0 and owner peer receipt confirmed. Pure-local syntheticDB reopen/history/dedup also passed/noauth/network. Current authorization valid; owner now requests real invalid-authorization recovery and accepts manual official-client disconnect, not naturalTTL. Recovery tooling is isolated preparation only; do not disconnect until ready. OriginalchatDB unopened/unmigrated, once latches retained/no replay. Package24 remains open,82% unchanged; [live evidence](docs/research/weixin-authorization-state-verification.md).
+
+
+2026-10-20 corrected publication/native acceptance: engineering **86% =43/50**, packages42/43 accepted for the reviewed candidate. Public d9bc7320ba6f78350fe9d622e35e5e49d28b8f2c, nativeCI39405918311/job118571692654 completedSUCCESS, primary exactSHA/run/job/all12step verification: unit/integration,vet,nativeLinuxrace,govuln(no vulnerabilities),historypolicy(1622contents/0findings),amd64/arm64crossbuild andcleanup allSUCCESS. Whole-product128-file manualreview addressesI1/0unresolvedCIM; affectedstatic0new/0removed retains83Windows/86Linux-static warnings/dispositions; explicit24paths/515publicblobs, pre/post all5policy+Gitleaksexits0, posthistory46commits0leaks. Lastold5a nativefailure remains retained; d9success does not diagnose its causalrelationship to separatelyprovedClosegap. Remaining7:24,45,46,47,48,49,50. New actualinvalid-auth recovery is paused after server old_authorization_expired and QR candidate_identity_changed: samealloweduser/baseURL, differentbotaccount; originalauthbytes unchanged, noinstall/send. Owneridentity/scope decision required before changed-account adoption. No ordinaryCore/privateDBmigration/serverload/release acceptance.
+
+
+2026-10-20 real recovery acceptance: engineering **88% =44/50**, package24 accepted at its finite live phase gate. Realold_authorization_expired afterownerofficialdisconnect ->QR candidate distinctbot/sameuser+base ->strictsameidentityrefusalretained ->ownerapprovednewbot ->checkedprivatebackup/retainedlocalinstall ->newmarkerstrictACK+persist+ownerpeerreceipt ->purelocalreopen/history/dedup, all successfulphaseprocess0/cleanuptrue. SixHTTPoperations within12budget, no originalDBread/migration/generalCore/paid/server call. Not naturalTTL/fullCorecursor/powercrash proof. Originaloldbot scope/history preserved/noalias. See docs/research/weixin-authorization-recovery-live-verification.md. Remaining6:45,46,47,48,49,50. Native d9bc732/all12SUCCESS and security43 remain accepted for unchangedproductsource; private tooling is not a released recovery UI.

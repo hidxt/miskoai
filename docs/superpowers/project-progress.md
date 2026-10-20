@@ -2,7 +2,7 @@
 
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
-Current engineering progress: **82%** =41of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
+Current engineering progress: **88%** =44of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
 
 Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root763pass/0fail/4platformskips/fullvet0; independent reviewer usage-limit exit means no final verdict and package27 remains unchecked. Root inline sharedpublictransport constructor scoped38pass/0fail/0skip/vet0; full corrected-export root772pass/0fail/4platformskips/fullvet0 verified, fresh review still pending, package32 remains unchecked. No completion credit for partial tasks or a failed/missing review. Latest published nativeCI is codec/Coref6fcb3c/37976808001. Actual/live/resource/final gates below remain open.
 
@@ -29,7 +29,7 @@ Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root76
 - [x] 21. Strict persisted runtime configuration
 - [x] 22. Scoped management pagination/streamed export
 - [x] 23. New strict-ACK live marker acceptance
-- [ ] 24. Live reconnect/auth-expiry recovery
+- [x] 24. Live reconnect/auth-expiry recovery
 - [x] 25. Shared maintenance local gate
 - [x] 26. Joined Core/controller administration
 - [x] 27. Loopback HTTP authentication boundary
@@ -47,8 +47,8 @@ Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root76
 - [x] 39. Private image/GIF library and metadata
 - [x] 40. Image/sticker reply integration/capability evidence
 - [x] 41. Binary/systemd operations and upgrade lifecycle
-- [ ] 42. Final integrated native Linux/race gate
-- [ ] 43. Final whole-product security review/scans
+- [x] 42. Final integrated native Linux/race gate
+- [x] 43. Final whole-product security review/scans
 - [x] 44. Final dependency/source/binary notice review
 - [ ] 45. Final feature/UI regression and recovery checks
 - [ ] 46. Final amd64/arm64 artifact/hash verification
@@ -338,3 +338,9 @@ Actual private database remains schema2, untouched. Real WeChat explicitly defer
 
 
 2026-10-20 real controlled disconnect/reconnect passed: observed HTTP cancel -> owner newmarker -> freshprocess poll/one strictACK/persist reply +owner peerreceipt -> purelocalreopen/dedup, allphase0/cleanuptrue. Actualinvalid-authrecovery stillpending; user accepts deliberateofficialclientdisconnect, not naturalTTL. Engineering **82%** unchanged,24notyetaccepted. See docs/research/weixin-authorization-state-verification.md.
+
+
+2026-10-20 corrected publication/native acceptance: engineering **86% =43/50**, packages42/43 accepted for the reviewed candidate. Public d9bc7320ba6f78350fe9d622e35e5e49d28b8f2c, nativeCI39405918311/job118571692654 completedSUCCESS, primary exactSHA/run/job/all12step verification: unit/integration,vet,nativeLinuxrace,govuln(no vulnerabilities),historypolicy(1622contents/0findings),amd64/arm64crossbuild andcleanup allSUCCESS. Whole-product128-file manualreview addressesI1/0unresolvedCIM; affectedstatic0new/0removed retains83Windows/86Linux-static warnings/dispositions; explicit24paths/515publicblobs, pre/post all5policy+Gitleaksexits0, posthistory46commits0leaks. Lastold5a nativefailure remains retained; d9success does not diagnose its causalrelationship to separatelyprovedClosegap. Remaining7:24,45,46,47,48,49,50. New actualinvalid-auth recovery is paused after server old_authorization_expired and QR candidate_identity_changed: samealloweduser/baseURL, differentbotaccount; originalauthbytes unchanged, noinstall/send. Owneridentity/scope decision required before changed-account adoption. No ordinaryCore/privateDBmigration/serverload/release acceptance.
+
+
+2026-10-20 real recovery acceptance: engineering **88% =44/50**, package24 accepted at its finite live phase gate. Realold_authorization_expired afterownerofficialdisconnect ->QR candidate distinctbot/sameuser+base ->strictsameidentityrefusalretained ->ownerapprovednewbot ->checkedprivatebackup/retainedlocalinstall ->newmarkerstrictACK+persist+ownerpeerreceipt ->purelocalreopen/history/dedup, all successfulphaseprocess0/cleanuptrue. SixHTTPoperations within12budget, no originalDBread/migration/generalCore/paid/server call. Not naturalTTL/fullCorecursor/powercrash proof. Originaloldbot scope/history preserved/noalias. See docs/research/weixin-authorization-recovery-live-verification.md. Remaining6:45,46,47,48,49,50. Native d9bc732/all12SUCCESS and security43 remain accepted for unchangedproductsource; private tooling is not a released recovery UI.

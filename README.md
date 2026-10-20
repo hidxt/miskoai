@@ -2,7 +2,7 @@
 
 超轻量 AI 微信聊天伙伴：Go 模块化单体、SQLite、DeepSeek 官方云模型与 Ollama 云端搜索，管理页面随单个可执行文件内嵌。目标平台为原生 Linux amd64 / arm64、2 vCPU / 512MB。
 
-项目进度 **82%（41/50）**，仍在开发，尚未发布生产版本。剩余 **9 项**见 [任务清单](TASKS.md)；本地实现、原生 CI、真实微信与服务器资源验收分别记录在 [交付状态](DELIVERY.md)。已完成短时真实服务器测量，完整512MB与持续负载验收仍待完成。
+项目进度 **88%（44/50）**，仍在开发，尚未发布生产版本。剩余 **6 项**见 [任务清单](TASKS.md)；本地实现、原生 CI、真实微信与服务器资源验收分别记录在 [交付状态](DELIVERY.md)。已完成短时真实服务器测量，完整512MB与持续负载验收仍待完成。
 
 ## 当前能力与验证
 
@@ -10,9 +10,9 @@
 - 持久化接收、去重与一次发送；范围隔离的事实、历史、候选、摘要和表达档案。
 - 有界 TXT、Markdown、DOCX、PDF 提取；私人媒体校验、本机图片库、数据库快照与完整图片备份恢复。
 - 登录保护的本机管理页面、CLI、原生 Linux 运维和用户级 systemd 模板。
-- 真实微信固定文字与静态 PNG 测试已通过独立服务端确认、持久保存和所有者收取确认。自动静态 PNG/JPEG 回复已实现并通过本地整合检查；真实随机选择/频率、重连和授权过期恢复仍待验证。GIF 动画与原生微信贴图不宣称支持；按原要求使用已验证的静态图片形式。详见 [图片实测](docs/research/weixin-static-image-live-verification.md)。
+- 真实微信固定文字与静态 PNG 测试已通过独立服务端确认、持久保存和所有者收取确认。自动静态 PNG/JPEG 回复已实现并通过本地整合检查；有限真实重连和实际授权失效后重新扫码恢复已通过；重新签发机器人标识时由所有者批准，旧范围数据保留、不混用。真实随机选择/频率等完整运行边界仍见交付记录。GIF 动画与原生微信贴图不宣称支持；按原要求使用已验证的静态图片形式。详见 [图片实测](docs/research/weixin-static-image-live-verification.md)。
 
-最近公开提交 [5a94038](https://github.com/hidxt/miskoai/commit/5a94038c9b2b1321b2834719cdb364530b2ed974) 的 [原生 CI39287643209](https://github.com/hidxt/miskoai/actions/runs/39287643209) 通过单元/整合与vet，但在Core重开用例的race阶段失败，后续步骤跳过；存储关闭修正已通过本机3253项测试与vet，PoC维护锁/恢复暂停准入修正已通过22项针对性验证，128个生产Go文件已完成集中审查。最后完整原生成功仍是 [d811e643 / CI38540398046](https://github.com/hidxt/miskoai/actions/runs/38540398046) 的12步成功，不能替代新源码验收。实际Debian短时测量：产品空闲峰值12.16MiB，128条合成Core消息峰值18.97MiB，采样Swap为0；供应商/通道为模拟，详见 [测量范围](docs/research/server-bounded-measurement.md)。交叉构建不代表arm64运行。
+最新已验收源码 [d9bc732](https://github.com/hidxt/miskoai/commit/d9bc7320ba6f78350fe9d622e35e5e49d28b8f2c) 的 [原生 CI39405918311](https://github.com/hidxt/miskoai/actions/runs/39405918311) 已完成12步成功，包含单元/整合、vet、原生Linux race、依赖漏洞、完整历史秘密检查和双架构构建。集中生产源码审查、保留告警核对与公开内容扫描已通过其验收门槛；最终UI、产物、资源和发布仍有独立项目。此前5a94038的Core重开失败保留，不从后来成功反推其原因。实际Debian短时测量：产品空闲峰值12.16MiB，128条合成Core消息峰值18.97MiB，采样Swap为0；供应商/通道为模拟，详见 [测量范围](docs/research/server-bounded-measurement.md)。交叉构建不代表arm64运行。
 
 ## 部署与本机管理
 
