@@ -9,7 +9,7 @@ import (
 	"io"
 )
 
-const Version = "0.1.0-dev"
+const Version = "0.1.0"
 
 func Run(args []string, out io.Writer) error {
 	return RunContext(context.Background(), args, out)

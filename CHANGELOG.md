@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0 — 2026-10-21 (release preparation)
+
+- Integrated native Go/SQLite companion, scoped memory/personality, bounded cloud text/vision/search, document/media processing, local image library and authenticated management/CLI.
+- Accepted source-bound native CI/security/notices gates, real text/static-image/reconnect/approved invalid-auth recovery, native35-image browser restore, and the authorized finite server idle/10-minute synthetic-adapter resource workload.
+- Recorded actual idle12.66MiB/full19.89MiB peaks and observed0swap on406.57MiB-visibleRAM/configured1GiBSwap; no universal resource guarantee.
+- Preserve Windows larger-library30s restore deadline and401status wording limits; nativeGIF/stickers, naturalTTL, actualarm64 runtime, systemd/powercrash/worst-case provider peaks remain unsupported or unverified as recorded.
+- Only production delta for release preparation is CLI version0.1.0. Matching final binaries/source/hash/native verification is in progress; no tag, Release or deployment has been performed.
+
+The dated Unreleased checkpoints below retain historical pending/failure statements; current status is in DELIVERY.md.
+
 ## Unreleased — 2026-10-20
 
 - Enforced existing lifecycle ownership and restore-pause refusal before the explicit WeChat probe reads authorization or opens storage; checked storage close precedes lock release. Primary affected22 tests/vet passed; consolidated128-file source review addressed its Important finding, with native confirmation pending.

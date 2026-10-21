@@ -1,6 +1,6 @@
 # MiskoAI verification strategy
 
-Current engineering **88%** (44/50); active source-bound implementation, local/native/live/resource results and remaining gates are in [DELIVERY.md](DELIVERY.md). Dated checkpoints below retain earlier evidence and pending statements; they do not replace the current delivery state.
+Current engineering **96%** (48/50); source-bound implementation, local/native/live/resource results and remaining49/50 are in [DELIVERY.md](DELIVERY.md). Artifacts46 and authorized finite resources47/48 are accepted; Windows16-image restore reproduces the30s validation deadline, and authorized target-native35-image browser restore passed with unchanged budgets. Dated checkpoints below retain earlier evidence and pending statements; they do not replace current delivery state.
 
 Current2026-10-10 engineering **60%**: standalone image locallyaccepted root961namedpass/0fail/4platformskip/fullvet0/static0new and exactnative736af8f/38051668735 ALLSUCCESS; Webreadiness prerequisite locallyaccepted root965namedpass/0fail/4platformskip/fullvet0/targetedstatic0new/freshdualApproved, public90491a1/exactnative38052284640 ALLSUCCESS. Serve/status is active synthetic-only and earns no package30credit yet. Complete source/evidence boundaries in docs/research/{image-validation,web-readiness}-root-verification.md. Earlier checkpoints below are historical; no live/private/resource/final acceptance inferred.
 

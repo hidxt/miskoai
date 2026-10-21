@@ -1,5 +1,7 @@
 # Corrected native and security checkpoint
 
+Current superseding checkpoint2026-10-21: engineering96%=48/50. Later documentation-only616ba3b8 nativeCI39410051711/job118585309788 completed all12stepsSUCCESS, primary exact-head/run/job/step verified. Live recovery24, artifacts46 and finite resources47/48 subsequently accepted; current gaps49/50 are in DELIVERY.md. The dated paragraphs below preserve their earlier86% evidence and pending states.
+
 2026-10-20. Engineering **86% = 43/50**; packages42 and43 accepted for the reviewed source candidate. Seven remaining packages are24,45,46,47,48,49,50. Implementation, local, native, real-channel, server and final release evidence remain distinct.
 
 Primary normally pushed `d9bc7320ba6f78350fe9d622e35e5e49d28b8f2c` on the development branch after inspecting24 explicit staged paths and verifying515 canonical public blobs against staged/source identities. This integrates the independently reviewed Store.Close cancellation-cleanup join and existing-policy CLI probe ownership/pause correction, plus evidence and exact byte-preserved historical ledgers. No schema, dependency, SQLite setting, channel strategy, LICENSE or workflow change was made.

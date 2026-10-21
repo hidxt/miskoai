@@ -11,6 +11,8 @@ Owner exception approved 2026-10-18: the external Google Antigravity CLI (`agy`)
 Owner extended the agy assignment on 2026-10-19 to simple tasks as well. Use **Gemini 4 Argon Medium**, isolated public inputs and explicitly owned outputs for bounded UI/static-view/documentation tasks, with primary review before integration. The Codex child model rule, private-data boundaries and required owner decisions for risky scope changes remain in force; this is not authorization for deployment, credentials, paid live tests or public Git actions by agy.
 
 ## Handoff and file ownership
+Owner update 2026-10-21 supersedes the earlier agy model choice: external `agy` simple public UI/static/documentation tasks may use **Gemini 3.8 Flash (High)**, exact identifier **`gemini-3.8-flash-high`**, reasoning effort **high**. The isolated public-input/output boundaries and primary review remain. Announce this exact model/effort and xx% before each invocation. Codex children remain exclusively **GPT-6.1 Sol Medium**, `gpt-6.1-sol` / `medium`.
+
 Each task states goal, dependencies, owned files, interfaces, tests and limitations. Do not edit another agent's files. No concurrent modification of a file. Return actual commands/results, changed files and unresolved issues. Primary reads code/diff and re-runs integrated checks; agent assertions alone are not evidence. Use a fresh reviewer where practical.
 
 ## Recovery and decisions

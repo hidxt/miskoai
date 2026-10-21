@@ -2,7 +2,7 @@
 
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
-Current engineering progress: **88%** =44of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
+Current engineering progress: **96%** =48of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
 
 Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root763pass/0fail/4platformskips/fullvet0; independent reviewer usage-limit exit means no final verdict and package27 remains unchecked. Root inline sharedpublictransport constructor scoped38pass/0fail/0skip/vet0; full corrected-export root772pass/0fail/4platformskips/fullvet0 verified, fresh review still pending, package32 remains unchecked. No completion credit for partial tasks or a failed/missing review. Latest published nativeCI is codec/Coref6fcb3c/37976808001. Actual/live/resource/final gates below remain open.
 
@@ -50,10 +50,10 @@ Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root76
 - [x] 42. Final integrated native Linux/race gate
 - [x] 43. Final whole-product security review/scans
 - [x] 44. Final dependency/source/binary notice review
-- [ ] 45. Final feature/UI regression and recovery checks
-- [ ] 46. Final amd64/arm64 artifact/hash verification
-- [ ] 47. Authorized512MB idle/chat resource workload
-- [ ] 48. Authorized512MB sustained/recovery workload
+- [x] 45. Final feature/UI regression and recovery checks (authorized nativeLinux35-image browser restore; Windows larger-library deadline retained)
+- [x] 46. Final amd64/arm64 artifact/hash verification (source-bound 0.1.0-dev candidate; release50 separate)
+- [x] 47. Authorized512MB idle/chat resource workload (supplied406.57MiB-visible host, configured1GiBSwap; observed0swap)
+- [x] 48. Authorized512MB sustained/recovery workload (finite480-primary/10min synthetic-adapter scope)
 - [ ] 49. Final delivery/documentation acceptance record
 - [ ] 50. Reviewed binary release
 

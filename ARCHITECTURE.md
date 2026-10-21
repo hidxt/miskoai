@@ -1,5 +1,7 @@
 # MiskoAI architecture
 
+Current checkpoint2026-10-21: engineering **96%=48/50**. Implementation is integrated; native616ba3b8/all12CI steps succeeded. Source-bound artifacts46 and finite supplied-server resources47/48 are accepted; targetLinux feature/UI45 is accepted, delivery49 and release50 remain; metadata-only0.1.0 build/native refresh is in progress. Windows larger-library restore reaches the existing30s validation deadline; target-native35-image browser comparison passed, without budget/security changes. Current evidence is in DELIVERY.md/TASKS.md; earlier planned/pending statements below retain their dated implementation history.
+
 Initial design 2026-10-09; implementation progress is in DELIVERY.md.
 
 ## Approach
