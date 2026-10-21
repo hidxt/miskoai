@@ -1,5 +1,7 @@
 # Project progress measurement
 
+**Current release blocker (2026-10-21):** exact084c8bb CI39600092376 passed full unit/integration, vet and nativeLinux race, then failed govulncheck on GO-2026-6809 in Go1.27.2 crypto/x509 (fixedGo1.27.3); later history/build steps skipped. Engineering stays **96%**,49/50 remain open; existing candidate binaries must not be published. Project-private Go1.27.3 patch verification/rebuild is in progress under D098, with no relaxed security gate or new live workload. See [patch evidence](../research/go-1.27.3-release-gate.md). Earlier accepted source-bound results below remain history.
+
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
 Current engineering progress: **96%** =48of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.

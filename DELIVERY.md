@@ -1,5 +1,7 @@
 # MiskoAI delivery status
 
+**Current release blocker (2026-10-21):** exact084c8bb CI39600092376 passed full unit/integration, vet and nativeLinux race, then failed govulncheck on GO-2026-6809 in Go1.27.2 crypto/x509 (fixedGo1.27.3); later history/build steps skipped. Engineering stays **96%**,49/50 remain open; existing candidate binaries must not be published. Project-private Go1.27.3 patch verification/rebuild is in progress under D098, with no relaxed security gate or new live workload. See [patch evidence](docs/research/go-1.27.3-release-gate.md). Earlier accepted source-bound results below remain history.
+
 2026-10-21. Engineering **96% =48/50** at stated phase gates; **two remain:49,50**. [Progress checklist](docs/superpowers/project-progress.md) is authoritative. Final acceptance/release is incomplete.
 
 ## Evidence at current checkpoint
