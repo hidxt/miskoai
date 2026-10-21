@@ -1,5 +1,7 @@
 # Final artifact verification
 
+Current artifact46 refresh2026-10-21: fixedGo1.27.3/0.1.0 threeplatform builds and allseven final asset/source/notices/hash readbacks accepted; engineering98%. OldGo1.27.2 candidates below remain historical and must not be released. See [final record](release-0.1.0-verification.md).
+
 2026-10-21. Package46 is accepted for the source-bound `0.1.0-dev` development candidate after independent GPT-6.1 Sol Medium verification and primary review/read-only hash/header checks. Engineering **90% =45/50**; release50 is separate.
 
 | Artifact | Bytes | SHA256 |

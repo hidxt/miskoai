@@ -1,5 +1,7 @@
 # Authorized native server resource acceptance
 
+Scope note2026-10-21: these measurements retain the original Go1.27.2 binaries/toolchain. Later0.1.0/Go1.27.3 is not a rerun of this once-authorized load; final delivery preserves this boundary. Current delivery progress is in DELIVERY.md;94% below is historical.
+
 2026-10-21. Packages47/48 are accepted within the owner's finite synthetic-adapter workload on the supplied native Debian12/x86_64/2CPU server. Engineering **94% =47/50**; feature/UI45, delivery49 and release50 remain open. Earlier A1 diagnostic and owner-interrupted A2 attempt are retained separately and are not reused as passing sustained evidence.
 
 The owner explicitly approved this fresh attempt after pause: unchanged reviewed five-file37.94MiB packet, a new private temporary directory, standalone idle60s and480 primary messages paced10min with13min external ceiling. Manifest SHA256 is `68c6c92e42162aa546083f2cad1370a5290b95d5aa9226ff36a7c9ffdabf1596`. Product amd64 artifact matches [package46](final-artifact-verification.md). Tool's actual compiled dependency closure excludes the older unused CLI pair and otherwise matches accepted product inputs. No original credentials, chat database, media or real provider/channel calls were used.

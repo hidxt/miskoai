@@ -1,6 +1,8 @@
 # Corrected native and security checkpoint
 
-Current superseding checkpoint2026-10-21: engineering96%=48/50. Later documentation-only616ba3b8 nativeCI39410051711/job118585309788 completed all12stepsSUCCESS, primary exact-head/run/job/step verified. Live recovery24, artifacts46 and finite resources47/48 subsequently accepted; current gaps49/50 are in DELIVERY.md. The dated paragraphs below preserve their earlier86% evidence and pending states.
+Latest accepted release source2026-10-21: dce3c1b/Go1.27.3, [CI39604537169](https://github.com/hidxt/miskoai/actions/runs/39604537169), job119237235022, all12SUCCESS including nativeLinuxrace/vulnerability/history/builds. FreshWindows3266PASS/0FAIL/4SKIP/vet0/govuln0 and finalassets accepted, delivery49 complete/engineering98%; only release50 needs owner decision. Earlier084standard-library vulnerability failure and older dated records remain preserved. [Final record](release-0.1.0-verification.md).
+
+Earlier checkpoint2026-10-21: engineering96%=48/50. Later documentation-only616ba3b8 nativeCI39410051711/job118585309788 completed all12stepsSUCCESS, primary exact-head/run/job/step verified. Live recovery24, artifacts46 and finite resources47/48 subsequently accepted; current gaps49/50 are in DELIVERY.md. The dated paragraphs below preserve their earlier86% evidence and pending states.
 
 2026-10-20. Engineering **86% = 43/50**; packages42 and43 accepted for the reviewed source candidate. Seven remaining packages are24,45,46,47,48,49,50. Implementation, local, native, real-channel, server and final release evidence remain distinct.
 

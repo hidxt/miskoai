@@ -1,5 +1,7 @@
 # Changelog
 
+0.1.0 delivery update2026-10-21 (not yet published): Go1.27.3 security baseline resolvesGO-2026-6809; freshlocal3266PASS/vet/govuln and exactnativeCI39604537169 all12SUCCESS, finalseven assets verified. Windows larger-library30s restore deadline,401wordingMinor and documented runtime/resource limits remain. See docs/research/release-0.1.0-verification.md.
+
 ## 0.1.0 — 2026-10-21 (release preparation)
 
 - Integrated native Go/SQLite companion, scoped memory/personality, bounded cloud text/vision/search, document/media processing, local image library and authenticated management/CLI.

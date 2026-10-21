@@ -1,8 +1,7 @@
 # MiskoAI architecture
 
-**Current release blocker (2026-10-21):** exact084c8bb CI39600092376 passed full unit/integration, vet and nativeLinux race, then failed govulncheck on GO-2026-6809 in Go1.27.2 crypto/x509 (fixedGo1.27.3); later history/build steps skipped. Engineering stays **96%**,49/50 remain open; existing candidate binaries must not be published. Project-private Go1.27.3 patch verification/rebuild is in progress under D098, with no relaxed security gate or new live workload. See [patch evidence](docs/research/go-1.27.3-release-gate.md). Earlier accepted source-bound results below remain history.
 
-Current checkpoint2026-10-21: engineering **96%=48/50**. Implementation is integrated; native616ba3b8/all12CI steps succeeded. Source-bound artifacts46 and finite supplied-server resources47/48 are accepted; targetLinux feature/UI45 is accepted, delivery49 and release50 remain; metadata-only0.1.0 build/native refresh is in progress. Windows larger-library restore reaches the existing30s validation deadline; target-native35-image browser comparison passed, without budget/security changes. Current evidence is in DELIVERY.md/TASKS.md; earlier planned/pending statements below retain their dated implementation history.
+Current checkpoint2026-10-21: engineering **98%=49/50**. Implementation and delivery49 accepted; exact release source dce3c1b/Go1.27.3 with [CI39604537169](https://github.com/hidxt/miskoai/actions/runs/39604537169) all12SUCCESS, freshWindows3266PASS/0FAIL/4SKIP/vet0/govuln0 and seven reviewed final assets. Only publicrelease50 remains. Prior live/resource/UI evidence retains Go1.27.2 binary scope; Windows larger-library30s deadline and other limits remain in DELIVERY.md. Go patch changes X.509 trust filtering, not product architecture/policy. Historical implementation paragraphs below retain their dates.
 
 Initial design 2026-10-09; implementation progress is in DELIVERY.md.
 

@@ -2,7 +2,7 @@
 
 超轻量 AI 微信聊天伙伴：Go 模块化单体、SQLite、DeepSeek 官方云模型与 Ollama 云端搜索，管理页面随单个可执行文件内嵌。目标平台为原生 Linux amd64 / arm64、2 vCPU / 512MB。
 
-项目进度 **96%（48/50）**，仍在开发，尚未发布生产版本。剩余 **2 项**见 [任务清单](TASKS.md)；本地实现、原生 CI、真实微信与服务器资源验收分别记录在 [交付状态](DELIVERY.md)。已完成获准的原生服务器空闲与10分钟合成持续负载验收；可见内存与Swap边界单独报告。
+项目进度 **98%（49/50）**，0.1.0交付候选已完成检查，尚未公开发布。剩余 **1 项**见 [任务清单](TASKS.md)；本地实现、原生 CI、真实微信与服务器资源验收分别记录在 [交付状态](DELIVERY.md)。已完成获准的原生服务器空闲与10分钟合成持续负载验收；可见内存与Swap边界单独报告。
 
 ## 当前能力与验证
 
@@ -12,9 +12,9 @@
 - 登录保护的本机管理页面、CLI、原生 Linux 运维和用户级 systemd 模板。
 - 真实微信固定文字与静态 PNG 测试已通过独立服务端确认、持久保存和所有者收取确认。自动静态 PNG/JPEG 回复已实现并通过本地整合检查；有限真实重连和实际授权失效后重新扫码恢复已通过；重新签发机器人标识时由所有者批准，旧范围数据保留、不混用。真实随机选择/频率等完整运行边界仍见交付记录。GIF 动画与原生微信贴图不宣称支持；按原要求使用已验证的静态图片形式。详见 [图片实测](docs/research/weixin-static-image-live-verification.md)。
 
-0.1.0版本元信息正在配套构建/CI核对；尚未公开发布。最终CI已通过单元测试、vet和Linux race，但Go1.27.2的标准库漏洞GO-2026-6809阻止发布，正在升级官方Go1.27.3补丁基线；现有候选包不可发布。详见 [安全补丁记录](docs/research/go-1.27.3-release-gate.md)。
+0.1.0已使用官方Go1.27.3重新构建，修复Go1.27.2的GO-2026-6809安全阻挡；本地3266PASS/0FAIL/4平台跳过、vet及漏洞扫描通过，[精确原生CI39604537169](https://github.com/hidxt/miskoai/actions/runs/39604537169)12步全部成功。七个固定交付文件已核验，唯一剩余项为所有者批准后的公开发布。详见 [最终交付记录](docs/research/release-0.1.0-verification.md) 与 [发布范围](docs/operations/release-0.1.0-plan.md)。
 
-上一次已验收源码 [d9bc732](https://github.com/hidxt/miskoai/commit/d9bc7320ba6f78350fe9d622e35e5e49d28b8f2c) 的 [原生 CI39405918311](https://github.com/hidxt/miskoai/actions/runs/39405918311) 已完成12步成功，包含单元/整合、vet、原生Linux race、依赖漏洞、完整历史秘密检查和双架构构建。集中生产源码审查、保留告警核对与公开内容扫描已通过其验收门槛；制品和有限资源门槛已验收，原生Linux35图浏览器完整恢复已验收；交付记录和公开发布仍有独立项目。Windows较大库恢复的30秒限制保留，详见 [目标环境恢复验证](docs/research/native-browser-recovery-verification.md)。此前5a94038的Core重开失败保留，不从后来成功反推其原因。新一轮Debian测量：产品空闲60秒峰值12.66MiB，480条主消息/10分钟合成Core负载峰值19.89MiB，采样Swap为0；主机可见RAM406.57MiB、配置1GiBSwap，供应商/通道为模拟，详见 [资源验收](docs/research/server-resource-acceptance.md)。交叉构建不代表arm64运行。
+历史已验收源码 [d9bc732](https://github.com/hidxt/miskoai/commit/d9bc7320ba6f78350fe9d622e35e5e49d28b8f2c) 的 [原生 CI39405918311](https://github.com/hidxt/miskoai/actions/runs/39405918311) 已完成12步成功，包含单元/整合、vet、原生Linux race、依赖漏洞、完整历史秘密检查和双架构构建。集中生产源码审查、保留告警核对与公开内容扫描已通过其验收门槛；制品和有限资源门槛已验收，原生Linux35图浏览器完整恢复已验收；交付记录现已完成，公开发布仍须所有者决定。Windows较大库恢复的30秒限制保留，详见 [目标环境恢复验证](docs/research/native-browser-recovery-verification.md)。此前5a94038的Core重开失败保留，不从后来成功反推其原因。此前Go1.27.2二进制的Debian测量：产品空闲60秒峰值12.66MiB，480条主消息/10分钟合成Core负载峰值19.89MiB，采样Swap为0；主机可见RAM406.57MiB、配置1GiBSwap，供应商/通道为模拟，详见 [资源验收](docs/research/server-resource-acceptance.md)。交叉构建不代表arm64运行。
 
 ## 部署与本机管理
 

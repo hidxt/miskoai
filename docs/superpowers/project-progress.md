@@ -1,10 +1,9 @@
 # Project progress measurement
 
-**Current release blocker (2026-10-21):** exact084c8bb CI39600092376 passed full unit/integration, vet and nativeLinux race, then failed govulncheck on GO-2026-6809 in Go1.27.2 crypto/x509 (fixedGo1.27.3); later history/build steps skipped. Engineering stays **96%**,49/50 remain open; existing candidate binaries must not be published. Project-private Go1.27.3 patch verification/rebuild is in progress under D098, with no relaxed security gate or new live workload. See [patch evidence](../research/go-1.27.3-release-gate.md). Earlier accepted source-bound results below remain history.
 
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
-Current engineering progress: **96%** =48of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
+Current engineering progress: **98%** =49of50 delivery work packages at their stated local/phase gates. Each package has equal tracking weight; this is a coarse engineering measure, not elapsed-time prediction, percentage of lines, or final/live/resource acceptance. Research/plans and in-progress fixes earn no completion credit. Completed local packages remain subject to final integrated/security/live gates below; native builds are distinct from architecture runtime and512MB acceptance. Any scope/count adjustment is recorded explicitly rather than silently changing the denominator.
 
 Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root763pass/0fail/4platformskips/fullvet0; independent reviewer usage-limit exit means no final verdict and package27 remains unchecked. Root inline sharedpublictransport constructor scoped38pass/0fail/0skip/vet0; full corrected-export root772pass/0fail/4platformskips/fullvet0 verified, fresh review still pending, package32 remains unchecked. No completion credit for partial tasks or a failed/missing review. Latest published nativeCI is codec/Coref6fcb3c/37976808001. Actual/live/resource/final gates below remain open.
 
@@ -53,11 +52,13 @@ Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root76
 - [x] 43. Final whole-product security review/scans
 - [x] 44. Final dependency/source/binary notice review
 - [x] 45. Final feature/UI regression and recovery checks (authorized nativeLinux35-image browser restore; Windows larger-library deadline retained)
-- [x] 46. Final amd64/arm64 artifact/hash verification (source-bound 0.1.0-dev candidate; release50 separate)
+- [x] 46. Final amd64/arm64 artifact/hash verification (source-bound0.1.0/Go1.27.3; release50 separate)
 - [x] 47. Authorized512MB idle/chat resource workload (supplied406.57MiB-visible host, configured1GiBSwap; observed0swap)
 - [x] 48. Authorized512MB sustained/recovery workload (finite480-primary/10min synthetic-adapter scope)
-- [ ] 49. Final delivery/documentation acceptance record
+- [x] 49. Final delivery/documentation acceptance record (Go1.27.3 source/artifacts/exactCI/operator notes; public release50 separate)
 - [ ] 50. Reviewed binary release
+
+Current release source `dce3c1b480fbe8acb2223a498edbe9baeac7533b` / [CI39604537169](https://github.com/hidxt/miskoai/actions/runs/39604537169) all12SUCCESS; Windows3266PASS/0FAIL/4SKIP/vet0/govuln0;7 final assets/source/notices verified. Implementation/local/native acceptance is separate from prior Go1.27.2 live/resource evidence. Only50 awaits concrete public-release approval. [Final record](../research/release-0.1.0-verification.md).
 
 ## Historical evidence ledger
 
@@ -222,12 +223,12 @@ After recovery the live child tree and working tree were empty; prior Task2 disp
 
 Complete staticWindows86files18511lines74warnings(13HIGH11MED50LOW), Linuxamd64STATIC86files18329lines77warnings(15HIGH13MED49LOW),0Goerrors/0nosec/actualwarningexit1each. One new G115 CMap conversion and one removed octal conversion fingerprint per target; all other warning dispositions retained. New conversion is bounded by per-font insertion ceiling8192 before `uint64(8192-len(mappings))`, and shared remaining room is checked before range expansion. Original octal now deliberately masks low8bits; no warning suppression/clean-scan claim. Full frozen-public Gitleaks~3052765bytes0/exit0. Same complete1479-byte pinned BSD license/source headers remain in source and binary notices; both retained256-entry encoding tables and all8 supplied source inventory identities verified locally. Final license/artifact gate remains separate.
 
-New PDF development publication/nativeCI and real processor-Agent/Core integration are next. Prior private core3be86ef/native38140923924/all12SUCCESS is separate. LiveWeChat deferred, paid allowance spent, privateDBschema2 unchanged; no actualarm64/512MB/livefile/final acceptance credit. See [PDF root verification](docs/research/pdf-extraction-root-verification.md).
+New PDF development publication/nativeCI and real processor-Agent/Core integration are next. Prior private core3be86ef/native38140923924/all12SUCCESS is separate. LiveWeChat deferred, paid allowance spent, privateDBschema2 unchanged; no actualarm64/512MB/livefile/final acceptance credit. See [PDF root verification](../research/pdf-extraction-root-verification.md).
 
 
 2026-10-12 latest checkpoint: engineering **72%** (36/50). Reviewed PDF commit6fff184f6f907301eaf40830bfd217dafbf9a3e4 normally pushed;27explicit paths/321public files, allruntime Go/module/workflow/notices exact against root1596/vet0, archives exact. Staged27/working328 policy0, publicGitleaks~3064990bytes0, full-history772uniquecontents0/Gitleaks36commits~3388847bytes0. Exact nativeCI38211423839/job114686234735 is IN_PROGRESS, no new native success claimed. Initial Markdown EOF whitespace and subsequent command-quoting error were corrected before commit; original failed/escaped exports retained, runtime/test bytes unchanged.
 
-After local PDF gate, nine processor/Agent source/report identities adopted byte-exact. Complete328-file root scoped attachment/Agent235pass/vet0 and fresh jointreview0newfindings confirm real supported parsers, private artifact sequencing, visible quoted source and usage/dedup. This is a dependency gate; Core/full-product/static/native/live/resource/final remain pending. Core child uses ONLY GPT-6.1 Sol Medium; initial model-capacity failure produced no source, same-model retry follows. See [joint verification](docs/research/claimed-document-root-verification.md).
+After local PDF gate, nine processor/Agent source/report identities adopted byte-exact. Complete328-file root scoped attachment/Agent235pass/vet0 and fresh jointreview0newfindings confirm real supported parsers, private artifact sequencing, visible quoted source and usage/dedup. This is a dependency gate; Core/full-product/static/native/live/resource/final remain pending. Core child uses ONLY GPT-6.1 Sol Medium; initial model-capacity failure produced no source, same-model retry follows. See [joint verification](../research/claimed-document-root-verification.md).
 
 RealWeChat deferred, paid allowance spent, actual private schema2 untouched; no actualarm64/512MB/livefile/final acceptance inferred.
 
