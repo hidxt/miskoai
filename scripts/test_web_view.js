@@ -141,8 +141,95 @@ function assertInvalidated(snapshot) {
   assert.equal(snapshot.systemVisible, true); assert.equal(snapshot.consoleVisible, true);
 }
 module.exports = { Element, documentFixture, waitFor, tick, script };
+async function revisionFixture(config = {}) {
+  const doc = documentFixture(), $ = id => doc.getElementById(id), calls = [];
+  let pendingDefaults;
+  const settings = { listen: "127.0.0.1:8787", deepseek_url: "https://api.deepseek.com", model: "saved-model", vision_model: "vision", weixin_url: "https://ilinkai.weixin.qq.com", max_output_tokens: 1024, context_bytes: 16384, context_tokens: 4096 };
+  const defaults = { ...settings, model: "default-model" };
+  const events = Array.from({ length: 24 }, (_, i) => ({ kind: "event-" + i, at: "2026-10-28T00:00:00Z" }));
+  const status = { channel_state: "backoff", diagnostic_code: "transport", heap_bytes: 1048576, uptime_seconds: 7380, goroutines: 2, gc_count: 1, channel: { state: "backoff", received: 3, processed: 2, sent: 1, failed: 1, last_code: "transport" }, summary: {}, logical_attempts: {}, successful_usage: {}, events: [...events].reverse() };
+  async function fetch(path, options) {
+    calls.push({ path, method: options.method, body: options.body });
+    const url = new URL(path, "http://fixture"); let payload;
+    if (path === "/api/session") { if (config.login) return new Response("{}", { status: 401 }); payload = { csrf: "s".repeat(43) }; }
+    else if (path === "/api/bootstrap") payload = { nonce: "n".repeat(43) };
+    else if (path === "/api/login") payload = { csrf: "s".repeat(43) };
+    else if (path === "/api/status") payload = status;
+    else if (path === "/api/settings/defaults") { if (config.holdDefaults) return new Promise(resolve => { pendingDefaults = resolve; }); if (config.defaultsStatus) return new Response("{}", { status: config.defaultsStatus }); payload = defaults; }
+    else if (path === "/api/logout") payload = {};
+    else if (path === "/api/settings") payload = options.method === "GET" ? { desired: settings, effective: settings, overrides: { model: true } } : { ok: true };
+    else if (path === "/api/profiles") payload = options.method === "GET" ? { custom: [oldProfile], active: oldProfile, builtin_ids: ["warm", "concise"] } : { ok: true };
+    else if (url.pathname === "/api/events") { const offset = Number(url.searchParams.get("offset")); payload = { items: events.slice(offset, offset + 20), next_offset: Math.min(offset + 20, events.length), has_more: offset === 0 }; }
+    else throw new Error("unexpected revision route " + path);
+    return new Response(JSON.stringify(payload), { headers: { "Content-Type": "application/json" } });
+  }
+  class FixedDate extends Date { static now() { return 1793145600000; } }
+  vm.runInContext(script, vm.createContext({ document: doc, Date: config.fixedClock ? FixedDate : Date, location: { pathname: config.events ? "/events" : "/" }, crypto: require("node:crypto").webcrypto, fetch, setTimeout, clearTimeout, Blob, AbortController, TextEncoder, URL, URLSearchParams, console }));
+  const idle = () => $("main").getAttribute("aria-busy") === "false";
+  await waitFor(idle, "revision startup");
+  async function dispatch(control, type = "click") { assert.ok(control, "revision control exists"); control.dispatch(type); await waitFor(idle, type); }
+  const nav = name => doc.querySelectorAll("[data-section]").find(n => n.dataset.section === name);
+  return { doc, $, calls, settings, dispatch, nav, idle, resolveDefaults: () => pendingDefaults(new Response(JSON.stringify(defaults))) };
+}
+const revisionTests = [
+  ["account login posts exactly credentials and nonce", async () => {
+    const f = await revisionFixture({ login: true }); assert.ok(f.$("username"), "account field exists");
+    f.$("username").value = "operator"; f.$("password").value = "synthetic-password"; await f.dispatch(f.$("login-form"), "submit");
+    assert.deepEqual(JSON.parse(f.calls.find(c => c.path === "/api/login").body), { username: "operator", password: "synthetic-password", nonce: "n".repeat(43) }); assert.equal(f.$("password").value, "");
+  }],
+  ["model edit cancel defaults stay draft until save", async () => {
+    const f = await revisionFixture(); await f.dispatch(f.nav("ai")); const input = () => f.$("settings-form").elements.namedItem("model");
+    assert.equal(input().readOnly, true, "settings initially read only");
+    await f.dispatch(f.$("settings-edit")); assert.equal(input().readOnly, false); input().value = "unsaved";
+    await f.dispatch(f.$("settings-cancel")); assert.equal(input().value, "saved-model"); assert.equal(input().readOnly, true);
+    await f.dispatch(f.$("settings-edit")); await f.dispatch(f.$("settings-defaults")); assert.equal(input().value, "default-model");
+    assert.equal(f.calls.filter(c => c.path === "/api/settings" && c.method === "POST").length, 0);
+    assert.ok(f.$("settings-fields").textContent.includes("ENV")); await f.dispatch(f.$("settings-form"), "submit");
+    assert.equal(JSON.parse(f.calls.find(c => c.path === "/api/settings" && c.method === "POST").body).model, "default-model"); assert.equal(input().readOnly, true);
+  }],
+  ["dashboard compact uptime latest three and dedicated event paging", async () => {
+    const f = await revisionFixture(); assert.ok(f.$("status-cards").textContent.includes("2 小时 3 分钟"));
+    assert.equal(f.$("events").children.length, 3); assert.ok(f.$("events").children[0].textContent.includes("event-0"));
+    assert.equal(f.$("events-more").getAttribute("href"), "/events"); assert.ok(f.$("channel-status").textContent.includes("transport"));
+    const e = await revisionFixture({ events: true, login: true }); e.$("username").value = "admin"; e.$("password").value = "synthetic-password"; await e.dispatch(e.$("login-form"), "submit");
+    assert.equal(e.$("event-page").hidden, false); assert.equal(e.$("event-list").children.length, 20); assert.equal(e.$("events-back").getAttribute("href"), "/");
+    await e.dispatch(e.$("events-next")); assert.equal(e.$("event-list").children.length, 4); assert.ok(e.calls.some(c => c.path === "/api/events?offset=20&limit=20"));
+    await e.dispatch(e.$("events-prev")); assert.equal(e.$("event-list").children.length, 20);
+  }],
+  ["personas hide builtins generate IDs preserve metadata and byte limits", async () => {
+    const f = await revisionFixture(); await f.dispatch(f.nav("ai")); assert.ok(!f.$("profile-list").textContent.includes("温暖自然"));
+    assert.equal(f.$("profile-form").elements.namedItem("id").getAttribute("type"), "hidden");
+    const record = f.$("profile-list").children[0]; await f.dispatch(record.descendants.find(n => n.tagName === "button" && n.textContent === "编辑"));
+    f.$("profile-form").elements.namedItem("name").value = "renamed"; await f.dispatch(f.$("profile-form"), "submit");
+    assert.deepEqual(JSON.parse(f.calls.find(c => c.path === "/api/profiles" && c.method === "POST").body), { ...oldProfile, name: "renamed" });
+    await f.dispatch(f.$("new-profile")); const form = f.$("profile-form"); form.elements.namedItem("name").value = "new persona"; form.elements.namedItem("style").value = "中".repeat(171);
+    await f.dispatch(form, "submit"); assert.equal(f.calls.filter(c => c.path === "/api/profiles" && c.method === "POST").length, 1, "513 byte style refused");
+    form.elements.namedItem("style").value = "中".repeat(170) + "ab"; await f.dispatch(form, "submit");
+    const body = JSON.parse(f.calls.filter(c => c.path === "/api/profiles" && c.method === "POST").at(-1).body); assert.match(body.id, /^[a-z0-9_-]{1,64}$/); assert.notEqual(body.id, oldProfile.id); assert.equal(body.style, "中".repeat(170) + "ab");
+  }],
+  ["default draft late responses cannot survive logout or cancellation", async () => {
+    for (const control of ["logout", "cancel-request"]) {
+      const f = await revisionFixture({ holdDefaults: true }); await f.dispatch(f.nav("ai")); await f.dispatch(f.$("settings-edit"));
+      f.$("settings-form").elements.namedItem("model").value = "private-draft"; f.$("settings-defaults").dispatch("click");
+      await waitFor(() => f.calls.some(c => c.path === "/api/settings/defaults"), "pending default draft"); f.$(control).dispatch("click"); f.resolveDefaults(); await waitFor(f.idle, "late defaults");
+      assert.equal(f.calls.filter(c => c.path === "/api/settings" && c.method === "POST").length, 0);
+      if (control === "logout") { assert.equal(f.$("settings-fields").textContent, ""); assert.equal(f.$("console-view").hidden, true); }
+      else { assert.equal(f.$("settings-form").elements.namedItem("model").value, "private-draft"); assert.ok(!f.$("notice").textContent.includes("已填入默认值")); }
+    }
+  }],
+  ["defaults session expiry clears model and persona data without retry", async () => {
+    const f = await revisionFixture({ defaultsStatus: 401 }); await f.dispatch(f.nav("ai")); await f.dispatch(f.$("settings-edit")); await f.dispatch(f.$("settings-defaults"));
+    assert.equal(f.$("console-view").hidden, true); assert.equal(f.$("settings-fields").textContent, ""); assert.equal(f.$("profile-list").textContent, ""); assert.equal(f.calls.filter(c => c.path === "/api/settings/defaults").length, 1);
+  }],
+  ["new persona IDs differ across tabs at the same clock time", async () => {
+    const ids = [];
+    for (let i = 0; i < 2; i++) { const f = await revisionFixture({ fixedClock: true }); await f.dispatch(f.nav("ai")); f.$("profile-form").elements.namedItem("name").value = "new persona"; await f.dispatch(f.$("profile-form"), "submit"); ids.push(JSON.parse(f.calls.find(c => c.path === "/api/profiles" && c.method === "POST").body).id); }
+    assert.notEqual(ids[0], ids[1], "separate tabs cannot overwrite a new persona through identical generated IDs");
+  }]
+];
 if (require.main === module) (async () => {
   let passed = 0, failed = 0;
+  for (const [name, fn] of revisionTests) { try { await fn(); console.log(JSON.stringify({ test: name, result: "pass" })); passed++; } catch (error) { console.log(JSON.stringify({ test: name, result: "fail", message: error.message, stack: error.stack })); failed++; } }
   for (const mode of ["success", "failure", "abort", "cancel"]) {
     try {
       const f = await fixture(mode);
@@ -158,7 +245,7 @@ if (require.main === module) (async () => {
           const profileForm = doc.getElementById("profile-form"); profileForm.elements.id.value = "fresh-profile"; profileForm.elements.name.value = "new explicit profile";
           await f.dispatch(profileForm, "submit"); const profileWrite = f.calls.filter(c => c.path === "/api/profiles" && c.method === "POST").at(-1);
           console.log(JSON.stringify({ trace: "post_restore_profile_write", payload: JSON.parse(profileWrite.body) }));
-          assert.equal(JSON.parse(profileWrite.body).id, "fresh-profile"); assert.equal(JSON.parse(profileWrite.body).style, "", "old profile style cannot carry into new write");
+          assert.match(JSON.parse(profileWrite.body).id, /^persona_[a-z0-9_]+$/, "new profile ID is generated internally"); assert.notEqual(JSON.parse(profileWrite.body).id, oldProfile.id, "restore discards previous profile edit target"); assert.equal(JSON.parse(profileWrite.body).style, "", "old profile style cannot carry into new write");
         } else assertInvalidated(f.after);
         assertInvalidated(f.dispatchSnapshot); assert.equal(f.dispatchSnapshot.busy, "true", "controls remain pending before restore dispatch");
         assert.equal(f.dispatchSnapshot.factDisabled, true); assert.equal(f.dispatchSnapshot.profileDisabled, true);

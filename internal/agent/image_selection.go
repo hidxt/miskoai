@@ -1,8 +1,7 @@
 package agent
 
 import (
-	"crypto/sha256"
-	"encoding/json"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -17,6 +16,7 @@ import (
 type imageSelectionInput struct {
 	Scope                          storage.Scope
 	InboundID, UserText, Reply     string
+	SuggestedID                    string
 	Profile                        storage.Profile
 	Candidates                     []storage.LibraryAsset
 	NowMillis, LastConfirmedMillis int64
@@ -30,10 +30,10 @@ const imageSelectionMaxMillis int64 = 253402300799999
 // durable once-only receipts remain obligations of the eventual orchestrator.
 func selectReplyImage(in imageSelectionInput) (storage.LibraryAsset, bool) {
 	refuse := storage.LibraryAsset{}
-	// Caller-controlled sizes are admitted before hashing, normalization or copies.
+	// Caller-controlled sizes are admitted before parsing, normalization or copies.
 	if !in.OrdinarySuccess || len(in.Candidates) == 0 || len(in.Candidates) > 128 ||
 		len(in.Scope.Account) > 256 || len(in.Scope.User) > 256 || len(in.InboundID) > 512 ||
-		len(in.UserText) > 16384 || len(in.Reply) > 16384 {
+		len(in.UserText) > 16384 || len(in.Reply) > 16384 || len(in.SuggestedID) > 19 {
 		return refuse, false
 	}
 	if !imageSelectionScope(in.Scope) || !imageSelectionField(in.InboundID, 512) || strings.TrimSpace(in.InboundID) == "" ||
@@ -54,40 +54,24 @@ func selectReplyImage(in imageSelectionInput) (storage.LibraryAsset, bool) {
 			}
 		}
 	}
-	cooldown := int64(5 * 60 * 1000)
-	threshold := byte(2)
+	cooldown := int64(30 * 1000)
 	if in.Profile.Sticker == "low" {
-		cooldown = 30 * 60 * 1000
-		threshold = 1
+		cooldown = 180 * 1000
 	}
 	if in.LastConfirmedMillis != 0 && in.NowMillis-in.LastConfirmedMillis < cooldown {
 		return refuse, false
 	}
-	canonical, err := json.Marshal([3]string{in.Scope.Account, in.Scope.User, in.InboundID})
-	if err != nil {
+	id, err := strconv.ParseInt(in.SuggestedID, 10, 64)
+	if err != nil || id <= 0 || strconv.FormatInt(id, 10) != in.SuggestedID {
 		return refuse, false
 	}
-	digest := sha256.Sum256(canonical)
-	if digest[0]%8 >= threshold {
-		return refuse, false
-	}
-	user, reply := strings.ToLower(in.UserText), strings.ToLower(in.Reply)
 	var chosen storage.LibraryAsset
 	for _, a := range in.Candidates {
-		if !a.Enabled || a.State != "ready" || a.Frames != 1 || (a.Format != "png" && a.Format != "jpeg") ||
-			(a.LastUsedMillis != 0 && in.NowMillis-a.LastUsedMillis < 24*60*60*1000) {
+		if a.ID != id || !a.Enabled || a.State != "ready" || a.Frames != 1 || (a.Format != "png" && a.Format != "jpeg") ||
+			(a.LastUsedMillis != 0 && in.NowMillis-a.LastUsedMillis < 600*1000) {
 			continue
 		}
-		relevant := imageSelectionRelevant(user, reply, a.Emotion)
-		for _, tag := range a.Tags {
-			if imageSelectionRelevant(user, reply, tag) {
-				relevant = true
-				break
-			}
-		}
-		if relevant && (chosen.ID == 0 || a.ID < chosen.ID) {
-			chosen = a
-		}
+		chosen = a
 	}
 	if chosen.ID == 0 {
 		return refuse, false
@@ -192,36 +176,4 @@ func imageSelectionAsset(a storage.LibraryAsset) bool {
 		}
 	}
 	return imageSelectionText(a.Emotion, 64, true) && imageSelectionText(a.Description, 1024, false)
-}
-
-func imageSelectionRelevant(user, reply, key string) bool {
-	key = strings.ToLower(strings.TrimSpace(key))
-	return key != "" && imageSelectionContains(user, key) && imageSelectionContains(reply, key)
-}
-
-func imageSelectionWord(b byte) bool { return b >= 'a' && b <= 'z' || b >= '0' && b <= '9' || b == '_' }
-func imageSelectionContains(text, key string) bool {
-	word := true
-	for n := 0; n < len(key); n++ {
-		if !imageSelectionWord(key[n]) {
-			word = false
-			break
-		}
-	}
-	if !word {
-		return strings.Contains(text, key)
-	}
-	for start := 0; start <= len(text)-len(key); {
-		offset := strings.Index(text[start:], key)
-		if offset < 0 {
-			return false
-		}
-		at := start + offset
-		end := at + len(key)
-		if (at == 0 || !imageSelectionWord(text[at-1])) && (end == len(text) || !imageSelectionWord(text[end])) {
-			return true
-		}
-		start = at + 1
-	}
-	return false
 }

@@ -9,7 +9,7 @@ import (
 
 func cleanEnv(t *testing.T) string {
 	t.Helper()
-	for _, name := range []string{"MISKOAI_LISTEN", "MISKOAI_DATA_DIR", "MISKOAI_DEEPSEEK_URL", "MISKOAI_MODEL", "MISKOAI_VISION_MODEL", "MISKOAI_WEIXIN_URL", "MISKOAI_MAX_OUTPUT_TOKENS", "MISKOAI_CONTEXT_BYTES", "MISKOAI_CONTEXT_TOKENS", "MISKOAI_CREDENTIALS_FILE", "DEEPSEEK_API_KEY", "OLLAMA_API_KEY", "MISKOAI_ADMIN_PASSWORD"} {
+	for _, name := range []string{"MISKOAI_LISTEN", "MISKOAI_DATA_DIR", "MISKOAI_DEEPSEEK_URL", "MISKOAI_MODEL", "MISKOAI_VISION_MODEL", "MISKOAI_WEIXIN_URL", "MISKOAI_MAX_OUTPUT_TOKENS", "MISKOAI_CONTEXT_BYTES", "MISKOAI_CONTEXT_TOKENS", "MISKOAI_CREDENTIALS_FILE", "DEEPSEEK_API_KEY", "OLLAMA_API_KEY", "MISKOAI_ADMIN_USERNAME", "MISKOAI_ADMIN_PASSWORD"} {
 		old, ok := os.LookupEnv(name)
 		os.Unsetenv(name)
 		t.Cleanup(func() {
@@ -49,7 +49,7 @@ func TestStoredSettingsAreRuntimeConfiguration(t *testing.T) {
 	}
 }
 func TestPresentEmptyRuntimeValuesReject(t *testing.T) {
-	for _, name := range []string{"MISKOAI_MAX_OUTPUT_TOKENS", "DEEPSEEK_API_KEY", "MISKOAI_CREDENTIALS_FILE", "MISKOAI_ADMIN_PASSWORD"} {
+	for _, name := range []string{"MISKOAI_MAX_OUTPUT_TOKENS", "DEEPSEEK_API_KEY", "MISKOAI_CREDENTIALS_FILE", "MISKOAI_ADMIN_USERNAME", "MISKOAI_ADMIN_PASSWORD"} {
 		t.Run(name, func(t *testing.T) {
 			cleanEnv(t)
 			t.Setenv(name, "")

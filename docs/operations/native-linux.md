@@ -110,6 +110,7 @@ copy_new_regular "$unit_source" "$HOME/.config/systemd/user/miskoai.service"
 ```ini
 MISKOAI_DATA_DIR=/home/REPLACE_LOCAL_USER/.local/share/miskoai
 MISKOAI_CREDENTIALS_FILE=/home/REPLACE_LOCAL_USER/.config/miskoai/provider.json
+MISKOAI_ADMIN_USERNAME=admin
 MISKOAI_ADMIN_PASSWORD=synthetic-only-replace-in-local-editor
 ```
 
@@ -135,7 +136,7 @@ test "$(stat -c %a -- "$HOME/.config/miskoai/miskoai.env")" = 600
 test "$(stat -c %a -- "$HOME/.config/miskoai/provider.json")" = 600
 ```
 
-设置优先级为默认设置 → 数据目录 `settings.json` → `MISKOAI_*` 环境覆盖；供应商 `DEEPSEEK_API_KEY` / `OLLAMA_API_KEY` 环境值优先于凭据文件。模型默认保持 `deepseek-flash`。unit 固定设置 `MISKOAI_LISTEN=127.0.0.1:8080`，环境文件只填写上述三个字段，不能加入 LISTEN 或其他设置覆盖；systemd EnvironmentFile 的赋值会覆盖 Environment，故编辑者必须保持这个约定。不要把 manager 继承的旧配置误当新配置；在本机检查时只枚举变量**名称**，不要显示其值。启动前清除 manager 中遗留的 `MISKOAI_*` 和两个供应商变量，或由管理员提供已确认干净的用户 manager；不要打印 `systemctl show-environment`。
+设置优先级为默认设置 → 数据目录 `settings.json` → `MISKOAI_*` 环境覆盖；供应商 `DEEPSEEK_API_KEY` / `OLLAMA_API_KEY` 环境值优先于凭据文件。模型默认保持 `deepseek-flash`。unit 固定设置 `MISKOAI_LISTEN=127.0.0.1:8080`，环境文件只填写上述四个字段，不能加入 LISTEN 或其他设置覆盖；systemd EnvironmentFile 的赋值会覆盖 Environment，故编辑者必须保持这个约定。不要把 manager 继承的旧配置误当新配置；在本机检查时只枚举变量**名称**，不要显示其值。启动前清除 manager 中遗留的 `MISKOAI_*` 和两个供应商变量，或由管理员提供已确认干净的用户 manager；不要打印 `systemctl show-environment`。
 
 在确认该用户 manager 的这些变量没有被其他服务依赖后，可用下列**仅名称**命令清除当前版本识别的配置变量；它改变该用户 manager 的环境，不改变已经运行的进程，也不替其他服务作配置决定。若其他服务依赖这些变量，先由管理员协调而不执行这段：
 
@@ -144,7 +145,7 @@ systemctl --user unset-environment \
     MISKOAI_DATA_DIR MISKOAI_LISTEN MISKOAI_DEEPSEEK_URL MISKOAI_MODEL \
     MISKOAI_VISION_MODEL MISKOAI_WEIXIN_URL MISKOAI_MAX_OUTPUT_TOKENS \
     MISKOAI_CONTEXT_BYTES MISKOAI_CONTEXT_TOKENS MISKOAI_CREDENTIALS_FILE \
-    MISKOAI_ADMIN_PASSWORD DEEPSEEK_API_KEY OLLAMA_API_KEY
+    MISKOAI_ADMIN_USERNAME MISKOAI_ADMIN_PASSWORD DEEPSEEK_API_KEY OLLAMA_API_KEY
 ```
 
 CLI 的本地检查可在独立子 shell 内清除继承名称，不读取环境文件。以下示例明确设置路径与 loopback，没有真实密码参数；只在确认 `settings.json` 不存在时执行 `init` 一次：
@@ -224,7 +225,9 @@ systemctl --user show miskoai.service -p ActiveState -p SubState -p Result -p Ma
 
 故障原因已排除且允许重新处理账号流量后，可以 `systemctl --user reset-failed miskoai.service` 再 `start`；配置变更用私有编辑器保存并检查权限后显式 `restart`，unit 变更先 `daemon-reload`。两者都会造成停止/启动边界，不能无意识连续执行。
 
-应用 `status` 会用管理密码登录本机 loopback、读取有界状态摘要，不直接打开数据库。可在服务器终端通过静默输入取得密码，只在这个子 shell 的进程环境中使用；不要开 shell xtrace，也不要把这段保存为带真实密码的脚本：
+管理登录使用一个私有用户名和原有密码；`MISKOAI_ADMIN_USERNAME` 未设置时默认为 `admin`，升级不会修改原有密码。用户名须为有效 UTF-8、1–64 字节，无控制字符、无首尾空白；不提供注册、多用户或浏览器重置凭据。使用自定义用户名时，`serve` 和 `status` 的环境必须一致。
+
+应用 `status` 会用管理用户名和密码登录本机 loopback、读取有界状态摘要，不直接打开数据库。可在服务器终端通过静默输入取得密码，只在这个子 shell 的进程环境中使用；不要开 shell xtrace，也不要把这段保存为带真实密码的脚本：
 
 ```bash
 (
@@ -234,6 +237,9 @@ systemctl --user show miskoai.service -p ActiveState -p SubState -p Result -p Ma
     export MISKOAI_DATA_DIR="$HOME/.local/share/miskoai"
     export MISKOAI_LISTEN=127.0.0.1:8080
     export MISKOAI_CREDENTIALS_FILE="$HOME/.config/miskoai/provider.json"
+    read -r -s -p 'MiskoAI admin username [admin]: ' MISKOAI_ADMIN_USERNAME
+    printf '\n'
+    export MISKOAI_ADMIN_USERNAME="${MISKOAI_ADMIN_USERNAME:-admin}"
     read -r -s -p 'MiskoAI admin password: ' MISKOAI_ADMIN_PASSWORD
     printf '\n'
     export MISKOAI_ADMIN_PASSWORD
@@ -249,7 +255,7 @@ systemctl --user show miskoai.service -p ActiveState -p SubState -p Result -p Ma
 ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:8080:127.0.0.1:8080 USER@HOST
 ```
 
-保持 SSH 会话，在本地浏览器打开 `http://127.0.0.1:8080`，使用管理密码登录。应用严格校验 Host 和 Origin 为配置的 `127.0.0.1:8080`；隧道两端端口必须保持一致，不能把本地端口改成 18080 后仍连接服务器 8080，也不能用 localhost 替代地址。如果本地 8080 被其他程序占用，先由操作者协调释放该端口，隧道失败就停止访问，不绕过 Host/Origin 检查。不要把应用监听改为 0.0.0.0，也不要通过防火墙公开管理端口。SSH 连接与访问目标服务器需要操作者已有授权。
+保持 SSH 会话，在本地浏览器打开 `http://127.0.0.1:8080`，使用管理用户名和密码登录。应用严格校验 Host 和 Origin 为配置的 `127.0.0.1:8080`；隧道两端端口必须保持一致，不能把本地端口改成 18080 后仍连接服务器 8080，也不能用 localhost 替代地址。如果本地 8080 被其他程序占用，先由操作者协调释放该端口，隧道失败就停止访问，不绕过 Host/Origin 检查。不要把应用监听改为 0.0.0.0，也不要通过防火墙公开管理端口。SSH 连接与访问目标服务器需要操作者已有授权。
 
 ## 6. 停止后备份、升级与恢复
 

@@ -26,7 +26,7 @@ func serve(ctx context.Context, cfg config.Config, out io.Writer) error {
 		if e != nil {
 			return nil, nil, e
 		}
-		w, e := web.New(web.Options{Listen: cfg.Listen, Password: cfg.AdminPassword}, web.Application(c), web.Assets())
+		w, e := web.New(web.Options{Listen: cfg.Listen, Username: cfg.AdminUsername, Password: cfg.AdminPassword}, web.Application(c), web.Assets())
 		if e != nil {
 			_ = c.Close()
 			return nil, nil, e

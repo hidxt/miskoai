@@ -101,7 +101,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		safeError(w, 400, "web_json")
 		return
 	}
-	body, err := strictRequestObject(r.Body, 2048, "password", "nonce")
+	body, err := strictRequestObject(r.Body, 2048, "username", "password", "nonce")
 	if err != nil {
 		safeError(w, 400, "web_json")
 		return
@@ -114,7 +114,8 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	expires, exists := s.nonces[nonce]
 	delete(s.nonces, nonce)
 	password := sha256.Sum256([]byte(body["password"]))
-	match := subtle.ConstantTimeCompare(password[:], s.password[:])
+	username := sha256.Sum256([]byte(body["username"]))
+	match := subtle.ConstantTimeCompare(password[:], s.password[:]) & subtle.ConstantTimeCompare(username[:], s.username[:])
 	if !valid || !exists || !now.Before(expires) || match != 1 {
 		safeError(w, 401, "web_auth")
 		return

@@ -136,6 +136,7 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	var text, code string
 	var usage provider.Usage
 	var captured storage.Profile
+	var advice imageAdvice
 	ordinary := false
 	if in.Attachment != nil {
 		if len(in.Text) > 8192 {
@@ -152,11 +153,15 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 			if len(in.Text) > 8192 {
 				text, code = limitReply, "limit"
 			} else {
-				text, usage, code = a.answerWithProfile(ctx, in.Text, &captured)
+				text, usage, code = a.answerWithAdvice(ctx, in.Text, &captured, &advice)
 				_, searching := searchCommand(in.Text)
 				ordinary = code == "" && !searching
 			}
 		}
+	}
+	if advice.err != nil {
+		a.setState(ctx, in.ID, "failed")
+		return Result{State: "failed", Usage: usage, Code: storageCode(advice.err)}, errors.New(storageCode(advice.err))
 	}
 	if ctx.Err() != nil {
 		a.setState(ctx, in.ID, "failed")
@@ -166,13 +171,8 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	if !valid {
 		text, code = modelReply, "output"
 	}
-	if ordinary && valid && a.replyImageBorrow != nil && a.replyImagePrepare != nil && imageSelectionProfile(captured) && captured.Sticker != "off" {
-		candidates, last, snapshotErr := a.store.ImageSelectionSnapshot(ctx, a.scope)
-		if snapshotErr != nil {
-			a.setState(ctx, in.ID, "failed")
-			return Result{State: "failed", Usage: usage, Code: storageCode(snapshotErr)}, errors.New(storageCode(snapshotErr))
-		}
-		chosen, selected := selectReplyImage(imageSelectionInput{Scope: a.scope, InboundID: in.ID, UserText: in.Text, Reply: text, Profile: captured, Candidates: candidates, NowMillis: time.Now().UTC().UnixMilli(), LastConfirmedMillis: last, OrdinarySuccess: true})
+	if ordinary && valid && advice.id != "" && a.replyImageBorrow != nil && a.replyImagePrepare != nil && imageSelectionProfile(captured) && captured.Sticker != "off" {
+		chosen, selected := selectReplyImage(imageSelectionInput{Scope: a.scope, InboundID: in.ID, UserText: in.Text, Reply: text, SuggestedID: advice.id, Profile: captured, Candidates: advice.candidates, NowMillis: time.Now().UTC().UnixMilli(), LastConfirmedMillis: advice.last, OrdinarySuccess: true})
 		if selected {
 			return a.sendImageReply(ctx, in, text, usage, chosen)
 		}
@@ -277,6 +277,10 @@ func (a *Agent) answer(ctx context.Context, current string) (string, provider.Us
 }
 
 func (a *Agent) answerWithProfile(ctx context.Context, current string, captured *storage.Profile) (string, provider.Usage, string) {
+	return a.answerWithAdvice(ctx, current, captured, nil)
+}
+
+func (a *Agent) answerWithAdvice(ctx context.Context, current string, captured *storage.Profile, advice *imageAdvice) (string, provider.Usage, string) {
 	var empty provider.Usage
 	snapshot, err := a.store.ChatContextWithProfile(ctx, a.scope, factQuery(current), 16, 8, a.opts.Profile)
 	if err != nil {
@@ -289,7 +293,8 @@ func (a *Agent) answerWithProfile(ctx context.Context, current string, captured 
 		*captured = snapshot.Profile
 	}
 	var sources []provider.SearchResult
-	if query, explicit := searchCommand(current); explicit {
+	query, explicit := searchCommand(current)
+	if explicit {
 		if query == "" || len(query) > 512 {
 			return limitReply, empty, "limit"
 		}
@@ -308,7 +313,27 @@ func (a *Agent) answerWithProfile(ctx context.Context, current string, captured 
 			}
 		}
 	}
-	msgs, ok := buildSnapshotContext(current, snapshot, sources, a.opts)
+	var msgs []provider.Message
+	var ok bool
+	structured := false
+	if advice != nil && !explicit && a.replyImageBorrow != nil && a.replyImagePrepare != nil && imageSelectionProfile(snapshot.Profile) && snapshot.Profile.Sticker != "off" {
+		candidates, last, snapshotErr := a.store.ImageSelectionSnapshot(ctx, a.scope)
+		if snapshotErr != nil {
+			advice.err = snapshotErr
+			return modelReply, empty, storageCode(snapshotErr)
+		}
+		catalogue, offered := imageCatalogue(a.scope, candidates, time.Now().UTC().UnixMilli())
+		if len(offered) > 0 {
+			msgs, ok = buildImageAdviceContext(current, snapshot, sources, a.opts, catalogue)
+			if ok {
+				structured = true
+				advice.candidates, advice.last = offered, last
+			}
+		}
+	}
+	if !structured {
+		msgs, ok = buildSnapshotContext(current, snapshot, sources, a.opts)
+	}
 	if !ok {
 		return limitReply, empty, "limit"
 	}
@@ -321,6 +346,18 @@ func (a *Agent) answerWithProfile(ctx context.Context, current string, captured 
 	}
 	if reply.FinishReason != "stop" && reply.FinishReason != "length" {
 		return modelReply, reply.Usage, "output"
+	}
+	if structured {
+		text, id, valid := parseImageAdvice(reply.Text)
+		if !valid {
+			return modelReply, reply.Usage, "output"
+		}
+		// A complete text inside a length-limited response is useful, but a
+		// truncated response never grants optional image advice.
+		if reply.FinishReason == "stop" {
+			advice.id = id
+		}
+		return text, reply.Usage, ""
 	}
 	citation := ""
 	if len(sources) > 0 {

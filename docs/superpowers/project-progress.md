@@ -1,5 +1,6 @@
 # Project progress measurement
 
+2026-10-29 revision checkpoint: engineering **98% (49/50 historical phase gates)**. Owner started F01–F08; all eight groups are implemented in the working candidate. Primary full Windows **3319 PASS / 0 FAIL / 4 platform SKIP**, full vet 0, Node **61 PASS**, three platform builds 0 and current source/symbol govulncheck **0 findings**; concentrated independent review has **0 unresolved C/I/M**. Actual synthetic browser checks passed for login/settings/personas/events/PNG/responsive layout. Fresh exact-source native CI/race, live test-server replacement and owner recall/image acceptance remain pending; existing pilot and deferred public release are unchanged. See [revision evidence](../research/trial-revisions-local-verification.md) and [prepared maintenance scope](../operations/trial-revision-update-2026-10-29.md).
 
 2026-10-10 owner request: report project progress in xx% format. Children use only GPT-6.1 Sol Medium (gpt-6.1-sol, reasoning_effort medium). Exact model/effort and project progress are announced before every child dispatch/resume.
 
@@ -58,9 +59,11 @@ Historical initial50% recovery2026-10-10: Webauth implemented/frozen with root76
 - [x] 49. Final delivery/documentation acceptance record (Go1.27.3 source/artifacts/exactCI/operator notes; public release50 separate)
 - [ ] 50. Reviewed binary release
 
-Current release source `dce3c1b480fbe8acb2223a498edbe9baeac7533b` / [CI39604537169](https://github.com/hidxt/miskoai/actions/runs/39604537169) all12SUCCESS; Windows3266PASS/0FAIL/4SKIP/vet0/govuln0;7 final assets/source/notices verified. Implementation/local/native acceptance is separate from prior Go1.27.2 live/resource evidence. Only50 awaits concrete public-release approval. [Final record](../research/release-0.1.0-verification.md).
+Current release source `dce3c1b480fbe8acb2223a498edbe9baeac7533b` / [CI39604537169](https://github.com/hidxt/miskoai/actions/runs/39604537169) all12SUCCESS; Windows3266PASS/0FAIL/4SKIP/vet0/govuln0;7 final assets/source/notices verified. Implementation/local/native acceptance is separate from prior Go1.27.2 live/resource evidence. Owner deferred50/publication for a new isolated server trial before feedback/revisions. Go1.27.3 nonroot deployment/stop/new privateKeys/freshQR/deliberate activation and19 management checks passed; owner-confirmed ordinary AI reply passed; wider full-flow feedback pending. The50-package denominator and98% remain unchanged. [Final record](../research/release-0.1.0-verification.md), [pilot evidence](../research/test-server-pilot-verification.md).
 
 ## Historical evidence ledger
+
+2026-10-22 owner-trial update: direct visible memory/history UI save and keyword search passed, but natural Chinese full-question recall failed. The saved fact is retained; exact full-query negative/short-keyword positive and shared source predicate explain the gap. [Open functional blocker](../research/chinese-memory-recall-trial-failure.md). No percentage credit, product change or final acceptance; prior49 packages retain their stated local/phase scope and publication50 remains deferred.
 
 The dated records below retain earlier successes, failures and pending statements. Current engineering progress is the value at the top; current implementation/local/native/live/final boundaries are in TASKS.md and DELIVERY.md. Older statements that a server was not supplied or a live marker was pending are historical, not the current checkpoint.
 

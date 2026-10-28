@@ -99,6 +99,7 @@ func newReplyFixture(t *testing.T) *replyFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
+	m.reply.Text = fmt.Sprintf(`{"reply":"happy!","emotion":"joy","image_id":"%d"}`, f.asset.ID)
 	f.a, err = NewWithImageReplies(base, f.borrow, f.prepare)
 	if err != nil {
 		t.Fatal(err)
@@ -142,13 +143,7 @@ func (f *replyFixture) prepare(ctx context.Context, to string, local attachment.
 	return weixin.ImageSend{EncryptQueryParam: "synthetic-upload", AESKeyHex: "00000000000000000000000000000000", CiphertextBytes: 80}, nil
 }
 func (f *replyFixture) incoming() Incoming {
-	for n := 0; ; n++ {
-		in := incoming(fmt.Sprint("image-turn-", n), "happy")
-		h := sha256.Sum256([]byte(fmt.Sprintf(`["account","alice",%q]`, in.ID)))
-		if h[0]%8 < 2 {
-			return in
-		}
-	}
+	return incoming("image-turn-0", "happy")
 }
 func TestImageReplyOrchestrationSuccess(t *testing.T) {
 	f := newReplyFixture(t)
@@ -270,15 +265,6 @@ func TestImageReplyOrchestrationOriginalProfile(t *testing.T) {
 				}
 			}
 			in := f.incoming()
-			if initial == "low" {
-				for n := 0; ; n++ {
-					in.ID = fmt.Sprint("low-", n)
-					h := sha256.Sum256([]byte(fmt.Sprintf(`["account","alice",%q]`, in.ID)))
-					if h[0]%8 == 0 {
-						break
-					}
-				}
-			}
 			r, e := f.a.Handle(context.Background(), in)
 			if e != nil {
 				t.Fatal(e)
@@ -294,7 +280,7 @@ func TestImageReplyOrchestrationOriginalProfile(t *testing.T) {
 	}
 }
 func TestImageReplyOrchestrationLegacyExclusions(t *testing.T) {
-	for _, name := range []string{"legacy", "off", "builtin", "command", "search", "attachment", "document", "model-error", "refusal", "empty", "unrelated", "hash-gate"} {
+	for _, name := range []string{"legacy", "off", "builtin", "command", "search", "attachment", "document", "model-error", "refusal", "empty", "plain-without-advice", "no-image-advice"} {
 		t.Run(name, func(t *testing.T) {
 			f := newReplyFixture(t)
 			in := f.incoming()
@@ -323,16 +309,13 @@ func TestImageReplyOrchestrationLegacyExclusions(t *testing.T) {
 				f.m.reply.FinishReason = "content_filter"
 			case "empty":
 				f.m.reply.Text = ""
-			case "unrelated":
+			case "plain-without-advice":
 				f.m.reply.Text = "sad"
-			case "hash-gate":
-				for n := 0; ; n++ {
-					in.ID = fmt.Sprint("skip-", n)
-					h := sha256.Sum256([]byte(fmt.Sprintf(`["account","alice",%q]`, in.ID)))
-					if h[0]%8 >= 2 {
-						break
-					}
-				}
+			case "no-image-advice":
+				f.m.reply.Text = `{"reply":"happy!","emotion":"joy","image_id":""}`
+			}
+			if name == "legacy" || name == "off" || name == "builtin" {
+				f.m.reply.Text = "ordinary plaintext"
 			}
 			r, e := f.a.Handle(context.Background(), in)
 			if name == "attachment" || name == "document" { // A valid descriptor is mandatory even when no processor exists.
@@ -345,6 +328,9 @@ func TestImageReplyOrchestrationLegacyExclusions(t *testing.T) {
 			}
 			if f.sender.calls != 1 || f.sender.images != 0 || len(f.order) != 1 || r.ImageState != "" {
 				t.Fatalf("excluded path selected %+v order=%v", r, f.order)
+			}
+			if (name == "legacy" || name == "off" || name == "builtin") && f.sender.text != "ordinary plaintext" {
+				t.Fatal("legacy/off/builtin plaintext path changed")
 			}
 		})
 	}

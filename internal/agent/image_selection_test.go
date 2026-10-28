@@ -11,16 +11,15 @@ import (
 
 func selectionFixture() imageSelectionInput {
 	sc := storage.Scope{Account: "acct", User: "user"}
-	return imageSelectionInput{Scope: sc, InboundID: "turn-1", UserText: "I am happy!", Reply: "Happy to hear it.", Profile: storage.Profile{ID: "custom", Name: "Synthetic", Length: "normal", Sticker: "normal"}, Candidates: []storage.LibraryAsset{{ID: 7, Scope: sc, SHA256: strings.Repeat("a", 64), Format: "png", Bytes: 1024, Width: 32, Height: 32, Frames: 1, Tags: []string{" happy "}, State: "ready", Enabled: true}}, NowMillis: 200000000, OrdinarySuccess: true}
+	return imageSelectionInput{Scope: sc, InboundID: "turn-1", UserText: "I am happy!", Reply: "Happy to hear it.", SuggestedID: "7", Profile: storage.Profile{ID: "custom", Name: "Synthetic", Length: "normal", Sticker: "normal"}, Candidates: []storage.LibraryAsset{{ID: 7, Scope: sc, SHA256: strings.Repeat("a", 64), Format: "png", Bytes: 1024, Width: 32, Height: 32, Frames: 1, Tags: []string{" happy "}, State: "ready", Enabled: true}}, NowMillis: 200000000, OrdinarySuccess: true}
 }
 
-// These literals were independently calculated using .NET SHA256 over the UTF8
-// JSON tuples, before implementation: turn-1 byte0=176, turn-2=81, turn-0=106.
-func TestImageSelectionFixedGateVectors(t *testing.T) {
+// Every previously gated identity now accepts the same offered semantic advice.
+func TestImageSelectionSemanticAdviceHasNoRandomGate(t *testing.T) {
 	for _, tc := range []struct {
 		id, frequency string
 		want          bool
-	}{{"turn-1", "low", true}, {"turn-1", "normal", true}, {"turn-2", "low", false}, {"turn-2", "normal", true}, {"turn-0", "low", false}, {"turn-0", "normal", false}} {
+	}{{"turn-1", "low", true}, {"turn-1", "normal", true}, {"turn-2", "low", true}, {"turn-2", "normal", true}, {"turn-0", "low", true}, {"turn-0", "normal", true}} {
 		t.Run(tc.id+"/"+tc.frequency, func(t *testing.T) {
 			in := selectionFixture()
 			in.InboundID = tc.id
@@ -33,26 +32,26 @@ func TestImageSelectionFixedGateVectors(t *testing.T) {
 	}
 }
 
-func TestImageSelectionDualTextLiteralRelevance(t *testing.T) {
+func TestImageSelectionSemanticAdviceNeedsNoLiteralOverlap(t *testing.T) {
 	for _, tc := range []struct {
 		name, user, reply, tag, emotion, description string
 		want                                         bool
 	}{
 		{"trim and case", "HAPPY!", "happy.", " HAPPY ", "", "", true},
-		{"user only", "happy", "sad", "happy", "", "", false},
-		{"reply only", "sad", "happy", "happy", "", "", false},
-		{"description ignored", "happy", "happy", "sad", "", "happy", false},
-		{"invented id ignored", "asset 7", "asset 7", "happy", "", "", false},
-		{"word prefix", "unhappy", "happy", "happy", "", "", false},
-		{"word suffix", "happyish", "happy", "happy", "", "", false},
-		{"underscore boundary", "happy_person", "happy", "happy", "", "", false},
-		{"digit boundary", "happy2", "happy", "happy", "", "", false},
+		{"user only", "happy", "sad", "happy", "", "", true},
+		{"reply only", "sad", "happy", "happy", "", "", true},
+		{"description", "happy", "happy", "sad", "", "happy", true},
+		{"text id irrelevant", "asset 7", "asset 7", "happy", "", "", true},
+		{"word prefix", "unhappy", "happy", "happy", "", "", true},
+		{"word suffix", "happyish", "happy", "happy", "", "", true},
+		{"underscore boundary", "happy_person", "happy", "happy", "", "", true},
+		{"digit boundary", "happy2", "happy", "happy", "", "", true},
 		{"later valid occurrence", "unhappy happy", "happy", "happy", "", "", true},
 		{"emotion", "JOY!", "joy.", "sad", " JOY ", "", true},
-		{"different keys cannot combine", "happy", "joy", "happy", "joy", "", false},
+		{"different semantic words", "happy", "joy", "happy", "joy", "", true},
 		{"nonascii literal", "今天开心", "很开心", "开心", "", "", true},
 		{"punctuation literal", "a+b", "a+b", "a+b", "", "", true},
-		{"blank tags", "happy", "happy", "  ", "", "", false},
+		{"blank tags", "happy", "happy", "  ", "", "", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			in := selectionFixture()
@@ -98,6 +97,10 @@ func TestImageSelectionAdmissionRefusals(t *testing.T) {
 		"profile controls":        func(i *imageSelectionInput) { i.Profile.Name = "\x01" },
 		"too many assets":         func(i *imageSelectionInput) { i.Candidates = make([]storage.LibraryAsset, 129) },
 		"empty assets":            func(i *imageSelectionInput) { i.Candidates = nil },
+		"no suggestion":           func(i *imageSelectionInput) { i.SuggestedID = "" },
+		"unoffered suggestion":    func(i *imageSelectionInput) { i.SuggestedID = "8" },
+		"overflow suggestion":     func(i *imageSelectionInput) { i.SuggestedID = "9223372036854775808" },
+		"noncanonical suggestion": func(i *imageSelectionInput) { i.SuggestedID = "07" },
 	}
 	for name, mutate := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -168,12 +171,12 @@ func TestImageSelectionCooldownAndClock(t *testing.T) {
 		want              bool
 	}{
 		{"never confirmed", "normal", 200000000, 0, 0, true},
-		{"scope normal boundary", "normal", 200000000, 199700000, 0, true},
-		{"scope normal inside", "normal", 200000000, 199700001, 0, false},
-		{"scope low boundary", "low", 200000000, 198200000, 0, true},
-		{"scope low inside", "low", 200000000, 198200001, 0, false},
-		{"asset boundary", "normal", 200000000, 0, 113600000, true},
-		{"asset inside", "normal", 200000000, 0, 113600001, false},
+		{"scope normal boundary", "normal", 200000000, 199970000, 0, true},
+		{"scope normal inside", "normal", 200000000, 199970001, 0, false},
+		{"scope low boundary", "low", 200000000, 199820000, 0, true},
+		{"scope low inside", "low", 200000000, 199820001, 0, false},
+		{"asset boundary", "normal", 200000000, 0, 199400000, true},
+		{"asset inside", "normal", 200000000, 0, 199400001, false},
 		{"future scope", "normal", 200000000, 200000001, 0, false},
 		{"future asset", "normal", 200000000, 0, 200000001, false},
 		{"negative scope", "normal", 200000000, -1, 0, false},
@@ -221,6 +224,7 @@ func TestImageSelectionOrderSkipAndImmutableResult(t *testing.T) {
 	stale.ID = 5
 	stale.LastUsedMillis = in.NowMillis
 	in.Candidates = []storage.LibraryAsset{high, gif, disabled, base, deleting, stale, low}
+	in.SuggestedID = "3"
 	before := make([]storage.LibraryAsset, len(in.Candidates))
 	for n, a := range in.Candidates {
 		before[n] = a
@@ -257,6 +261,7 @@ func TestImageSelectionOrderSkipAndImmutableResult(t *testing.T) {
 		in := selectionFixture()
 		a := in.Candidates[0]
 		in.Candidates = make([]storage.LibraryAsset, 128)
+		in.SuggestedID = "1"
 		for n := range in.Candidates {
 			in.Candidates[n] = a
 			in.Candidates[n].ID = int64(n + 1)
@@ -293,15 +298,13 @@ func TestImageSelectionEarlyRefusalAllocations(t *testing.T) {
 	}
 }
 
-// Additional independent JSON vectors cover tuple separation and Go's canonical
-// escaping: ["ab","c","turn-0"] byte0=113, ["a","bc","turn-0"]=19,
-// ["a\u003c\u0026\u003e","user","turn-0"]=192, ["账","用户","turn-1"]=96.
-func TestImageSelectionCanonicalTupleVectors(t *testing.T) {
+// Scope/identity Unicode or escaping never adds a random selection gate.
+func TestImageSelectionScopeIdentityDoesNotChangeAdvice(t *testing.T) {
 	for _, tc := range []struct {
 		account, user, id string
 		want              bool
 	}{
-		{"ab", "c", "turn-0", true}, {"a", "bc", "turn-0", false},
+		{"ab", "c", "turn-0", true}, {"a", "bc", "turn-0", true},
 		{"a<&>", "user", "turn-0", true}, {"账", "用户", "turn-1", true},
 	} {
 		t.Run(tc.account+"/"+tc.user, func(t *testing.T) {

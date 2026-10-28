@@ -18,6 +18,7 @@ func Assets() http.Handler {
 	resources := make(map[string]resource, 3)
 	for _, entry := range []struct{ route, file, mime string }{
 		{"/", "assets/index.html", "text/html; charset=utf-8"},
+		{"/events", "assets/index.html", "text/html; charset=utf-8"},
 		{"/app.js", "assets/app.js", "text/javascript; charset=utf-8"},
 		{"/style.css", "assets/style.css", "text/css; charset=utf-8"},
 	} {

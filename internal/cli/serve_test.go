@@ -240,7 +240,7 @@ func TestServeActualWorkerAndHandlerJoin(t *testing.T) {
 	closed := make(chan struct{})
 	var releaseOnce sync.Once
 	release := func() { releaseOnce.Do(func() { close(channel.release); close(httpRelease) }) }
-	w, e := web.New(web.Options{Listen: address, Password: cfg.AdminPassword}, web.Application(c), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w, e := web.New(web.Options{Listen: address, Username: cfg.AdminUsername, Password: cfg.AdminPassword}, web.Application(c), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		close(admitted)
 		<-httpRelease
 		io.WriteString(w, "synthetic")
@@ -332,7 +332,7 @@ func TestServeBindFailureUnwinds(t *testing.T) {
 		if e != nil {
 			return nil, nil, e
 		}
-		w, e := web.New(web.Options{Listen: c.Listen, Password: c.AdminPassword}, web.Application(real), web.Assets())
+		w, e := web.New(web.Options{Listen: c.Listen, Username: c.AdminUsername, Password: c.AdminPassword}, web.Application(real), web.Assets())
 		if e != nil {
 			real.Close()
 			return nil, nil, e

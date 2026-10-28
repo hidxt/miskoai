@@ -4,6 +4,8 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/hidxt/miskoai/internal/privatefs"
 )
@@ -21,6 +23,7 @@ type Config struct {
 	Overrides     map[string]bool `json:"overrides"`
 	DeepSeekKey   string          `json:"-"`
 	OllamaKey     string          `json:"-"`
+	AdminUsername string          `json:"-"`
 	AdminPassword string          `json:"-"`
 	desired       Settings
 	effective     Settings
@@ -74,9 +77,16 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	username, present := os.LookupEnv("MISKOAI_ADMIN_USERNAME")
+	if !present {
+		username = "admin"
+	}
+	if !validText(username, 64) || strings.TrimSpace(username) != username || strings.IndexFunc(username, unicode.IsControl) >= 0 {
+		return Config{}, ErrCredentials
+	}
 	password, present := os.LookupEnv("MISKOAI_ADMIN_PASSWORD")
 	if present && !validText(password, 256) {
 		return Config{}, ErrCredentials
 	}
-	return Config{Listen: s.Listen, DataDir: abs, DeepSeekURL: s.DeepSeekURL, Model: s.Model, VisionModel: s.VisionModel, WeixinURL: s.WeixinURL, MaxOutput: s.MaxOutput, ContextBytes: s.ContextBytes, ContextTokens: s.ContextTokens, Overrides: overrides, DeepSeekKey: deep, OllamaKey: search, AdminPassword: password, desired: desired, effective: s}, nil
+	return Config{Listen: s.Listen, DataDir: abs, DeepSeekURL: s.DeepSeekURL, Model: s.Model, VisionModel: s.VisionModel, WeixinURL: s.WeixinURL, MaxOutput: s.MaxOutput, ContextBytes: s.ContextBytes, ContextTokens: s.ContextTokens, Overrides: overrides, DeepSeekKey: deep, OllamaKey: search, AdminUsername: username, AdminPassword: password, desired: desired, effective: s}, nil
 }

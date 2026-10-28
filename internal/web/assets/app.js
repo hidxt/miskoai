@@ -9,7 +9,11 @@
     ["listen", "监听地址", "text"], ["deepseek_url", "DeepSeek 官方地址", "url"], ["model", "文本模型", "text"], ["vision_model", "视觉模型", "text"], ["weixin_url", "微信服务地址", "url"],
     ["max_output_tokens", "最大输出 Tokens", "number", 1, 4096], ["context_bytes", "上下文 Bytes", "number", 16384, 49152], ["context_tokens", "上下文 Tokens", "number", 4096, 65536]
   ];
-  const builtinNames = { warm: "温暖自然", concise: "简洁直接", professional: "专业清晰" };
+  let settingsSnapshot = null;
+  let settingsEditing = false;
+  let profileSequence = 0;
+  const eventPage = { offset: 0, next: 0, more: false, previous: [] };
+  const standaloneEvents = typeof location !== "undefined" && location.pathname === "/events";
   function node(tag, text, className) { const n = document.createElement(tag); if (text !== undefined && text !== null) n.textContent = String(text); if (className) n.className = className; return n; }
   function text(id, value) { $(id).textContent = value ?? ""; }
   function empty(container, message = "暂无记录。") { container.replaceChildren(node("p", message, "empty")); }
@@ -17,6 +21,8 @@
   function message(value, error = false) { const target = state.authenticated ? $("notice") : $("login-message"); target.textContent = value; target.classList.toggle("error", error); }
   function safeFailure(status) { return ({ 400: "输入或维护条件无效，请核对后重试。", 401: "会话已失效，请重新登录。", 403: "会话校验失败，请刷新会话后核对操作结果。", 404: "记录不存在或接口不可用，请刷新列表。", 408: "操作超时，请核对结果后再手动重试。", 409: "服务繁忙或记录已变化，请刷新后核对。", 429: "登录尝试过多，请稍后再试。", 503: "服务未配置或暂不可用。" })[status] || "服务未能完成操作，请核对状态后再试。"; }
   function resetPrivate() {
+    settingsSnapshot = null; settingsEditing = false; eventPage.offset = 0; eventPage.next = 0; eventPage.more = false; eventPage.previous = [];
+    $("event-list").replaceChildren(); text("events-page", "");
     clearLibrary(); clearLibraryPreview(); $("library-upload-form").reset();
     $("library-list").replaceChildren(); text("library-page", "");
     state.library = { after: "0", next: "0", previous: [], more: false };
@@ -114,7 +120,7 @@
     state.csrf = validToken(csrf); state.authenticated = true;
     $("login-view").hidden = true; $("console-view").hidden = false;
     $("session-warning").hidden = true; text("login-message", "");
-    selectSection("dashboard"); await loadDashboard();
+    selectSection(standaloneEvents ? "event-page" : "dashboard"); await loadSection();
   }
   function selectSection(name) {
     state.section = name;
@@ -137,13 +143,24 @@
   function channelLabel(value) { return ({ unconfigured: "通道未配置", provider_unconfigured: "模型服务未配置", restore_paused: "恢复后暂停", receiving: "接收中", backoff: "退避等待", stopped: "已停止", authorization_expired: "授权失效", paused: "已暂停", quarantined: "已隔离", closed: "已关闭", closing: "关闭中", unavailable: "不可用" })[value] || "未知状态（请查看安全状态码）"; }
   async function loadDashboard() {
     const s = await request("/api/status");
-    $("status-cards").replaceChildren(metric("通道状态", channelLabel(s.channel_state), s.channel_state), metric("Go 堆内存", `${(s.heap_bytes / 1048576).toFixed(1)} MiB`, "RSS 不可用；非进程总内存"), metric("运行时间", `${Math.floor(s.uptime_seconds / 60)} 分钟`, "当前进程"), metric("Goroutines", s.goroutines, `GC 次数 ${s.gc_count}`));
+    const minutes = Math.floor(s.uptime_seconds / 60);
+    $("status-cards").replaceChildren(metric("通道", channelLabel(s.channel_state), diagnosticLabel(s.diagnostic_code || s.channel_state)), metric("Go 堆内存", `${(s.heap_bytes / 1048576).toFixed(1)} MiB`, "非进程 RSS"), metric("运行时间", `${Math.floor(minutes / 60)} 小时 ${minutes % 60} 分钟`, "当前进程"), metric("协程", s.goroutines, `GC ${s.gc_count} 次`));
     $("channel-status").replaceChildren();
-    pairs($("channel-status"), [["DeepSeek 凭据", s.has_deepseek_key ? "已配置（不显示密钥）" : "未配置"], ["Ollama 凭据", s.has_ollama_key ? "已配置（不显示密钥）" : "未配置"], ["通道状态", s.channel.state], ["接收 / 处理 / 发送", `${s.channel.received} / ${s.channel.processed} / ${s.channel.sent}`], ["重复 / 失败 / 不明确", `${s.channel.duplicate} / ${s.channel.failed} / ${s.channel.ambiguous}`], ["通道最近状态码", s.channel.last_code || "无"], ["摘要完成 / 失败", `${s.summary.completed} / ${s.summary.failed}`], ["摘要最近状态码", s.summary.last_code || "无"]]);
+    pairs($("channel-status"), [["接收 / 处理 / 发送", `${s.channel.received ?? 0} / ${s.channel.processed ?? 0} / ${s.channel.sent ?? 0}`], ["重复 / 失败 / 待核对", `${s.channel.duplicate ?? 0} / ${s.channel.failed ?? 0} / ${s.channel.ambiguous ?? 0}`], ["摘要完成 / 失败", `${s.summary.completed ?? 0} / ${s.summary.failed ?? 0}`]]);
+    const details = node("details"); details.append(node("summary", "状态详情与代码"));
+    pairs(details, [["通道", channelLabel(s.channel.state)], ["诊断", diagnosticLabel(s.diagnostic_code || s.channel_state)], ["诊断代码", s.diagnostic_code || s.channel_state], ["通道最近代码", s.channel.last_code || "无"], ["摘要最近代码", s.summary.last_code || "无"]]); $("channel-status").append(details);
     $("usage-status").replaceChildren();
     pairs($("usage-status"), [["聊天 / 摘要尝试", `${s.logical_attempts.chat} / ${s.logical_attempts.summary}`], ["视觉 / 搜索尝试", `${s.logical_attempts.vision} / ${s.logical_attempts.search}`], ["输入 / 输出 Tokens", `${s.successful_usage.prompt_tokens} / ${s.successful_usage.completion_tokens}`], ["成功总 Tokens", s.successful_usage.total_tokens], ["缓存 / 推理 Tokens", `${s.successful_usage.cached_tokens} / ${s.successful_usage.reasoning_tokens}`]]);
     $("events").replaceChildren(); if (!s.events.length) empty($("events"), "暂无安全事件记录。");
-    else for (const event of s.events) { const r = node("div", null, "record"); r.append(node("span", event.kind), node("p", event.at, "meta")); $("events").append(r); }
+    else renderEvents($("events"), s.events.slice(-3).reverse());
+  }
+  function diagnosticLabel(code) { return ({ transport: "连接异常，请查看诊断", model: "模型请求失败", storage: "存储操作失败", rate: "请求受限，等待恢复", send_ambiguous: "发送结果待人工核对", "send-ambiguous": "发送结果待人工核对", receiving: "正在接收消息", backoff: "稍后继续接收", authorization_expired: "请重新授权微信", "auth-expired": "请重新授权微信", unconfigured: "请完成服务配置", provider_unconfigured: "请完成模型配置", restore_paused: "核对恢复记录后再启用", "restore-paused": "核对恢复记录后再启用" })[code] || channelLabel(code); }
+  function renderEvents(target, events) { target.replaceChildren(); if (!events.length) return empty(target, "暂无事件。"); for (const event of events) { const row = node("div", null, "record event-row"); row.append(node("span", event.kind), node("time", event.at, "meta")); target.append(row); } }
+  async function loadEvents() {
+    const data = await request(`/api/events?offset=${eventPage.offset}&limit=20`);
+    if (!Array.isArray(data.items) || data.items.length > 20 || !Number.isSafeInteger(data.next_offset) || data.next_offset < eventPage.offset || data.next_offset > 128 || typeof data.has_more !== "boolean") throw new Error("事件响应无效，请刷新后重试。");
+    eventPage.next = data.next_offset; eventPage.more = data.has_more; renderEvents($("event-list"), data.items);
+    text("events-page", `第 ${eventPage.previous.length + 1} 页`); pagerDisabled($("events-prev"), !eventPage.previous.length); pagerDisabled($("events-next"), !data.has_more);
   }
   // Read controls explicitly: pending controls are disabled to prevent duplicate
   // submissions, and native FormData would omit those disabled values.
@@ -153,23 +170,29 @@
   function canonicalListen(value) { const match = /^(127\.0\.0\.1|\[::1\]):([1-9][0-9]{0,4})$/.exec(value); if (!match || Number(match[2]) > 65535) throw new Error("监听地址必须是 127.0.0.1:端口 或 [::1]:端口（1–65535，无前导零）。"); return value; }
   async function loadAI() {
     const s = await request("/api/settings");
+    settingsSnapshot = s; renderSettings(s.desired, false);
+    await loadProfiles();
+  }
+  function renderSettings(values, editing) {
+    settingsEditing = editing; const s = settingsSnapshot;
     text("restart-state", s.restart_required ? "期望配置与当前生效配置不同，需要重启服务。" : "期望配置与当前生效配置一致。");
     const target = $("settings-fields"); target.replaceChildren();
     for (const [key, label, type, min, max] of fields) {
-      const wrapper = node("label", label); const input = node("input"); input.name = key; input.type = type; input.required = true; input.value = s.desired[key];
+      const wrapper = node("div", null, "setting-field"); const inputLabel = node("label", label); const input = node("input"); input.name = key; input.type = type; input.required = true; input.value = values[key]; input.readOnly = !editing;
       if (type === "number") { input.min = min; input.max = max; input.step = "1"; } else input.maxLength = key === "listen" ? 64 : 2048;
       const overridden = s.overrides[key] === true;
-      wrapper.append(input, node("span", `当前生效：${s.effective[key]}\nENV 覆盖：${overridden ? "是 · 重启仍优先使用 ENV" : "否"}`, "field-state")); target.append(wrapper);
+      const details = node("details", null, "field-details"); details.append(node("summary", overridden ? "ENV 覆盖中" : "查看当前生效值"), node("span", `当前生效：${s.effective[key]}\nENV 覆盖：${overridden ? "是，重启仍优先使用 ENV" : "否"}`, "field-state"));
+      inputLabel.append(input); wrapper.append(inputLabel, details); target.append(wrapper);
     }
-    await loadProfiles();
+    $("settings-edit").hidden = editing; for (const id of ["settings-save", "settings-cancel", "settings-defaults"]) $(id).hidden = !editing;
   }
   async function loadProfiles() {
-    const data = await request("/api/profiles"); text("active-profile", `当前档案：${data.active.name}（${data.active.id}）· 表达不授予权限`);
+    const data = await request("/api/profiles"); text("active-profile", data.custom.some(p => p.id === data.active.id) ? `正在使用：${data.active.name}` : "选择或新建人物设定，用于之后的对话。");
     const target = $("profile-list"); target.replaceChildren();
-    for (const id of data.builtin_ids) { const r = node("article", null, "record"); r.append(node("h3", builtinNames[id] || id), node("p", `内置 · ${id}`, "meta")); const b = action(data.active.id === id ? "正在使用" : "使用档案", async () => { await request("/api/profiles/select", { method: "POST", body: { id } }); await loadProfiles(); }); b.disabled = data.active.id === id; r.append(b); target.append(r); }
+    if (!data.custom.length) empty(target, "还没有人物设定，创建一个熟悉的说话方式。");
     for (const p of data.custom) {
-      const r = node("article", null, "record"); r.append(node("h3", p.name), node("p", p.description, "preserve"), node("p", `自定义 · ${p.id}`, "meta")); const controls = node("div", null, "actions");
-      controls.append(action(data.active.id === p.id ? "正在使用" : "使用", async () => { await request("/api/profiles/select", { method: "POST", body: { id: p.id } }); await loadProfiles(); }), action("编辑", async () => editProfile(p)), action("删除", async () => { if (!await confirmOperation("删除表达档案", `删除自定义档案「${p.name}」？`)) return false; await request(`/api/profiles?id=${encodeURIComponent(p.id)}`, { method: "DELETE" }); if (state.profileID === p.id) clearProfile(); await loadProfiles(); }, { danger: true })); r.append(controls); target.append(r);
+      const r = node("article", null, "record"); r.append(node("h3", p.name), node("p", p.style || p.description, "preserve")); const controls = node("div", null, "actions");
+      controls.append(action(data.active.id === p.id ? "正在使用" : "使用", async () => { await request("/api/profiles/select", { method: "POST", body: { id: p.id } }); await loadProfiles(); }), action("编辑", async () => editProfile(p)), action("删除", async () => { if (!await confirmOperation("删除人物设定", `删除「${p.name}」？`)) return false; await request(`/api/profiles?id=${encodeURIComponent(p.id)}`, { method: "DELETE" }); if (state.profileID === p.id) clearProfile(); await loadProfiles(); }, { danger: true })); r.append(controls); target.append(r);
     }
   }
   function clearProfile() { $("profile-form").reset(); $("profile-form").elements.namedItem("id").readOnly = false; state.profileID = null; }
@@ -267,15 +290,21 @@
   }
   async function loadMemory() { await loadFacts(); await loadMemoryReview(); await loadHistory(); }
   async function loadSystem() { const d = await request("/api/diagnostics"); $("diagnostics").replaceChildren(); pairs($("diagnostics"), [["产品", d.product], ["Go 版本", d.go_version], ["系统 / 架构", `${d.os} / ${d.architecture}`], ["外部探测", d.external_probe === false ? "未执行" : "未知状态"], ["通道", `${channelLabel(d.status.channel_state)} · ${d.status.channel_state}`], ["进程 RSS", "不可用；不作资源验收结论"]]); }
-  async function loadSection() { if (state.section === "dashboard") await loadDashboard(); else if (state.section === "ai") await loadAI(); else if (state.section === "memory") await loadMemory(); else if (state.section === "library") await loadLibrary(); else await loadSystem(); }
+  async function loadSection() { if (state.section === "event-page") await loadEvents(); else if (state.section === "dashboard") await loadDashboard(); else if (state.section === "ai") await loadAI(); else if (state.section === "memory") await loadMemory(); else if (state.section === "library") await loadLibrary(); else await loadSystem(); }
   async function download(path, filename, limit, type) { const blob = await request(path, { method: "POST", body: {}, download: { limit, type } }); const url = URL.createObjectURL(blob); const link = node("a"); link.href = url; link.download = filename; document.body.append(link); try { link.click(); } finally { link.remove(); URL.revokeObjectURL(url); } }
-  $("login-form").addEventListener("submit", (e) => { e.preventDefault(); const password = $("password").value; $("password").value = ""; run(async () => { const b = await request("/api/bootstrap"); const data = await request("/api/login", { method: "POST", body: { password, nonce: validToken(b.nonce) } }); await enter(data.csrf); }); });
+  $("login-form").addEventListener("submit", (e) => { e.preventDefault(); const username = $("username").value; const password = $("password").value; $("password").value = ""; run(async () => { const b = await request("/api/bootstrap"); const data = await request("/api/login", { method: "POST", body: { username, password, nonce: validToken(b.nonce) } }); await enter(data.csrf); }); });
   $("logout").addEventListener("click", () => { const token = state.csrf; forgetSession("已退出本页面。正在结束服务端会话…"); run(async () => { if (!token) throw new Error("本页面数据已清除；服务端会话将在到期后失效。可重新登录后再退出。"); state.csrf = token; try { await request("/api/logout", { method: "POST", body: {} }); } finally { state.csrf = ""; } }, "已退出登录，页面数据已清除。"); });
   $("cancel-request").addEventListener("click", () => { if (confirmation) resolveConfirmation(false); if (activeRequest) activeRequest.abort(); });
   $("session-refresh").addEventListener("click", () => run(async () => { try { const data = await request("/api/session"); state.csrf = validToken(data.csrf); $("session-warning").hidden = true; await loadSection(); } catch (error) { if (!state.csrf) forgetSession("会话不可用，请重新登录。"); throw error; } }, "会话已刷新；请核对状态后手动提交操作。"));
   for (const b of document.querySelectorAll("[data-section]")) b.addEventListener("click", () => run(async () => { selectSection(b.dataset.section); await loadSection(); $("main").focus(); }));
   document.querySelector(".brand").addEventListener("click", (e) => { e.preventDefault(); run(async () => { selectSection("dashboard"); await loadDashboard(); }); });
   for (const [id, task] of [["refresh-dashboard", loadDashboard], ["refresh-ai", loadAI], ["refresh-memory", loadMemory], ["refresh-system", loadSystem], ["refresh-library", refreshLibrary]]) $(id).addEventListener("click", () => run(task));
+  $("refresh-events").addEventListener("click", () => run(async () => { eventPage.offset = 0; eventPage.previous = []; await loadEvents(); }));
+  $("events-prev").addEventListener("click", () => run(async () => { if (!eventPage.previous.length) return; eventPage.offset = eventPage.previous.pop(); await loadEvents(); }));
+  $("events-next").addEventListener("click", () => run(async () => { if (!eventPage.more) return; eventPage.previous.push(eventPage.offset); eventPage.offset = eventPage.next; await loadEvents(); }));
+  $("settings-edit").addEventListener("click", () => { if (settingsSnapshot) renderSettings(settingsSnapshot.desired, true); });
+  $("settings-cancel").addEventListener("click", () => { if (settingsSnapshot) { renderSettings(settingsSnapshot.desired, false); message("已取消配置修改。"); } });
+  $("settings-defaults").addEventListener("click", () => run(async () => { if (!settingsEditing) return false; const defaults = await request("/api/settings/defaults"); renderSettings(defaults, true); return "已填入默认值，点击保存后才会写入。ENV 覆盖仍然优先，重启后生效。"; }));
   $("library-upload-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => {
     const file = $("library-file").files[0]; if (!file || file.size < 1 || file.size > 4 * 1048576) throw new Error("请选择非空且不超过 4 MiB 的 PNG、JPEG 或 GIF；服务端将校验实际内容。");
     const result = await request("/api/library", { method: "POST", raw: file });
@@ -292,9 +321,9 @@
   $("cancel-library").addEventListener("click", clearLibrary);
   $("library-prev").addEventListener("click", () => run(async () => { if (!state.library.previous.length) return; state.library.after = state.library.previous.pop(); await loadLibrary(); }));
   $("library-next").addEventListener("click", () => run(async () => { if (!state.library.more) return; state.library.previous.push(state.library.after); state.library.after = state.library.next; await loadLibrary(); }));
-  $("settings-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => { const data = formData("settings-form"); const body = {}; for (const [key, , type, min, max] of fields) body[key] = type === "number" ? integer(data.get(key), min, max) : data.get(key); canonicalListen(body.listen); await request("/api/settings", { method: "POST", body }); await loadAI(); }, "期望配置已保存。请查看当前生效值和重启提示。"); });
-  $("profile-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => { const data = formData("profile-form"); const body = {}; for (const key of ["id", "name", "description", "style", "address", "length", "sticker"]) body[key] = data.get(key); if (Object.hasOwn(builtinNames, body.id)) throw new Error("内置档案不可覆盖，请使用新的标识。"); for (const [key, limit, label] of [["name", 128, "名称"], ["description", 1024, "说明"], ["style", 512, "风格"], ["address", 128, "称呼"]]) boundedText(body[key], limit, label); body.humor = integer(data.get("humor"), 0, 3); await request("/api/profiles", { method: "POST", body }); clearProfile(); await loadProfiles(); }, "档案已保存；选择后用于下一条消息。"); });
-  $("new-profile").addEventListener("click", () => { clearProfile(); $("profile-form").elements.namedItem("id").focus(); }); $("cancel-profile").addEventListener("click", clearProfile);
+  $("settings-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => { if (!settingsEditing) return false; const data = formData("settings-form"); const body = {}; for (const [key, , type, min, max] of fields) body[key] = type === "number" ? integer(data.get(key), min, max) : data.get(key); canonicalListen(body.listen); await request("/api/settings", { method: "POST", body }); await loadAI(); }, "期望配置已保存。请查看当前生效值和重启提示。"); });
+  $("profile-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => { const data = formData("profile-form"); const body = {}; for (const key of ["name", "description", "style", "address", "length", "sticker"]) body[key] = data.get(key); body.id = state.profileID || `persona_${Date.now().toString(36)}_${(++profileSequence).toString(36)}_${Math.random().toString(36).slice(2, 12)}`; for (const [key, limit, label] of [["name", 128, "名称"], ["description", 1024, "说明"], ["style", 512, "风格"], ["address", 128, "称呼"]]) boundedText(body[key], limit, label); body.humor = integer(data.get("humor"), 0, 3); await request("/api/profiles", { method: "POST", body }); clearProfile(); await loadProfiles(); }, "人物设定已保存；选择后用于下一条消息。"); });
+  $("new-profile").addEventListener("click", () => { clearProfile(); $("profile-form").elements.namedItem("name").focus(); }); $("cancel-profile").addEventListener("click", clearProfile);
   $("fact-form").addEventListener("submit", (e) => { e.preventDefault(); run(async () => { const data = formData("fact-form"); const body = { content: boundedText(data.get("content"), 16384, "事实内容"), category: boundedText(data.get("category"), 256, "分类"), importance: integer(data.get("importance"), 0, 100), expires_at: data.get("expires_at").trim() || null }; const editing = state.factID !== null; if (editing) body.id = stringID(state.factID); await request("/api/facts", { method: editing ? "PATCH" : "POST", body }); clearFact(); await loadFacts(); }, "事实已保存。"); });
   $("new-fact").addEventListener("click", () => { clearFact(); $("fact-form").elements.content.focus(); }); $("cancel-fact").addEventListener("click", clearFact);
   for (const [kind, form, query, limit, load] of [["facts", "fact-search", "fact-query", 16, loadFacts], ["history", "history-search", "history-query", 8, loadHistory]]) {

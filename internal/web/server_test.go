@@ -313,7 +313,7 @@ func TestURLQueryAndOverrideRefusal(t *testing.T) {
 	calls := 0
 	s := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls++; w.WriteHeader(204) }))
 	cookie, csrf := login(t, s)
-	for _, path := range []string{"/api/write?password=secret-canary", "/api/write?%74oken=x", "/api/write?CSRF=x", "/api/write?session_token=x", "/api/write?admin_password=x", "/api/write?api_key=x", "/api/write?bot_token=x", "/api/write?nonce=x", "/api/write?session=x", "/api/write?MiskoAI_session=x", "/api/write?x=%zz", "/api/write?x=a;b", "/api/session?q=x", "/api/bootstrap?q=x", "/api/logout?q=x", "/api/login?q=x", "/api%2fwrite"} {
+	for _, path := range []string{"/api/write?username=owner-canary", "/api/write?admin_username=x", "/api/write?password=secret-canary", "/api/write?%74oken=x", "/api/write?CSRF=x", "/api/write?session_token=x", "/api/write?admin_password=x", "/api/write?api_key=x", "/api/write?bot_token=x", "/api/write?nonce=x", "/api/write?session=x", "/api/write?MiskoAI_session=x", "/api/write?x=%zz", "/api/write?x=a;b", "/api/session?q=x", "/api/bootstrap?q=x", "/api/logout?q=x", "/api/login?q=x", "/api%2fwrite"} {
 		r := httptest.NewRequest("GET", path, nil)
 		r.Host = testHost
 		r.AddCookie(cookie)

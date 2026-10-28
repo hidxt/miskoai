@@ -1,27 +1,27 @@
 :root {
-  --bg-page: #faf8f5;
-  --bg-Subtle: #f3f0ea;
-  --bg-sidebar: #f4f1eb;
+  --bg-page: #f1f6fa;
+  --bg-Subtle: #eaf1f7;
+  --bg-sidebar: #f5faff;
   --bg-surface: #ffffff;
-  --bg-elevated: #fcfbf9;
+  --bg-elevated: #f5f9fc;
   --bg-hover: #eef2f6;
   --bg-input: #ffffff;
-  --bg-readonly: #f5f3ef;
+  --bg-readonly: #eaf1f6;
 
-  --ink: #1e242b;
-  --ink-secondary: #3d4652;
-  --muted: #5c6672;
+  --ink: #17304a;
+  --ink-secondary: #304e68;
+  --muted: #53687b;
 
-  --line: #e4dfd7;
-  --line-strong: #cfc8bc;
-  --line-input: #cbd2d9;
+  --line: #d6e3ed;
+  --line-strong: #b9ccda;
+  --line-input: #b7cbdc;
 
-  --accent: #2b5c8f;
-  --accent-hover: #214973;
-  --accent-soft: #edf3f9;
-  --accent-border: #bfd3e6;
+  --accent: #2164d8;
+  --accent-hover: #184fac;
+  --accent-soft: #eaf2ff;
+  --accent-border: #b7cef2;
 
-  --focus-ring: #2b5c8f;
+  --focus-ring: #2164d8;
 
   --info-bg: #eff4f9;
   --info-border: #cde0f0;
@@ -37,7 +37,7 @@
   --danger-border: #e8c0bc;
   --danger-zone-bg: #fffcfb;
 
-  --status-ok: #2e7d5b;
+  --status-ok: #238c8a;
 
   --radius-sm: 8px;
   --radius-md: 11px;
@@ -47,7 +47,7 @@
   --shadow-card: 0 1px 3px rgba(30, 36, 43, 0.04), 0 4px 12px rgba(30, 36, 43, 0.025);
   --shadow-dialog: 0 20px 60px rgba(20, 26, 33, 0.18), 0 4px 16px rgba(20, 26, 33, 0.08);
 
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", system-ui, sans-serif;
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   color: var(--ink);
   background: var(--bg-page);
   font-size: 15px;
@@ -475,8 +475,7 @@ input[type="file"]::file-selector-button:hover {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(250, 248, 245, 0.88);
-  backdrop-filter: blur(8px);
+  background: var(--bg-surface);
   border-bottom: 1px solid var(--line);
   font-size: 13px;
   font-weight: 500;
@@ -908,7 +907,7 @@ footer {
   display: grid;
   place-items: center;
   padding: 28px 18px;
-  background: radial-gradient(ellipse at 18% 15%, #e8eff7 0%, transparent 55%),
+  background: radial-gradient(ellipse at 18% 15%, #dceaf9 0%, transparent 55%),
               radial-gradient(ellipse at 85% 85%, #f2ece1 0%, transparent 55%),
               var(--bg-page);
 }
@@ -1243,3 +1242,43 @@ dialog .actions {
     scroll-behavior: auto !important;
   }
 }
+
+/* Quiet glass: opaque surfaces first, translucency only with blur support. */
+body { background: radial-gradient(ellipse at 85% 5%, #dceef2 0, transparent 48%), radial-gradient(ellipse at 20% 80%, #dfeafa 0, transparent 48%), var(--bg-page); background-attachment: fixed; }
+.sidebar { background: #f6faff; border-right-color: #d6e3ed; }
+.card { border-color: #d6e3ed; box-shadow: 0 8px 28px rgba(38, 75, 111, .045); }
+.metric { border-radius: 12px; box-shadow: none; }
+.metric .value { font-size: clamp(17px, 1.65vw, 23px); }
+.brand-mark { background: #238c8a; border-radius: 14px 14px 14px 4px; box-shadow: none; }
+.sidebar nav button[aria-current="page"] { background: #e8f1ff; border-color: #bed3f5; box-shadow: inset 3px 0 #2164d8; }
+.login-card { max-width: 460px; border-color: #d3e3ed; border-radius: 28px 28px 28px 8px; box-shadow: 0 24px 70px rgba(23, 48, 74, .09); }
+.login-brand { color: #238c8a; font-weight: 700; margin: 16px 0 12px; }
+.login-card h1 { font-size: 32px; line-height: 1.45; letter-spacing: -.03em; }
+.login-card form { text-align: left; }
+.login-card label { margin-top: 12px; }
+.login-wrap { background: transparent; }
+@supports (backdrop-filter: blur(16px)) {
+  .sidebar { background: #f7fbffbf; backdrop-filter: blur(20px); }
+  .topbar { background: #f8fcffb8; backdrop-filter: blur(16px); }
+  .card, .login-card { background: #ffffffcc; backdrop-filter: blur(16px); border-color: #ffffff; }
+  .metric { background: #ffffffa6; backdrop-filter: blur(16px); border-color: #ffffff; }
+}
+details > summary { cursor: pointer; color: var(--accent); font-weight: 600; padding: 10px 0; }
+details .key-values { margin-top: 8px; }
+.persona-advanced { border-top: 1px solid var(--line); margin: 16px 0; }
+.persona-advanced[open] > summary { margin-bottom: 12px; }
+.event-row { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+.event-row .meta { margin: 0; flex-shrink: 0; }
+#event-page .page-heading a { display: inline-block; margin-bottom: 14px; }
+.backup-formats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.backup-format { min-width: 0; padding: 18px; background: #f2f7fbbf; border: 1px solid var(--line); border-radius: 12px; }
+.backup-format > h3 { padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--line); font-size: 17px; }
+.format-tag { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.backup-step + .backup-step { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); }
+.backup-step h2 { font-size: 14px; }
+.backup-step p { font-size: 13px; color: var(--muted); }
+.backup-step input[type="file"] { max-width: 100%; }
+@media (max-width: 1100px) { .backup-formats { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .event-row { flex-direction: column; gap: 4px; } .event-row .meta { flex-shrink: 1; } .login-card h1 { font-size: 27px; } .backup-format { padding: 14px; } }
+.setting-field { min-width: 0; }
+.field-details > summary { font-size: 12px; padding: 5px 0; font-weight: 400; }

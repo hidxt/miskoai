@@ -1,7 +1,8 @@
 # MiskoAI tasks
 
+2026-10-29 revision checkpoint: engineering **98% (49/50 historical phase gates)**. Owner started F01–F08; all eight groups are implemented in the working candidate. Primary full Windows **3319 PASS / 0 FAIL / 4 platform SKIP**, full vet 0, Node **61 PASS**, three platform builds 0 and current source/symbol govulncheck **0 findings**; concentrated independent review has **0 unresolved C/I/M**. Actual synthetic browser checks passed for login/settings/personas/events/PNG/responsive layout. Fresh exact-source native CI/race, live test-server replacement and owner recall/image acceptance remain pending; existing pilot and deferred public release are unchanged. See [revision evidence](docs/research/trial-revisions-local-verification.md) and [prepared maintenance scope](docs/operations/trial-revision-update-2026-10-29.md).
 
-Current: 2026-10-21, owner resumed continuous routine work. Engineering **98% =49/50** at recorded phase gates; **only package50 remains**. The [authoritative checklist](docs/superpowers/project-progress.md) distinguishes engineering progress from final acceptance.
+Current: 2026-10-22. Engineering **98% =49/50** at recorded phase gates. Owner deferred public release50 and requested a test-server full-flow trial before feedback/revisions. [Pilot plan](docs/superpowers/plans/2026-10-21-test-server-pilot.md). The [authoritative checklist](docs/superpowers/project-progress.md) distinguishes engineering progress from final acceptance.
 
 ## Current evidence
 
@@ -17,9 +18,19 @@ Current: 2026-10-21, owner resumed continuous routine work. Engineering **98% =4
 
 ## Remaining work
 
+**Current owner start2026-10-28:** “先修复这些，开始修复” lifts the prior record-only hold for F01—F08. Implementation has started in three disjoint permitted gpt-6.1-sol/medium tasks, primary integrates/reviews. [Current design](docs/superpowers/specs/2026-10-28-trial-revisions-design.md), [implementation plan](docs/superpowers/plans/2026-10-28-trial-revisions.md). Historical hold statements below are superseded for this scope. New implementation/local/native/live/final gates pending;98% unchanged. Existing server candidate remains running until a verified update/maintenance boundary; public release still deferred.
+
+**Additional trial feedback2026-10-28:** owner invoked frontend-design and specified dashboard hour+minute uptime/more diagnostic codes/compact channel-summary/global copy cleanup/latest3events+independent events page, unified backup/restore, explicit model-edit mode+defaults, simpler custom-only人物设定, and modern frosted-glass UI. Consolidated as F04—F08 alongside original F01—F03 in docs/operations/trial-feedback-2026-10-22.md. Previous record-only hold remains; no code/configuration/deployment changes or new tests. Eight feedback groups are not eight new engineering packages;98% unchanged.
+
+**Owner direction2026-10-22:** selected AI emotion-aware image option1 but explicitly requested recording only while collecting more feedback. [Consolidated trial feedback](docs/operations/trial-feedback-2026-10-22.md) records semantic selection and30s/3min/10min limits. Do not start product fixes/new behavior/deployment until owner says to begin consolidated revisions; current trial service continues on existing rules. No implementation/test/CI/live/acceptance credit for the selected proposal.
+
+**New owner-trial blocker:** direct browser save/keyword fact search and history persistence/search passed, but natural Chinese full-question recall failed with owner peer confirmation and two stored test exchanges. Shared whole-term retrieval returns no match for the full question; short keywords find the saved fact. No fix/deployment change yet. [Failure and source trace](docs/research/chinese-memory-recall-trial-failure.md). Prior local/native passes do not accept this new live gate; engineering98% is unchanged.
+
 | Package | Concrete next result |
 |---|---|
-|50|Present reviewed binary/source/checksum/license package and concrete release action for owner decision. No deployment, tag or release yet.|
+|50|Public release deferred by owner; no tag/Release/asset publication. First finish the newly requested isolated server trial and receive feedback.|
+
+**Owner trial:** exact0.1.0/Go1.27.3 Linuxamd64 installed under a fresh locked nonroot account/system unit. Initial configuration/doctor, actual127.0.0.1:18790 listener, nine HTTP checks and manager-confirmed successful stop passed. Owner approved and completed new hidden-input test Keys/fresh QR/normal trial billing. Private provisioning/config validation succeeded; deliberately started service is receiving, both keys loaded, text/vision modelsdeepseek-flash. Ten further login/status/scoped-management/logout checks passed; at that observation zero provider attempts/messages. Owner confirmed the first ordinary AI reply; metadata shows1received/1processed/1sent/1chat attempt/0failed/0ambiguous. Wider user trial/feedback pending. No auto-restart/boot enable or old local state transfer. [Actual pilot evidence](docs/research/test-server-pilot-verification.md). No new percentage credit.
 
 ## Working boundaries
 

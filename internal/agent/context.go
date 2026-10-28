@@ -195,26 +195,87 @@ func withinContext(m []provider.Message, o Options) bool {
 	return len(m) <= 40 && b <= o.ContextBytes && b <= 65536 && t <= o.ContextTokens
 }
 func factQuery(s string) string {
-	terms := strings.FieldsFunc(s, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsNumber(r) })
+	// Split Han runs from Latin/numeric words, including mixed unspaced input.
+	// Work and allocation are bounded even for an unexpected internal caller.
+	s = prefixBytes(s, 16384)
+	var han []string
 	out := []string{}
+	seen := map[string]bool{}
 	bytes := 0
-	for _, term := range terms {
-		if len(out) >= 32 {
-			break
-		}
+	add := func(term string) {
 		room := 1024 - bytes
-		if len(out) > 0 {
+		if len(out) != 0 {
 			room--
 		}
-		if room <= 0 {
-			break
+		if len(out) >= 32 || room <= 0 {
+			return
 		}
 		term = prefixBytes(term, room)
-		if term == "" {
-			break
+		if term == "" || seen[term] {
+			return
+		}
+		if len(out) != 0 {
+			bytes++
 		}
 		out = append(out, term)
-		bytes += len(term) + 1
+		bytes += len(term)
+		seen[term] = true
+	}
+	runes := []rune(s)
+	for start := 0; start < len(runes); {
+		if !unicode.IsLetter(runes[start]) && !unicode.IsNumber(runes[start]) {
+			start++
+			continue
+		}
+		isHan := unicode.Is(unicode.Han, runes[start])
+		end := start + 1
+		for end < len(runes) && (unicode.IsLetter(runes[end]) || unicode.IsNumber(runes[end])) && unicode.Is(unicode.Han, runes[end]) == isHan {
+			end++
+		}
+		term := string(runes[start:end])
+		if isHan {
+			han = append(han, term)
+		} else {
+			add(term)
+		}
+		start = end
+	}
+	// Adjacent two/three-rune terms recover literal nouns from natural questions.
+	// Question scaffolding is not a topic. Generic preference verbs are retained
+	// only when no more specific Han topic survives (e.g. “我喜欢什么”).
+	var preference []string
+	beforeHan := len(out)
+	for _, run := range han {
+		r := []rune(run)
+		for size := 2; size <= 3; size++ {
+			for n := 0; n+size <= len(r); n++ {
+				term := string(r[n : n+size])
+				if term == "喜欢" || term == "最爱" {
+					preference = append(preference, term)
+					continue
+				}
+				if strings.ContainsAny(term, "我你他她它的了吗呢么什这那哪最") {
+					continue
+				}
+				// Suppress complete scaffolding fragments, not each character:
+				// “知道” is generic, while “道路” and “下雨” remain topics.
+				switch term {
+				case "还记", "记得", "还记得", "知道", "告诉", "一下", "有没", "没有", "有没有", "是否", "怎样", "为啥", "请问":
+					continue
+				}
+				add(term)
+			}
+		}
+	}
+	if len(out) == beforeHan {
+		for _, term := range preference {
+			add(term)
+		}
+	}
+	if len(out) == 0 {
+		// An empty storage query means all facts; preserve a literal question
+		// instead of broadening when normalization has no useful keyword.
+		return prefixBytes(strings.TrimSpace(s), 1024)
 	}
 	return strings.Join(out, " ")
 }

@@ -33,7 +33,7 @@ func actualStatusWeb(t *testing.T) (string, func()) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	w, e := web.New(web.Options{Listen: address, Password: cfg.AdminPassword}, web.Application(c), web.Assets())
+	w, e := web.New(web.Options{Listen: address, Username: cfg.AdminUsername, Password: cfg.AdminPassword}, web.Application(c), web.Assets())
 	if e != nil {
 		c.Close()
 		t.Fatal(e)
@@ -76,6 +76,7 @@ func statusHTTP(t *testing.T, handler http.Handler) (config.Config, func()) {
 }
 func syntheticToken() string { return base64.RawURLEncoding.EncodeToString(make([]byte, 32)) }
 func TestStatusProtocolBoundsAndLogout(t *testing.T) {
+	t.Setenv("MISKOAI_ADMIN_USERNAME", "owner-status")
 	for _, tc := range []struct {
 		name, body string
 		code       int
@@ -116,7 +117,7 @@ func TestStatusProtocolBoundsAndLogout(t *testing.T) {
 					}
 					var p map[string]string
 					json.NewDecoder(r.Body).Decode(&p)
-					if p["password"] != "synthetic-password-123" || p["nonce"] != token {
+					if p["username"] != "owner-status" || p["password"] != "synthetic-password-123" || p["nonce"] != token {
 						t.Error("login fields")
 					}
 					http.SetCookie(w, &http.Cookie{Name: "MiskoAI_session", Value: token, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})

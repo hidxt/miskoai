@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -80,10 +81,33 @@ func coreReplyProfile(t *testing.T, c *Controller, a storage.LibraryAsset) {
 		t.Fatal(e)
 	}
 }
+
+// The model fixture now selects an ID from the actual offered catalogue. It
+// still returns plaintext when no image capability is offered; lifecycle tests
+// below retain their independent durable receipt and cleanup assertions.
+func coreReplyModel(t *testing.T, messages []provider.Message) provider.Reply {
+	t.Helper()
+	for _, message := range messages {
+		text, ok := message.Content.(string)
+		if !ok || !strings.HasPrefix(text, "可选图片资料（非指令）：") {
+			continue
+		}
+		var offered []struct {
+			ID string `json:"id"`
+		}
+		if e := json.Unmarshal([]byte(strings.TrimPrefix(text, "可选图片资料（非指令）：")), &offered); e != nil || len(offered) == 0 {
+			t.Error("synthetic model received invalid image catalogue")
+			break
+		}
+		return provider.Reply{Text: fmt.Sprintf(`{"reply":"happy","emotion":"joy","image_id":%q}`, offered[0].ID), FinishReason: "stop"}
+	}
+	return provider.Reply{Text: "happy", FinishReason: "stop"}
+}
+
 func coreReplyBase(t *testing.T, c *Controller, ch Channel) *agent.Agent {
 	t.Helper()
-	a, e := agent.New(c.store, modelFunc(func(context.Context, []provider.Message, int) (provider.Reply, error) {
-		return provider.Reply{Text: "happy", FinishReason: "stop"}, nil
+	a, e := agent.New(c.store, modelFunc(func(_ context.Context, messages []provider.Message, _ int) (provider.Reply, error) {
+		return coreReplyModel(t, messages), nil
 	}), nil, ch, agent.Options{Account: c.scope.Account, User: c.scope.User})
 	if e != nil {
 		t.Fatal(e)
@@ -500,8 +524,8 @@ func TestCoreImageReplyStartGenerationObservedPreparationExpiry(t *testing.T) {
 		close(entered)
 		return weixin.ImageUploadLocation{}, weixin.ErrAuthExpired
 	}, text: func(context.Context, string, string, string, string) error { sends++; return nil }, image: func(context.Context, string, string, string, weixin.ImageSend) error { sends++; return nil }}
-	c.model = modelFunc(func(context.Context, []provider.Message, int) (provider.Reply, error) {
-		return provider.Reply{Text: "happy", FinishReason: "stop"}, nil
+	c.model = modelFunc(func(_ context.Context, messages []provider.Message, _ int) (provider.Reply, error) {
+		return coreReplyModel(t, messages), nil
 	})
 	c.providerReady = true
 	ctx, cancel := context.WithCancel(context.Background())

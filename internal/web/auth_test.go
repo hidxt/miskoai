@@ -14,7 +14,7 @@ func bootstrap(t *testing.T, s *Server) string {
 	return decodeToken(t, request(s, "GET", "/api/bootstrap", "", nil, "", ""), "nonce")
 }
 func loginBody(password, nonce string) string {
-	b, _ := json.Marshal(map[string]string{"password": password, "nonce": nonce})
+	b, _ := json.Marshal(map[string]string{"username": "admin", "password": password, "nonce": nonce})
 	return string(b)
 }
 func login(t *testing.T, s *Server) (*http.Cookie, string) {
@@ -169,7 +169,7 @@ func TestLoginGlobalRateBound(t *testing.T) {
 func TestMalformedLoginUsesSharedRateBudget(t *testing.T) {
 	s := newTestServer(t, nil)
 	for i := 0; i < 10; i++ {
-		if w := request(s, "POST", "/api/login", `{"password":null}`, nil, testOrigin, ""); w.Code != 400 {
+		if w := request(s, "POST", "/api/login", `{"username":"admin","password":null}`, nil, testOrigin, ""); w.Code != 400 {
 			t.Fatalf("malformed attempt %d status %d", i, w.Code)
 		}
 	}
@@ -183,7 +183,7 @@ func TestLoginRollingMinuteAndBackwardClock(t *testing.T) {
 	clock := time.Unix(1800000000, 0)
 	s.now = func() time.Time { return clock }
 	attempt := func() int {
-		return request(s, "POST", "/api/login", `{"password":"wrong","nonce":"x"}`, nil, testOrigin, "").Code
+		return request(s, "POST", "/api/login", `{"username":"admin","password":"wrong","nonce":"x"}`, nil, testOrigin, "").Code
 	}
 	if got := attempt(); got != 401 {
 		t.Fatal(got)
@@ -228,7 +228,7 @@ func TestLoginRollingMinuteAndBackwardClock(t *testing.T) {
 func TestLoginBodyRefusalAndNonceConsumption(t *testing.T) {
 	s := newTestServer(t, nil)
 	nonce := bootstrap(t, s)
-	for _, body := range []string{`{"password":"a","password":"b","nonce":"x"}`, `{"password":null,"nonce":"x"}`, `{"password":"a","nonce":"x"} {}`, strings.Repeat(" ", 2049), "{\"password\":\"" + string([]byte{255}) + "\",\"nonce\":\"x\"}"} {
+	for _, body := range []string{`{"username":"admin","password":"a","password":"b","nonce":"x"}`, `{"username":"admin","password":null,"nonce":"x"}`, `{"username":"admin","password":"a","nonce":"x"} {}`, strings.Repeat(" ", 2049), "{\"username\":\"admin\",\"password\":\"" + string([]byte{255}) + "\",\"nonce\":\"x\"}"} {
 		w := request(s, "POST", "/api/login", body, nil, testOrigin, "")
 		if w.Code != 400 || strings.Contains(w.Body.String(), testPassword) {
 			t.Fatalf("invalid login status/body %d %q", w.Code, w.Body.String())

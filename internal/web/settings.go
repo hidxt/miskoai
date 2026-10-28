@@ -14,6 +14,8 @@ var settingsFields = []string{"listen", "deepseek_url", "model", "vision_model",
 
 func settingsRoute(w http.ResponseWriter, r *http.Request, b managementBackend, q url.Values) {
 	switch r.URL.Path {
+	case "/api/settings/defaults":
+		respondJSON(w, config.DefaultSettings())
 	case "/api/settings":
 		if r.Method == "GET" {
 			desired, effective, overrides := b.Settings()

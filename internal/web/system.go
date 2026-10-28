@@ -126,6 +126,7 @@ type statusDTO struct {
 	GCCount         uint32      `json:"gc_count"`
 	RSSAvailable    bool        `json:"rss_available"`
 	ChannelState    string      `json:"channel_state"`
+	DiagnosticCode  string      `json:"diagnostic_code"`
 	HasDeepSeekKey  bool        `json:"has_deepseek_key"`
 	HasOllamaKey    bool        `json:"has_ollama_key"`
 	Channel         channelDTO  `json:"channel"`
@@ -191,5 +192,5 @@ func statusResponse(s core.Status) statusDTO {
 		}
 	}
 	u := s.Metrics.SuccessfulUsage
-	return statusDTO{s.UptimeSeconds, s.HeapBytes, s.Goroutines, s.GCCount, false, state, s.HasDeepSeekKey, s.HasOllamaKey, channel, summary, attemptsDTO{s.Metrics.ChatAttempts, s.Metrics.SummaryAttempts, s.Metrics.VisionAttempts, s.Metrics.SearchAttempts}, usageDTO{u.PromptTokens, u.CompletionTokens, u.TotalTokens, u.CachedTokens, u.CompletionDetails.ReasoningTokens}, events}
+	return statusDTO{s.UptimeSeconds, s.HeapBytes, s.Goroutines, s.GCCount, false, state, diagnosticCode(s, state), s.HasDeepSeekKey, s.HasOllamaKey, channel, summary, attemptsDTO{s.Metrics.ChatAttempts, s.Metrics.SummaryAttempts, s.Metrics.VisionAttempts, s.Metrics.SearchAttempts}, usageDTO{u.PromptTokens, u.CompletionTokens, u.TotalTokens, u.CachedTokens, u.CompletionDetails.ReasoningTokens}, events}
 }

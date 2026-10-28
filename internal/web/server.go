@@ -20,13 +20,13 @@ import (
 )
 
 // Options contains private configuration supplied by the process owner.
-type Options struct{ Listen, Password string }
+type Options struct{ Listen, Username, Password string }
 
 // Server owns HTTP admission and ephemeral authentication, never application storage.
 // New constructs a single-use Run lifetime. Handler can also serve synthetic requests.
 type Server struct {
 	host, origin, network string
-	password              [32]byte
+	username, password    [32]byte
 	application, assets   http.Handler
 	now                   func() time.Time
 	random                io.Reader
@@ -47,6 +47,12 @@ type Server struct {
 
 // New accepts only canonical literal loopback addresses and a bounded UTF-8 password.
 func New(o Options, application, assets http.Handler) (*Server, error) {
+	if o.Username == "" {
+		o.Username = "admin"
+	}
+	if len(o.Username) > 64 || !utf8.ValidString(o.Username) || strings.TrimSpace(o.Username) != o.Username || strings.IndexFunc(o.Username, unicode.IsControl) >= 0 {
+		return nil, errors.New("web_options")
+	}
 	host, port, err := net.SplitHostPort(o.Listen)
 	if err != nil || (host != "127.0.0.1" && host != "::1") {
 		return nil, errors.New("web_options")
@@ -60,7 +66,7 @@ func New(o Options, application, assets http.Handler) (*Server, error) {
 		network = "tcp6"
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Server{host: o.Listen, origin: "http://" + o.Listen, network: network, password: sha256.Sum256([]byte(o.Password)), application: application, assets: assets, now: time.Now, random: rand.Reader, nonces: make(map[[32]byte]time.Time), sessions: make(map[[32]byte]session), workCtx: ctx, cancelWork: cancel, ready: make(chan struct{})}, nil
+	return &Server{host: o.Listen, origin: "http://" + o.Listen, network: network, username: sha256.Sum256([]byte(o.Username)), password: sha256.Sum256([]byte(o.Password)), application: application, assets: assets, now: time.Now, random: rand.Reader, nonces: make(map[[32]byte]time.Time), sessions: make(map[[32]byte]session), workCtx: ctx, cancelWork: cancel, ready: make(chan struct{})}, nil
 }
 
 // Ready reports the completed successful-bind startup event, not ongoing health.
@@ -174,7 +180,7 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		s.application.ServeHTTP(w, r.WithContext(ctx))
 		return
 	}
-	if (r.Method == "GET" || r.Method == "HEAD") && s.assets != nil && (r.URL.Path == "/" || r.URL.Path == "/app.js" || r.URL.Path == "/style.css") {
+	if (r.Method == "GET" || r.Method == "HEAD") && s.assets != nil && (r.URL.Path == "/" || r.URL.Path == "/events" || r.URL.Path == "/app.js" || r.URL.Path == "/style.css") {
 		s.assets.ServeHTTP(w, r)
 		return
 	}
@@ -200,7 +206,7 @@ func safeRequestTarget(r *http.Request) bool {
 	}
 	for name := range query {
 		switch strings.ToLower(name) {
-		case "password", "nonce", "token", "csrf", "session", "miskoai_session", "session_token", "admin_password", "api_key", "bot_token":
+		case "username", "admin_username", "password", "nonce", "token", "csrf", "session", "miskoai_session", "session_token", "admin_password", "api_key", "bot_token":
 			return false
 		}
 	}

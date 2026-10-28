@@ -101,10 +101,15 @@ func status(ctx context.Context, cfg config.Config, out io.Writer) (result error
 	if e != nil {
 		return errStatus
 	}
+	username := cfg.AdminUsername
+	if username == "" {
+		username = "admin"
+	}
 	body, _ := json.Marshal(struct {
+		Username string `json:"username"`
 		Password string `json:"password"`
 		Nonce    string `json:"nonce"`
-	}{cfg.AdminPassword, nonce})
+	}{username, cfg.AdminPassword, nonce})
 	data, cookies, e := request("POST", "/api/login", body, "", "")
 	if e != nil {
 		return e

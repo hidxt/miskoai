@@ -1,7 +1,8 @@
 # MiskoAI delivery status
 
+2026-10-29 revision checkpoint: engineering **98% (49/50 historical phase gates)**. Owner started F01–F08; all eight groups are implemented in the working candidate. Primary full Windows **3319 PASS / 0 FAIL / 4 platform SKIP**, full vet 0, Node **61 PASS**, three platform builds 0 and current source/symbol govulncheck **0 findings**; concentrated independent review has **0 unresolved C/I/M**. Actual synthetic browser checks passed for login/settings/personas/events/PNG/responsive layout. Fresh exact-source native CI/race, live test-server replacement and owner recall/image acceptance remain pending; existing pilot and deferred public release are unchanged. See [revision evidence](docs/research/trial-revisions-local-verification.md) and [prepared maintenance scope](docs/operations/trial-revision-update-2026-10-29.md).
 
-2026-10-21. Engineering **98% =49/50** at stated phase gates; **one remains:50**. [Progress checklist](docs/superpowers/project-progress.md) is authoritative. Final acceptance/release is incomplete.
+2026-10-22. Engineering **98% =49/50** at stated phase gates; public release50 is deferred by owner until a new test-server full-flow trial and feedback. [Progress checklist](docs/superpowers/project-progress.md) is authoritative. Final acceptance/release is incomplete.
 
 ## Evidence at current checkpoint
 
@@ -23,16 +24,26 @@ Evidence: [local](docs/research/final-product-local-verification.md), [native/se
 
 ## Remaining acceptance
 
+**Superseding owner instruction2026-10-28:** start fixing F01—F08 now. Prior record-only hold no longer prevents implementation; new design/plan and three disjoint permitted Medium tasks are active. No revised candidate/local/native/live/final acceptance yet,98% unchanged. Existing real test service/data untouched; public release remains deferred.
+
+2026-10-28 owner adds frontend-design dashboard/system/model/persona/frosted-glass UI feedback, recorded as F04—F08 with prior three in the trial-feedback document. All remain pending under the record-only hold; implementation/local/native/live evidence and deployed candidate remain unchanged. No progress credit from recording proposals. New diagnostic/event/default/persona behavior still needs appropriate design and verification when owner starts revisions.
+
+**Selected future change, not implemented:** owner chose AI emotion-aware images/natural frequency (normal30s/low3min/same-image10min) and explicitly requested recording only pending more feedback. [Trial feedback](docs/operations/trial-feedback-2026-10-22.md), D101. Current server behavior/local/native/live evidence is unchanged. Implementation and deployment await owner instruction to start consolidated revisions; no progress credit or new acceptance claim.
+
+**New actual-trial failure:** memory/history UI save, persistence and keyword search passed, but natural Chinese full-question memory retrieval/AI recall failed. Source trace and matching UI negative/positive comparison are in [trial failure](docs/research/chinese-memory-recall-trial-failure.md). This remains an open functional acceptance blocker despite previous local/native results. No correction/new server binary/retest or publication is implied; engineering98% remains the recorded phase count.
+
 | Package | Remaining result |
 |---|---|
-|50|Reviewed native/source/license/hash package and owner-approved concrete binary release. No tag, release, systemd installation or general private service startup performed.|
+|50|Reviewed native/source/license/hash package exists; publication is explicitly deferred. No tag, Release or asset upload. Owner requested isolated server trial before revisions/release.|
+
+**New server trial, separate from prior resource/live gates:** verified0.1.0/Go1.27.3 Linuxamd64 installed under a fresh nonroot system unit, loopback18790/private password/external192MiB guard/no auto-restart or boot enable. Initial config/doctor/process/listener/nine HTTP checks and manager-confirmed stop passed. Owner approved/completed new hidden-input Keys/fresh QR and normal trial billing; private provisioning/config validation and deliberate activation succeeded. Actual receiving state, both keys, deepseek-flash text/vision and ten further scoped-management/auth checks passed; observedRSS/HWM18856KiB/Swap0. Initial counters0; owner-confirmed first ordinary AI reply and1received/1processed/1sent/0failed/0ambiguous now verified; broader user full-flow feedback pending. No old private auth/DB/Keys transferred. [Pilot evidence](docs/research/test-server-pilot-verification.md).
 
 See [operator delivery checklist](docs/operations/delivery-checklist.md) and [native operations](docs/operations/native-linux.md). User actions are requested only for a concrete necessary/risky decision; routine internals continue. Primary owns acceptance. Children remain gpt-6.1-sol/medium; latest external agy exception is gemini-3.8-flash-high/high, isolated public simple UI/static/docs, reviewed before integration.
 
 Original private schema2 remains unmigrated and was not opened by new image/auth recovery tests. Earlier approved text testing changed its lifecycle state, so byte-unchanged claims are prohibited. New authorization and old independent/retained copies remain private, scope history not merged. No ordinary Core.Run/paid test or consumed-latch replay is authorized by these records. Configured model remains deepseek-flash.
 
-Actualarm64 runtime, powercrash/indefinite soak/real-provider worst-case peaks and systemd installation are not established by existing evidence. Windows larger-library restoration has a reproducible30s deadline limit; the authorized nativeLinux35-image comparison passed unchanged budgets; the earlier passing single-image resource restore does not close that UI gap. Source-correct constructor cleanup remains distinct from runtime observation where recorded.
+Actualarm64 runtime, powercrash/indefinite soak/real-provider worst-case peaks and packaged user-manager/linger operation are not established by existing evidence. The new isolated system-unit pilot is recorded separately above. Windows larger-library restoration has a reproducible30s deadline limit; the authorized nativeLinux35-image comparison passed unchanged budgets; the earlier passing single-image resource restore does not close that UI gap. Source-correct constructor cleanup remains distinct from runtime observation where recorded.
 
 Full prior DELIVERY bytes: [2026-10-21 archive](docs/superpowers/history/2026-10-21-DELIVERY.md); older archives remain linked there.
 
-Earlier live/server/UI observations retain their recorded Go1.27.2 toolchain/binary scope; no newGo1.27.3 serverRSS/paid/WeChat acceptance is asserted. The final seven assets contain the later verified CI/local metadata; their exactsource archive intentionally preserves source-commit historical status text.
+Earlier live/resource/UI observations retain their recorded Go1.27.2 toolchain/binary scope; the newGo1.27.3 pilot initial RSS observation is separate from those finite resource gates, and the new ordinary text reply is separately owner-confirmed; no wider new provider/media/recovery acceptance is asserted. The final seven assets contain the later verified CI/local metadata; their exactsource archive intentionally preserves source-commit historical status text.
