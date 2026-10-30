@@ -1,5 +1,7 @@
 # Chinese memory recall: owner trial failure — 2026-10-22
 
+2026-10-30 resolution update: revised source a66af6c deployed after all12 native CI checks; owner confirms the normal WeChat reply now recalls the saved synthetic preference for the original natural-question regression. The earlier failure and investigation below remain historical evidence. This is bounded literal-fragment recall, not universal synonym/semantic search. [Update evidence](trial-revision-server-update-verification.md).
+
 Engineering remains **98%=49/50** at recorded local/phase gates. This new real-trial finding blocks final functional acceptance/publication; existing source-bound local/native passes do not override it. No product code, SQLite policy, deployment binary or provider configuration was changed during this investigation.
 
 ## Actual browser and peer evidence

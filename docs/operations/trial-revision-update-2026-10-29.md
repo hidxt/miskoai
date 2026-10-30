@@ -1,6 +1,6 @@
 # Reviewed-candidate test-server update scope
 
-Status: **owner authorized on 2026-10-29, not executed**. Engineering **98%**. Owner approved pushing the reviewed source to existing `codex/foundation`, then updating the existing isolated trial only after exact-source native CI succeeds. The fixed maintenance boundary below is approved; public release remains deferred. The executable maintenance steps still require primary implementation/review and current server precondition checks before execution.
+Status as of2026-10-30: **owner-approved continuation completed; revised trial running; 13 authenticated-management observations passed**. Engineering **98%**. Exact source `a66af6c` CI40752953737/all12 succeeded. The first stopped attempt's cwd refusal remains recorded; subsequent explicit continuation approval preceded successful full backup, fixed-hash atomic installation and one start. Old binary/private copies and consistent bundle remain. Account admin uses the existing password/Keys/authorization. [Actual checkpoint](../research/trial-revision-server-update-verification.md). Owner recall/image trial and public release remain pending; original bounded scope below is retained as the maintenance history.
 
 ## Fixed candidate and prerequisites
 

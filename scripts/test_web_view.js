@@ -147,7 +147,7 @@ async function revisionFixture(config = {}) {
   const settings = { listen: "127.0.0.1:8787", deepseek_url: "https://api.deepseek.com", model: "saved-model", vision_model: "vision", weixin_url: "https://ilinkai.weixin.qq.com", max_output_tokens: 1024, context_bytes: 16384, context_tokens: 4096 };
   const defaults = { ...settings, model: "default-model" };
   const events = Array.from({ length: 24 }, (_, i) => ({ kind: "event-" + i, at: "2026-10-28T00:00:00Z" }));
-  const status = { channel_state: "backoff", diagnostic_code: "transport", heap_bytes: 1048576, uptime_seconds: 7380, goroutines: 2, gc_count: 1, channel: { state: "backoff", received: 3, processed: 2, sent: 1, failed: 1, last_code: "transport" }, summary: {}, logical_attempts: {}, successful_usage: {}, events: [...events].reverse() };
+  const status = { channel_state: "backoff", diagnostic_code: "transport", heap_bytes: 1048576, uptime_seconds: 7380, goroutines: 2, gc_count: 1, channel: { state: "backoff", received: 3, processed: 2, sent: 1, failed: 1, last_code: "transport", image_decision: "plain_text" }, summary: {}, logical_attempts: {}, successful_usage: {}, events: [...events].reverse() };
   async function fetch(path, options) {
     calls.push({ path, method: options.method, body: options.body });
     const url = new URL(path, "http://fixture"); let payload;
@@ -172,6 +172,16 @@ async function revisionFixture(config = {}) {
   return { doc, $, calls, settings, dispatch, nav, idle, resolveDefaults: () => pendingDefaults(new Response(JSON.stringify(defaults))) };
 }
 const revisionTests = [
+  ["image decision is visible only in diagnostic details and cleared on logout", async () => {
+    const f = await revisionFixture();
+    const details = f.$("channel-status").descendants.find(n => n.tagName === "details");
+    assert.ok(details, "diagnostics are collapsed details");
+    assert.ok(details.textContent.includes("配图判定码"));
+    assert.ok(details.textContent.includes("plain_text"));
+    assert.ok(!f.$("status-cards").textContent.includes("plain_text"));
+    await f.dispatch(f.$("logout"));
+    assert.ok(!f.$("channel-status").textContent.includes("plain_text"));
+  }],
   ["account login posts exactly credentials and nonce", async () => {
     const f = await revisionFixture({ login: true }); assert.ok(f.$("username"), "account field exists");
     f.$("username").value = "operator"; f.$("password").value = "synthetic-password"; await f.dispatch(f.$("login-form"), "submit");

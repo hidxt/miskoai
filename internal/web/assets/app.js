@@ -148,7 +148,7 @@
     $("channel-status").replaceChildren();
     pairs($("channel-status"), [["接收 / 处理 / 发送", `${s.channel.received ?? 0} / ${s.channel.processed ?? 0} / ${s.channel.sent ?? 0}`], ["重复 / 失败 / 待核对", `${s.channel.duplicate ?? 0} / ${s.channel.failed ?? 0} / ${s.channel.ambiguous ?? 0}`], ["摘要完成 / 失败", `${s.summary.completed ?? 0} / ${s.summary.failed ?? 0}`]]);
     const details = node("details"); details.append(node("summary", "状态详情与代码"));
-    pairs(details, [["通道", channelLabel(s.channel.state)], ["诊断", diagnosticLabel(s.diagnostic_code || s.channel_state)], ["诊断代码", s.diagnostic_code || s.channel_state], ["通道最近代码", s.channel.last_code || "无"], ["摘要最近代码", s.summary.last_code || "无"]]); $("channel-status").append(details);
+    pairs(details, [["通道", channelLabel(s.channel.state)], ["诊断", diagnosticLabel(s.diagnostic_code || s.channel_state)], ["诊断代码", s.diagnostic_code || s.channel_state], ["通道最近代码", s.channel.last_code || "无"], ["摘要最近代码", s.summary.last_code || "无"], ["配图判定码", s.channel.image_decision || "无"]]); $("channel-status").append(details);
     $("usage-status").replaceChildren();
     pairs($("usage-status"), [["聊天 / 摘要尝试", `${s.logical_attempts.chat} / ${s.logical_attempts.summary}`], ["视觉 / 搜索尝试", `${s.logical_attempts.vision} / ${s.logical_attempts.search}`], ["输入 / 输出 Tokens", `${s.successful_usage.prompt_tokens} / ${s.successful_usage.completion_tokens}`], ["成功总 Tokens", s.successful_usage.total_tokens], ["缓存 / 推理 Tokens", `${s.successful_usage.cached_tokens} / ${s.successful_usage.reasoning_tokens}`]]);
     $("events").replaceChildren(); if (!s.events.length) empty($("events"), "暂无安全事件记录。");

@@ -20,3 +20,6 @@ Update TASKS.md, MEMORY.md and DELIVERY.md at phase boundaries; record implement
 
 ## Git and test hygiene
 No broad staging before inspection. Before every commit/push: inspect ignore coverage, status, staged diff and secret scan. Before first new public push: scan full history and working tree. Do not force push. Use native Go builds; do not add container/WSL workflows. Separate mock, Windows host, live provider, real WeChat and native Linux/server evidence.
+
+## Owner authorization boundary (2026-10-31)
+Before installing a new tool, accessing files or directories outside the project working directory (the owner's .codex directory is excepted), or performing a high-risk operation, stop and wait for explicit owner authorization. A generic request to continue does not authorize a new external path or risky operation. Preserve specific approved scopes; ask with the exact paths/actions before any new such access. Routine authorized work inside the project continues without extra approval.

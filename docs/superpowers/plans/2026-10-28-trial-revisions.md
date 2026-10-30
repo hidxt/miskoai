@@ -63,6 +63,8 @@
 - [x] Read all actual deltas, reconcile interfaces; independently run integrated Go/JS/vet on immutable final candidate.
 - [x] Fresh consolidated independent review on final changes; fix findings within owned files and rerun affected checks only as justified.
 - [x] Synthetic browser visual/functional checks including auth/event page/model draft/persona/backups; show reviewed result to owner.
-- [ ] Reconcile docs/decisions/progress and build source-bound native candidates. Public release stays deferred. Before touching live server, prepare/review exact maintenance/data/credential compatibility and obtain only any genuinely missing risky decision.
+- [x] Reconcile docs/decisions/progress and build source-bound native candidates. Public release stays deferred. Before touching live server, prepare/review exact maintenance/data/credential compatibility and obtain only any genuinely missing risky decision.
 
 2026-10-29: implementation, primary full local/JS/vet/vulnerability checks, independent consolidated review and synthetic browser completed. Native CI/live update/owner acceptance remain separate. Evidence: [local checkpoint](../../research/trial-revisions-local-verification.md). Maintenance [scope](../../operations/trial-revision-update-2026-10-29.md) is prepared/reviewed, not an executed updater.
+
+2026-10-30: exact a66af6c/nativeCI/all12 passed; reviewed, explicitly approved trial update/backup/start and13 management checks passed after retained cwd/forward failures. Owner confirmed the specific F01 real natural recall result. Image/broader UI trial and public release remain separate pending owner feedback.

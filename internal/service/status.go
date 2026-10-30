@@ -17,9 +17,21 @@ type Status struct {
 	Received, Processed, Sent, Duplicate, Failed, Ambiguous int64
 	Usage                                                   provider.Usage
 	LastCode                                                string
+	LastImageDecision                                       string
 }
 
 func (s *Service) Snapshot() Status { s.mu.Lock(); defer s.mu.Unlock(); return s.status }
+
+// ImageDecisionCode also protects status consumers using an injected backend.
+// No untrusted model/provider text is allowed in these diagnostic observations.
+func ImageDecisionCode(code string) string {
+	switch code {
+	case "", "not_applicable", "unavailable", "profile_invalid", "profile_off", "empty_catalogue", "context_limit", "snapshot_error", "canceled", "model_error", "invalid_output", "plain_text", "no_suggestion", "invalid_advice", "output_limited", "not_offered", "cooldown", "repeat_cooldown", "selection_refused", "image_pipeline", "image_acked":
+		return code
+	default:
+		return "unknown"
+	}
+}
 func safeCode(c string) string {
 	switch c {
 	case "", "authorization", "protocol", "transport", "rate", "service", "storage", "capacity", "handler", "scope", "input", "canceled", "limit", "model", "memory", "search", "output", "send":
@@ -50,6 +62,7 @@ func (s *Service) recordResult(r agent.Result) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	x := &s.status
+	x.LastImageDecision = ImageDecisionCode(r.ImageDecision)
 	x.Processed = saturate64(x.Processed, 1)
 	switch r.State {
 	case "sent":

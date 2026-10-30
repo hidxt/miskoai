@@ -19,6 +19,7 @@ type imageAdvice struct {
 	candidates []storage.LibraryAsset
 	last       int64
 	id         string
+	decision   string
 	err        error
 }
 
@@ -87,65 +88,71 @@ func buildImageAdviceContext(current string, snap storage.ContextSnapshot, sourc
 // parseImageAdvice accepts legacy plaintext without granting an image. Once an
 // envelope starts, malformed/truncated/duplicate JSON is never displayed raw.
 // Bad advice in an otherwise valid envelope loses only the optional image.
-func parseImageAdvice(raw string) (text, id string, ok bool) {
+func parseImageAdvice(raw string) (text, id, decision string, ok bool) {
 	trimmed := strings.TrimSpace(raw)
 	protocolLike := strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") || strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, `"`) || strings.Contains(trimmed, `"reply"`) || strings.Contains(trimmed, `"image_id"`)
 	if !protocolLike {
 		text, ok = validatedReply(raw, maxReply)
-		return text, "", ok
+		if !ok {
+			return text, "", "invalid_output", false
+		}
+		return text, "", "plain_text", ok
 	}
 	if len(raw) > maxReply || !validText(raw) {
-		return "", "", false
+		return "", "", "invalid_output", false
 	}
 	d := json.NewDecoder(strings.NewReader(raw))
 	token, err := d.Token()
 	if err != nil || token != json.Delim('{') {
-		return "", "", false
+		return "", "", "invalid_output", false
 	}
 	fields := map[string]json.RawMessage{}
 	for d.More() {
 		token, err = d.Token()
 		key, keyOK := token.(string)
 		if err != nil || !keyOK || fields[key] != nil || len(fields) >= 8 {
-			return "", "", false
+			return "", "", "invalid_output", false
 		}
 		var value json.RawMessage
 		if d.Decode(&value) != nil {
-			return "", "", false
+			return "", "", "invalid_output", false
 		}
 		fields[key] = value
 	}
 	if token, err = d.Token(); err != nil || token != json.Delim('}') {
-		return "", "", false
+		return "", "", "invalid_output", false
 	}
 	if _, err = d.Token(); err != io.EOF {
-		return "", "", false
+		return "", "", "invalid_output", false
 	}
 	if json.Unmarshal(fields["reply"], &text) != nil {
-		return "", "", false
+		return "", "", "invalid_output", false
 	}
 	text, ok = validatedReply(text, maxReply)
 	if !ok {
-		return "", "", false
+		return "", "", "invalid_output", false
 	}
 	for key := range fields {
 		if key != "reply" && key != "emotion" && key != "image_id" {
-			return text, "", true
+			return text, "", "invalid_advice", true
 		}
 	}
 	var emotion string
 	if json.Unmarshal(fields["emotion"], &emotion) != nil || strings.TrimSpace(emotion) == "" || !imageSelectionText(emotion, 64, true) {
-		return text, "", true
+		return text, "", "invalid_advice", true
 	}
 	if emotion == "neutral" || emotion == "unknown" {
-		return text, "", true
+		return text, "", "no_suggestion", true
 	}
 	if json.Unmarshal(fields["image_id"], &id) != nil || len(id) > 19 {
-		return text, "", true
+		return text, "", "invalid_advice", true
+	}
+	if id == "" && string(fields["image_id"]) == `""` {
+		return text, "", "no_suggestion", true
 	}
 	parsed, err := strconv.ParseInt(id, 10, 64)
 	if err != nil || parsed <= 0 || strconv.FormatInt(parsed, 10) != id {
-		return text, "", true
+		return text, "", "invalid_advice", true
 	}
-	return text, id, true
+	return text, id, "suggested", true
 }

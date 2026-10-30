@@ -36,8 +36,10 @@ type Options struct {
 type Result struct {
 	State      string
 	ImageState string
-	Usage      provider.Usage
-	Code       string
+	// ImageDecision is a fixed, process-local diagnostic, never model text.
+	ImageDecision string
+	Usage         provider.Usage
+	Code          string
 }
 type Agent struct {
 	store             *storage.Store
@@ -93,7 +95,7 @@ func New(s *storage.Store, m Model, q Searcher, send Sender, o Options) (*Agent,
 
 // Handle serializes one scope's work. The total deadline includes admission
 // wait. Every persisted claim is terminal for automatic replay, in every state.
-func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
+func (a *Agent) Handle(parent context.Context, in Incoming) (result Result, handleErr error) {
 	if parent == nil {
 		return failure("rejected", "input")
 	}
@@ -137,6 +139,19 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	var usage provider.Usage
 	var captured storage.Profile
 	var advice imageAdvice
+	advice.decision = "not_applicable"
+	defer func() {
+		if advice.decision == "suggested" && ctx.Err() != nil {
+			advice.decision = "canceled"
+		}
+		if advice.decision == "selected" {
+			advice.decision = "image_pipeline"
+			if result.ImageState == "acked" {
+				advice.decision = "image_acked"
+			}
+		}
+		result.ImageDecision = advice.decision
+	}()
 	ordinary := false
 	if in.Attachment != nil {
 		if len(in.Text) > 8192 {
@@ -174,8 +189,10 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (Result, error) {
 	if ordinary && valid && advice.id != "" && a.replyImageBorrow != nil && a.replyImagePrepare != nil && imageSelectionProfile(captured) && captured.Sticker != "off" {
 		chosen, selected := selectReplyImage(imageSelectionInput{Scope: a.scope, InboundID: in.ID, UserText: in.Text, Reply: text, SuggestedID: advice.id, Profile: captured, Candidates: advice.candidates, NowMillis: time.Now().UTC().UnixMilli(), LastConfirmedMillis: advice.last, OrdinarySuccess: true})
 		if selected {
+			advice.decision = "selected"
 			return a.sendImageReply(ctx, in, text, usage, chosen)
 		}
+		advice.decision = refusedImageDecision(advice, captured, time.Now().UTC().UnixMilli())
 	}
 	if err = a.store.SetMessageState(ctx, a.scope, in.ID, "sending"); err != nil {
 		a.setState(ctx, in.ID, "failed")
@@ -316,14 +333,28 @@ func (a *Agent) answerWithAdvice(ctx context.Context, current string, captured *
 	var msgs []provider.Message
 	var ok bool
 	structured := false
+	if advice != nil && !explicit {
+		switch {
+		case a.replyImageBorrow == nil || a.replyImagePrepare == nil:
+			advice.decision = "unavailable"
+		case !imageSelectionProfile(snapshot.Profile):
+			advice.decision = "profile_invalid"
+		case snapshot.Profile.Sticker == "off":
+			advice.decision = "profile_off"
+		default:
+			advice.decision = "empty_catalogue"
+		}
+	}
 	if advice != nil && !explicit && a.replyImageBorrow != nil && a.replyImagePrepare != nil && imageSelectionProfile(snapshot.Profile) && snapshot.Profile.Sticker != "off" {
 		candidates, last, snapshotErr := a.store.ImageSelectionSnapshot(ctx, a.scope)
 		if snapshotErr != nil {
+			advice.decision = "snapshot_error"
 			advice.err = snapshotErr
 			return modelReply, empty, storageCode(snapshotErr)
 		}
 		catalogue, offered := imageCatalogue(a.scope, candidates, time.Now().UTC().UnixMilli())
 		if len(offered) > 0 {
+			advice.decision = "context_limit"
 			msgs, ok = buildImageAdviceContext(current, snapshot, sources, a.opts, catalogue)
 			if ok {
 				structured = true
@@ -342,13 +373,20 @@ func (a *Agent) answerWithAdvice(ctx context.Context, current string, captured *
 	}
 	reply, err := a.model.Chat(ctx, msgs, a.opts.MaxOutput)
 	if err != nil {
+		if advice != nil {
+			advice.decision = "model_error"
+		}
 		return modelReply, empty, "model"
 	}
 	if reply.FinishReason != "stop" && reply.FinishReason != "length" {
+		if advice != nil {
+			advice.decision = "invalid_output"
+		}
 		return modelReply, reply.Usage, "output"
 	}
 	if structured {
-		text, id, valid := parseImageAdvice(reply.Text)
+		text, id, decision, valid := parseImageAdvice(reply.Text)
+		advice.decision = decision
 		if !valid {
 			return modelReply, reply.Usage, "output"
 		}
@@ -356,6 +394,8 @@ func (a *Agent) answerWithAdvice(ctx context.Context, current string, captured *
 		// truncated response never grants optional image advice.
 		if reply.FinishReason == "stop" {
 			advice.id = id
+		} else {
+			advice.decision = "output_limited"
 		}
 		return text, reply.Usage, ""
 	}

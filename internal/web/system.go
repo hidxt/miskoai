@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"github.com/hidxt/miskoai/internal/core"
+	"github.com/hidxt/miskoai/internal/service"
 	"io"
 	"mime"
 	"net/http"
@@ -136,15 +137,16 @@ type statusDTO struct {
 	Events          []eventDTO  `json:"events"`
 }
 type channelDTO struct {
-	StartedAt string `json:"started_at"`
-	State     string `json:"state"`
-	Received  int64  `json:"received"`
-	Processed int64  `json:"processed"`
-	Sent      int64  `json:"sent"`
-	Duplicate int64  `json:"duplicate"`
-	Failed    int64  `json:"failed"`
-	Ambiguous int64  `json:"ambiguous"`
-	LastCode  string `json:"last_code"`
+	StartedAt     string `json:"started_at"`
+	State         string `json:"state"`
+	Received      int64  `json:"received"`
+	Processed     int64  `json:"processed"`
+	Sent          int64  `json:"sent"`
+	Duplicate     int64  `json:"duplicate"`
+	Failed        int64  `json:"failed"`
+	Ambiguous     int64  `json:"ambiguous"`
+	LastCode      string `json:"last_code"`
+	ImageDecision string `json:"image_decision"`
 }
 type summaryDTO struct {
 	Completed uint64 `json:"completed"`
@@ -179,7 +181,7 @@ func enum(value, fallback string, values ...string) string {
 }
 func statusResponse(s core.Status) statusDTO {
 	state := enum(s.ChannelState, "unavailable", "closed", "closing", "unavailable", "authorization_expired", "restore_paused", "unconfigured", "provider_unconfigured", "stopped", "receiving", "backoff", "paused", "quarantined")
-	channel := channelDTO{webTime(s.Channel.StartedAt), enum(s.Channel.Channel, "stopped", "stopped", "receiving", "backoff", "paused", "quarantined"), s.Channel.Received, s.Channel.Processed, s.Channel.Sent, s.Channel.Duplicate, s.Channel.Failed, s.Channel.Ambiguous, enum(s.Channel.LastCode, "service", "", "authorization", "protocol", "transport", "rate", "service", "storage", "capacity", "handler", "scope", "input", "canceled", "limit", "model", "memory", "search", "output", "send")}
+	channel := channelDTO{webTime(s.Channel.StartedAt), enum(s.Channel.Channel, "stopped", "stopped", "receiving", "backoff", "paused", "quarantined"), s.Channel.Received, s.Channel.Processed, s.Channel.Sent, s.Channel.Duplicate, s.Channel.Failed, s.Channel.Ambiguous, enum(s.Channel.LastCode, "service", "", "authorization", "protocol", "transport", "rate", "service", "storage", "capacity", "handler", "scope", "input", "canceled", "limit", "model", "memory", "search", "output", "send"), service.ImageDecisionCode(s.Channel.LastImageDecision)}
 	summary := summaryDTO{s.Summary.Completed, s.Summary.Failed, enum(s.Summary.LastCode, "summary", "", "stale", "capacity", "invalid", "canceled", "provider", "storage", "ok")}
 	events := make([]eventDTO, 0, 128)
 	for i, event := range s.Events {
