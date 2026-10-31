@@ -1,6 +1,6 @@
 # Image diagnostics trial-update scope
 
-Status: **prepared; not authorized or executed**. Engineering **98%**. This new scope is separate from the completed fixed-candidate update of a66af6c. See [diagnostic evidence](../research/natural-image-trial-diagnostics.md) and [implementation plan](../superpowers/plans/2026-10-30-image-decision-diagnostics.md).
+Status as of2026-10-31: **explicitly approved and completed; exact bf521038/nativeCI41115905560/all12 passed; stopped-state backup/fixed installation/one start and13 management observations passed**. Engineering **98%**. This new scope is separate from the completed fixed-candidate update of a66af6c. See [diagnostic evidence](../research/natural-image-trial-diagnostics.md) and [implementation plan](../superpowers/plans/2026-10-30-image-decision-diagnostics.md).
 
 ## Reviewable candidate
 

@@ -102,6 +102,20 @@ type countedModel struct {
 }
 
 func (m *countedModel) Chat(ctx context.Context, msg []provider.Message, n int) (provider.Reply, error) {
+	return m.chat(ctx, msg, n, m.delegate.Chat)
+}
+
+// Preserve optional JSON capability through accounting. Legacy delegates use
+// one Chat call; errors never cause a second request or a plaintext fallback.
+func (m *countedModel) ChatJSON(ctx context.Context, msg []provider.Message, n int) (provider.Reply, error) {
+	chat := m.delegate.Chat
+	if model, ok := m.delegate.(agent.JSONModel); ok {
+		chat = model.ChatJSON
+	}
+	return m.chat(ctx, msg, n, chat)
+}
+
+func (m *countedModel) chat(ctx context.Context, msg []provider.Message, n int, call func(context.Context, []provider.Message, int) (provider.Reply, error)) (provider.Reply, error) {
 	m.c.mu.Lock()
 	switch m.operation {
 	case "summary":
@@ -112,7 +126,7 @@ func (m *countedModel) Chat(ctx context.Context, msg []provider.Message, n int) 
 		increment(&m.c.metrics.ChatAttempts)
 	}
 	m.c.mu.Unlock()
-	r, e := m.delegate.Chat(ctx, msg, n)
+	r, e := call(ctx, msg, n)
 	if e == nil {
 		m.c.mu.Lock()
 		addUsage(&m.c.metrics.SuccessfulUsage, r.Usage)

@@ -132,9 +132,22 @@ func (d *DeepSeek) request(messages []Message, maxTokens int, stream bool) (map[
 }
 
 func (d *DeepSeek) Chat(ctx context.Context, messages []Message, maxTokens int) (Reply, error) {
+	return d.chat(ctx, messages, maxTokens, false)
+}
+
+// ChatJSON requests JSON syntax using the same transport, admission and retry
+// budget as Chat. Callers must supply the JSON contract in their trusted prompt.
+func (d *DeepSeek) ChatJSON(ctx context.Context, messages []Message, maxTokens int) (Reply, error) {
+	return d.chat(ctx, messages, maxTokens, true)
+}
+
+func (d *DeepSeek) chat(ctx context.Context, messages []Message, maxTokens int, jsonMode bool) (Reply, error) {
 	body, err := d.request(messages, maxTokens, false)
 	if err != nil {
 		return Reply{}, err
+	}
+	if jsonMode {
+		body["response_format"] = map[string]string{"type": "json_object"}
 	}
 	var result struct {
 		Choices []struct {

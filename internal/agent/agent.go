@@ -19,6 +19,12 @@ import (
 type Model interface {
 	Chat(context.Context, []provider.Message, int) (provider.Reply, error)
 }
+
+// JSONModel is optional: only a trusted, admitted image-advice context selects
+// this capability. A failed JSON call must never fall back to another request.
+type JSONModel interface {
+	ChatJSON(context.Context, []provider.Message, int) (provider.Reply, error)
+}
 type Searcher interface {
 	Search(context.Context, string, int) ([]provider.SearchResult, error)
 }
@@ -371,7 +377,13 @@ func (a *Agent) answerWithAdvice(ctx context.Context, current string, captured *
 	if ctx.Err() != nil {
 		return modelReply, empty, "canceled"
 	}
-	reply, err := a.model.Chat(ctx, msgs, a.opts.MaxOutput)
+	chat := a.model.Chat
+	if structured {
+		if model, ok := a.model.(JSONModel); ok {
+			chat = model.ChatJSON
+		}
+	}
+	reply, err := chat(ctx, msgs, a.opts.MaxOutput)
 	if err != nil {
 		if advice != nil {
 			advice.decision = "model_error"

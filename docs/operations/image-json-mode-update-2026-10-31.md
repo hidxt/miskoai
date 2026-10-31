@@ -1,0 +1,25 @@
+# Image-advice JSON-mode trial update: prepared scope
+
+Status: **prepared locally; not approved or executed**. Engineering **98%**. The owner approved local JSON-mode implementation and synthetic verification only. The running trial remains diagnostic source bf521038, binary `bbdb154e49e5aeaa6d1822ff3e174501d57835ec2f1c5f48e5965926efa732eb`. See [local implementation evidence](../research/image-json-mode-local-verification.md).
+
+## Fixed candidate
+
+Four production files add optional trusted JSON dispatch, counted forwarding, shared DeepSeek JSON mode and one bounded JSON example; three new Go test files cover the behavior. All7 reviewed hashes match the integrated files. The model remains deepseek-flash; same endpoint, request count,429/503 retry ceiling, context/output budgets, image selection/cooldowns, durable send and ACK protection.
+
+Local evidence is mixed and retained explicitly: targeted32PASS, affected652PASS, vet0, three builds0 and concentrated review0 actionable C/I/M; full sandbox3169PASS/14FAIL/8SKIP plus3 package8m timeouts, then serial31PASS/2FAIL/0SKIP. New nonlink failures and timeout cases passed serially; remaining serial failure is a denied authentic hardlink setup plus its parent. No single clean whole-suite claim or new unsandboxed authorization. Exact new native Linux CI must pass completely before deployment; a first-run failure is not erased by a later pass.
+
+Native Go1.27.3 Linuxamd64 candidate: **13,897,888 bytes**, SHA256 **869ce5c2714c52acfdaee6dacaa503d008759da534e1be24cab490b147d40488**. It was built locally; do not claim byte equality with a future CI artifact. Exact source/module/embed/LICENSE inputs must match the tested candidate before publication and be bound to the new commit, noting any Git-only line ending normalization.
+
+Prepared private5-file upload packet: **13,911,287 bytes** (13.27MiB), binary plus inspect.sh/maintenance.sh/start.sh/check-pending.py. Local manifest SHA256 **004df33ef542be07595aa3e4efe2e6d948f96c7547657433fb4cffc182c52c44**. These operational files derive from the successfully completed reviewed diagnostic packet; primary inspected all4 originals. Only old/new binary hashes and new destination names change, with an exact reversible text comparison. The read-only pending-state helper remains byte-identical. They have not been executed for this candidate; later remote syntax checks must pass before any maintenance.
+
+## Proposed approval boundary
+
+1. After the actual local full-suite outcome is recorded and explicit status/ignore/diff/secret/history gates pass, commit and normally push only the sealed reviewed source and development-state documentation to existing `codex/foundation`. Wait for **the exact new commit** to pass all existing native Linux CI steps. No final acceptance is inferred from a local build or prior diagnostic CI.
+2. Only after explicit owner approval of this complete scope and exact CI success may the SSH client use the previously supplied external private-key path to the pinned test host. Check unchanged nonroot miskoai-test.service, current binary hash, private path ownership, loopback18790, sufficient disk/memory and64MiB data admission. Create one new private packet directory `/home/miskoai-test/.local/share/miskoai-update-20261031-image-json`, upload exactly the fixed5 files and verify hashes. Do not transfer local credentials or chats.
+3. Perform one graceful stop, confirm quiescence and read-only schema6/zero pending or ambiguous states, preserve old binary/settings/auth/provider/management environment privately on the server, and create one consistent full database-plus-images backup with the existing CLI from the service user's HOME. Keep all previous backups. Packet budget400MiB and existing permission/path guards remain.
+4. After backup and all admissions pass, install the fixed binary atomically, validate the actual protected configuration, and start once. Check process identity/hash, authenticated management status and loopback listener. Existing admin/password/Keys/WeChat/data scope remain. Normal owner chat and actual model billing resume under the existing trial authorization; no separate automated paid/WeChat probe is included.
+5. Any failure, timeout or uncertain result stops the sequence. Preserve evidence and state; do not automatically retry a write, restore sending history, roll back, restart or replay prior test messages. Ask the owner for the necessary recovery decision.
+
+The supplied host is47.243.86.210:22, pinned ED25519 `SHA256:h0upY8ihQS3bs/6tiyM396ZIcmm8aptsmPNkv6gh/DQ`. The private key remains outside the public source; only the SSH client may use it after explicit authorization. No new tool installation, unit/firewall/public-port/Swap changes, credential rotation, data migration, tag or public Release belongs to this scope.
+
+After an approved successful update, a new owner-sent natural emotion message is still needed for live acceptance. JSON mode guarantees syntax rather than a suitable image on every reply. This document is a reviewable proposed boundary, not authorization to perform it.
