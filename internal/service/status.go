@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/hidxt/miskoai/internal/agent"
+	"github.com/hidxt/miskoai/internal/netx"
 	"github.com/hidxt/miskoai/internal/provider"
 	"math"
 	"time"
@@ -18,6 +19,7 @@ type Status struct {
 	Usage                                                   provider.Usage
 	LastCode                                                string
 	LastImageDecision                                       string
+	LastModelFailure                                        string
 }
 
 func (s *Service) Snapshot() Status { s.mu.Lock(); defer s.mu.Unlock(); return s.status }
@@ -63,6 +65,7 @@ func (s *Service) recordResult(r agent.Result) {
 	defer s.mu.Unlock()
 	x := &s.status
 	x.LastImageDecision = ImageDecisionCode(r.ImageDecision)
+	x.LastModelFailure = netx.NormalizeFailureCode(r.ModelFailure)
 	x.Processed = saturate64(x.Processed, 1)
 	switch r.State {
 	case "sent":

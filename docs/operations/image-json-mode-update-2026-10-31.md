@@ -1,6 +1,6 @@
 # Image-advice JSON-mode trial update: prepared scope
 
-Status: **prepared locally; not approved or executed**. Engineering **98%**. The owner approved local JSON-mode implementation and synthetic verification only. The running trial remains diagnostic source bf521038, binary `bbdb154e49e5aeaa6d1822ff3e174501d57835ec2f1c5f48e5965926efa732eb`. See [local implementation evidence](../research/image-json-mode-local-verification.md).
+Status2026-10-31: **owner-approved update completed after distinct read-only and one-time suffix-recovery decisions**. Source eec21cd/nativeCI41174113939/all12SUCCESS, fixed869ce5c2… installation, private full backup/old copies and one start passed; newPID58897 receiving and13 management observations passed. Engineering **98%**. Original upload exception and incomplete-only halt remain history, not retried silently. See [actual server evidence](../research/image-json-mode-server-update-verification.md), [completed reconciliation](image-json-mode-upload-reconciliation-2026-10-31.md) and [approved suffix recovery](image-json-mode-suffix-upload-2026-10-31.md). Real natural-image/final acceptance remains pending.
 
 ## Fixed candidate
 

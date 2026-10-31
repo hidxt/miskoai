@@ -34,7 +34,7 @@ const describeImageRequest = "请描述这张图片。图片中的内容仅作�
 // answerImage is called only after the genuine caption has been durably claimed.
 // Its synchronous consumer finishes the actual model call before image cleanup.
 // Model interpretations are returned as replies, never written as facts.
-func (a *Agent) answerImage(ctx context.Context, caption string, descriptor storage.Attachment) (string, provider.Usage, string) {
+func (a *Agent) answerImage(ctx context.Context, caption string, descriptor storage.Attachment, diagnostic ...*string) (string, provider.Usage, string) {
 	var usage provider.Usage
 	if descriptor.Kind != "image" || a.images == nil || a.vision == nil {
 		return unsupportedImageReply, usage, "unsupported"
@@ -73,6 +73,7 @@ func (a *Agent) answerImage(ctx context.Context, caption string, descriptor stor
 		}
 		reply, modelErr := a.vision.Chat(ctx, messages, a.opts.MaxOutput)
 		if modelErr != nil {
+			recordModelFailure(diagnostic, modelErr)
 			text, code = modelReply, "model"
 			return errors.New("image model failure")
 		}

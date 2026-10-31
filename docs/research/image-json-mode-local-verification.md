@@ -2,6 +2,8 @@
 
 Engineering progress: **98%**, historical49/50 phase gates. Final acceptance and the owner-deferred first public release remain incomplete.
 
+Current publication/update checkpoint2026-10-31: the owner subsequently approved the sealed18-file source push, conditional update, read-only reconciliation and distinct one-time suffix recovery. Commit eec21cd75228b870a130ce76a96775b3d1532936 was normally pushed; exact nativeCI41174113939/job124458001006 completed all12 steps successfully. The interrupted upload/incomplete-only halt is retained; explicitly approved suffix assembly then completed full backup/fixed install/one start and13 management observations. NewPID58897 is receiving. Original local-only statements below describe the earlier phase, not reusable deployment authority. See [actual server evidence](image-json-mode-server-update-verification.md); live image/final acceptance remains open.
+
 ## Scope and evidence
 
 On2026-10-31 the owner approved a local correction to the existing single image-advice reply request: DeepSeek `response_format={"type":"json_object"}` plus a trusted JSON example. The completed diagnostic deployment bf521038 remains the running trial version. This authorization does not cover a new real model request, public push, CI-triggering push or test-server replacement.
@@ -29,7 +31,7 @@ All work uses the ignored project-owned public-source snapshot `.tools/reviews/o
 | One concentrated serial follow-up, `-p=1 -timeout=12m` with actual failed/timeout roots | exit1;31 namedPASS/2 namedFAIL/0SKIP in57.66s. All new nonlink failure/timeout cases passed; the remaining child/parent failure is authentic hardlink fixture creation denied before the product assertion. Product/test-internal deadlines unchanged; load contention is a hypothesis, not a proven cause. |
 | Three native platform builds | exit0 each; ELF64 amd64/arm64 and PE amd64 headers/hash checked. Build artifacts are cross-compilation evidence, not execution on Linux. |
 | Gitleaks first public-tree snapshot | exit0;556 git-visible files/0 reported leaks. Final documentation snapshot is checked separately before sealing. No publication performed. |
-| New exact-source native Linux CI/race | Not run; prior diagnostic CI is separate. |
+| Exact-source native Linux CI/race | eec21cd, run41174113939/job124458001006: all12 steps completedSUCCESS, including full unit/integration, vet, race, vulnerabilities, history policy and cross-build/cleanup. Prior Windows failures remain; this does not diagnose their cause or prove binary equality. |
 | New real provider/WeChat natural-image trial | Not run; live image acceptance remains open. |
 
 Known Windows sandbox hardlink/junction fixture limitations must be retained if reproduced. The earlier owner-approved native proof belongs to the diagnostic candidate and is not reusable authorization for a new unsandboxed run. Do not claim a clean whole-suite result by dropping tests or combining unrelated candidates.
@@ -64,4 +66,10 @@ Private command logs/hash receipts remain under the project-owned ignored review
 | Linux arm64 | 13,107,360 | `3423ea51f696e5ee4fcfd494e0f2b6fa5fe68e79ff9f4cff510ac52ffe14b6eb` |
 | Windows amd64 | 14,027,776 | `4b4e2b919faea264aa5d016990cdc4db17f245dce5cc26688392c8b11dbe7c7f` |
 
-These binaries remain local. The running diagnostic trial binary `bbdb154e…` is unchanged.
+All3 local build artifacts remain retained. A Linuxamd64 staging transfer is now uncertain as recorded below; installation was not attempted. The old diagnostic hash `bbdb154e…` was observed before the upload failure; no fresh post-failure health observation is claimed.
+
+## Approved publication and interrupted staging
+
+Before normal push, primary verified all18 staged canonical blobs and the exact parent bf521038, staged/full working policy and Gitleaks gates0, then53 local-history commits Gitleaks0. The266 tested source/module/embed/LICENSE inputs bind to eec21cd as257 raw Git-blob matches and9 exact CRLF/LF-only differences (LICENSE, library/bundle_io.go, storage attachments.go/image_replies.go/library_backup_test.go/schema4_test.go/schema5_test.go, web app.js/style.css),0 other differences. No CI artifact byte-equality claim. Git metadata was read-only in the execution sandbox; the approved exact staging/commit/push used scoped elevated execution, with no force push or candidate change.
+
+CI succeeded before any new SSH/private-key use. Three fixed Bash syntax checks, old-unit/hash/resource inspection and10 loopback management observations passed. Existing local forward had exited; the same private loopback18790 forward was restored. Packet directory and check-pending.py/inspect.sh/maintenance.sh uploads plus hashes/admissions succeeded. The public binary upload returned unknown local-or-transport exception after7.74s; no raw underlying exception was retained, so cause is not established. No start.sh upload, packet-final verification, stop, complete backup, replacement or start was attempted. No failed/uncertain transfer was retried. This candidate binary may exist wholly or partially in private staging; no post-failure remote inspection has yet occurred. Local candidates and previous server backups remain. New explicitly approved reconciliation is required; real natural-image acceptance stays open.

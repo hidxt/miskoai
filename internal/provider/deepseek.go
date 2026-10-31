@@ -144,7 +144,7 @@ func (d *DeepSeek) ChatJSON(ctx context.Context, messages []Message, maxTokens i
 func (d *DeepSeek) chat(ctx context.Context, messages []Message, maxTokens int, jsonMode bool) (Reply, error) {
 	body, err := d.request(messages, maxTokens, false)
 	if err != nil {
-		return Reply{}, err
+		return Reply{}, netx.WithFailure("request_invalid", err)
 	}
 	if jsonMode {
 		body["response_format"] = map[string]string{"type": "json_object"}
@@ -165,11 +165,11 @@ func (d *DeepSeek) chat(ctx context.Context, messages []Message, maxTokens int, 
 		return Reply{}, err
 	}
 	if len(result.Choices) == 0 || strings.TrimSpace(result.Choices[0].Message.Content) == "" {
-		return Reply{}, errors.New("empty model response")
+		return Reply{}, netx.WithFailure("response_empty", errors.New("empty model response"))
 	}
 	c := result.Choices[0]
 	if c.FinishReason != "stop" && c.FinishReason != "length" {
-		return Reply{}, errors.New("model response did not finish successfully")
+		return Reply{}, netx.WithFailure("response_finish", errors.New("model response did not finish successfully"))
 	}
 	if len(c.Message.Content) > 32<<10 {
 		return Reply{}, netx.ErrLimit

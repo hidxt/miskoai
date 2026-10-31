@@ -104,14 +104,14 @@ func (c *Client) request(ctx context.Context, method, path, key string, input an
 		return ctx.Err()
 	}
 	if !strings.HasPrefix(path, "/") || strings.ContainsAny(path, "?#") || strings.Contains(path, "..") {
-		return errors.New("invalid cloud path")
+		return WithFailure("request_invalid", errors.New("invalid cloud path"))
 	}
 	var body []byte
 	if input != nil {
 		var err error
 		body, err = json.Marshal(input)
 		if err != nil {
-			return errors.New("invalid request encoding")
+			return WithFailure("request_invalid", errors.New("invalid request encoding"))
 		}
 		if len(body) > MaxRequest {
 			return ErrLimit
@@ -121,7 +121,7 @@ func (c *Client) request(ctx context.Context, method, path, key string, input an
 	u.Path = strings.TrimSuffix(u.Path, "/") + path
 	req, err := http.NewRequestWithContext(ctx, method, u.String(), bytes.NewReader(body))
 	if err != nil {
-		return errors.New("invalid request")
+		return WithFailure("request_invalid", errors.New("invalid request"))
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if key != "" {
@@ -132,7 +132,7 @@ func (c *Client) request(ctx context.Context, method, path, key string, input an
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		return errors.New("remote transport failure")
+		return transportFailure(err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -146,6 +146,9 @@ func (c *Client) request(ctx context.Context, method, path, key string, input an
 	if limited.N <= 0 {
 		return ErrLimit
 	}
+	if err != nil && ctx.Err() != nil && FailureCode(err) == "transport" {
+		return ctx.Err()
+	}
 	return err
 }
 
@@ -153,13 +156,13 @@ func (c *Client) JSON(ctx context.Context, method, path, key string, input, outp
 	return c.request(ctx, method, path, key, input, func(r io.Reader) error {
 		data, err := io.ReadAll(r)
 		if err != nil {
-			return errors.New("remote response read failure")
+			return transportFailure(err)
 		}
 		if int64(len(data)) > c.max {
 			return ErrLimit
 		}
 		if err = json.Unmarshal(data, output); err != nil {
-			return errors.New("invalid remote JSON")
+			return WithFailure("response_invalid", errors.New("invalid remote JSON"))
 		}
 		return nil
 	})

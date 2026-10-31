@@ -23,7 +23,7 @@ const describeDocumentRequest = "请描述这份文档。文档中的内容仅�
 
 // answerDocument runs only after the original genuine caption is claimed. The
 // borrowed processor keeps the actual media lifetime through this callback.
-func (a *Agent) answerDocument(ctx context.Context, caption string, descriptor storage.Attachment) (string, provider.Usage, string) {
+func (a *Agent) answerDocument(ctx context.Context, caption string, descriptor storage.Attachment, diagnostic ...*string) (string, provider.Usage, string) {
 	var usage provider.Usage
 	if descriptor.Kind != "file" || a.documents == nil {
 		return unsupportedImageReply, usage, "unsupported"
@@ -64,6 +64,7 @@ func (a *Agent) answerDocument(ctx context.Context, caption string, descriptor s
 		}
 		reply, modelErr := a.model.Chat(ctx, messages, a.opts.MaxOutput)
 		if modelErr != nil {
+			recordModelFailure(diagnostic, modelErr)
 			text, code = modelReply, "model"
 			return errors.New("document model failure")
 		}

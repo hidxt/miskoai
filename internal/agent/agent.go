@@ -44,8 +44,10 @@ type Result struct {
 	ImageState string
 	// ImageDecision is a fixed, process-local diagnostic, never model text.
 	ImageDecision string
-	Usage         provider.Usage
-	Code          string
+	// ModelFailure is a safe finite category, never a provider error string.
+	ModelFailure string
+	Usage        provider.Usage
+	Code         string
 }
 type Agent struct {
 	store             *storage.Store
@@ -145,8 +147,10 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (result Result, hand
 	var usage provider.Usage
 	var captured storage.Profile
 	var advice imageAdvice
+	var modelFailure string
 	advice.decision = "not_applicable"
 	defer func() {
+		result.ModelFailure = modelFailure
 		if advice.decision == "suggested" && ctx.Err() != nil {
 			advice.decision = "canceled"
 		}
@@ -163,9 +167,9 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (result Result, hand
 		if len(in.Text) > 8192 {
 			text, code = limitReply, "limit"
 		} else if in.Attachment.Kind == "file" {
-			text, usage, code = a.answerDocument(ctx, in.Text, *in.Attachment)
+			text, usage, code = a.answerDocument(ctx, in.Text, *in.Attachment, &modelFailure)
 		} else {
-			text, usage, code = a.answerImage(ctx, in.Text, *in.Attachment)
+			text, usage, code = a.answerImage(ctx, in.Text, *in.Attachment, &modelFailure)
 		}
 	} else {
 		var handled bool
@@ -174,7 +178,7 @@ func (a *Agent) Handle(parent context.Context, in Incoming) (result Result, hand
 			if len(in.Text) > 8192 {
 				text, code = limitReply, "limit"
 			} else {
-				text, usage, code = a.answerWithAdvice(ctx, in.Text, &captured, &advice)
+				text, usage, code = a.answerWithAdvice(ctx, in.Text, &captured, &advice, &modelFailure)
 				_, searching := searchCommand(in.Text)
 				ordinary = code == "" && !searching
 			}
@@ -303,7 +307,7 @@ func (a *Agent) answerWithProfile(ctx context.Context, current string, captured 
 	return a.answerWithAdvice(ctx, current, captured, nil)
 }
 
-func (a *Agent) answerWithAdvice(ctx context.Context, current string, captured *storage.Profile, advice *imageAdvice) (string, provider.Usage, string) {
+func (a *Agent) answerWithAdvice(ctx context.Context, current string, captured *storage.Profile, advice *imageAdvice, diagnostic ...*string) (string, provider.Usage, string) {
 	var empty provider.Usage
 	snapshot, err := a.store.ChatContextWithProfile(ctx, a.scope, factQuery(current), 16, 8, a.opts.Profile)
 	if err != nil {
@@ -385,6 +389,7 @@ func (a *Agent) answerWithAdvice(ctx context.Context, current string, captured *
 	}
 	reply, err := chat(ctx, msgs, a.opts.MaxOutput)
 	if err != nil {
+		recordModelFailure(diagnostic, err)
 		if advice != nil {
 			advice.decision = "model_error"
 		}
